@@ -57,9 +57,11 @@ RUN set -eux; \
         libc++abi-21-dev; \
     rm -rf /var/lib/apt/lists/*
 
-# Python tooling for documentation + MRDocs
-RUN python3 -m pip install --upgrade pip --break-system-packages && \
-    python3 -m pip install mrdocs~=0.4.0 --break-system-packages
+# Python tooling for documentation + MRDocs (isolated venv)
+RUN python3 -m venv /opt/mrdocs-venv && \
+    /opt/mrdocs-venv/bin/pip install --upgrade pip && \
+    /opt/mrdocs-venv/bin/pip install "mrdocs~=0.4.0" && \
+    ln -s /opt/mrdocs-venv/bin/mrdocs /usr/local/bin/mrdocs
 
 # Mermaid CLI for architecture diagrams
 RUN npm install -g @mermaid-js/mermaid-cli
