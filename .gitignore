@@ -6,3 +6,4 @@ CoverageReport*
 LastCoverageResults.log
 xcode
 logs/
+scripts/deploy_remote_devcontainer.sh
