@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
+    <serverData>
+      <paths name="c0903s4.ny5 - ubuntu - gcc (dd45c9cd-94e5-4a4b-8b83-67f492b9daa5)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/tmp.9IIU8luykz/SlotMap" local="$PROJECT_DIR$" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>
