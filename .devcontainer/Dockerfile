@@ -60,7 +60,7 @@ RUN set -eux; \
 # Python tooling for documentation + MRDocs (isolated venv)
 RUN python3 -m venv /opt/mrdocs-venv && \
     /opt/mrdocs-venv/bin/pip install --upgrade pip && \
-    /opt/mrdocs-venv/bin/pip install "mrdocs~=0.4.0" && \
+    /opt/mrdocs-venv/bin/pip install "mrdocs~=0.3" && \
     ln -s /opt/mrdocs-venv/bin/mrdocs /usr/local/bin/mrdocs
 
 # Mermaid CLI for architecture diagrams
