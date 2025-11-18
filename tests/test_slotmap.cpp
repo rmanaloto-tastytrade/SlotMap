@@ -1,2 +1,5 @@
-#include <iostream>
-int main(){std::cout<<"test";}
+#include <gtest/gtest.h>
+
+TEST(SlotMapSmoke, Placeholder) {
+    EXPECT_EQ(1, 1);
+}

@@ -1,0 +1,3 @@
+This is a header-only placeholder for the Intel CIB service registry.
+Target link libraries: none.
+Include directory: <cib/cib.hpp>

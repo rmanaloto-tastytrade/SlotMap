@@ -1,1 +1,62 @@
-{ "version": 6 }
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_OVERLAY_PORTS": "${sourceDir}/vcpkg-overlays/cib/ports;${sourceDir}/vcpkg-overlays/stdx/ports;${sourceDir}/vcpkg-overlays/qlibs/ports;${sourceDir}/vcpkg-overlays/boost-ext/ports",
+        "CMAKE_CXX_COMPILER": "clang++-21",
+        "CMAKE_C_COMPILER": "clang-21",
+        "CMAKE_CXX_STANDARD": "23",
+        "SLOTMAP_BUILD_TESTS": "ON",
+        "SLOTMAP_BUILD_DOCS": "ON"
+      }
+    },
+    {
+      "name": "clang-debug",
+      "displayName": "Clang Debug",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang-release",
+      "displayName": "Clang Release",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "clang-debug",
+      "configurePreset": "clang-debug"
+    },
+    {
+      "name": "clang-release",
+      "configurePreset": "clang-release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "clang-debug",
+      "configurePreset": "clang-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}
