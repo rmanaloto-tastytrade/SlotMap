@@ -26,14 +26,3 @@ This repository hosts the policy-driven rewrite of Sergey Makeev's SlotMap conta
 
 5. **Policies & sources**  
    Policy headers live under `include/slotmap/`. When changing or adding policies, keep the accompanying documentation in `docs/Architecture/` and `docs/Policies/` synchronized and update diagrams in `docs/Diagrams/`.
-
-### Remote devcontainer helper
-
-Use `scripts/deploy_remote_devcontainer.sh <ssh-host> [remote-path] [branch]` to push your current branch, sync it onto a remote Linux host, and rebuild/run the devcontainer automatically. Example:
-
-```bash
-scripts/deploy_remote_devcontainer.sh c24s1.ch2 ~/dev/github/SlotMap modernization.20251118
-```
-
-The helper ensures the branch is pushed to `origin`, enables Docker on the remote, clones/updates the repo at the given path, and restarts the `slotmap-dev` container with the correct bind mounts.
-Each run emits a timestamped log under `logs/` so you can review full stdout/stderr later.
