@@ -58,8 +58,8 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 
 # Python tooling for documentation + MRDocs
-RUN python3 -m pip install --upgrade pip && \
-    python3 -m pip install mrdocs~=0.4.0
+RUN python3 -m pip install --upgrade pip --break-system-packages && \
+    python3 -m pip install mrdocs~=0.4.0 --break-system-packages
 
 # Mermaid CLI for architecture diagrams
 RUN npm install -g @mermaid-js/mermaid-cli
