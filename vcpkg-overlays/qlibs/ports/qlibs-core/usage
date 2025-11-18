@@ -1,0 +1,1 @@
+Header-only core helpers for SlotMap policies. Include <qlibs/allocator.hpp>.

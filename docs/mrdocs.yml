@@ -1,0 +1,22 @@
+project:
+  name: SlotMap Modern
+  version: 0.1.0
+
+input:
+  include:
+    - include
+  exclude:
+    - extern
+  file-patterns:
+    - '*.hpp'
+
+output:
+  format: html
+  clean: true
+
+diagrams:
+  enabled: true
+  engine: graphviz
+
+style:
+  theme: plain

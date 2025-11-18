@@ -1,1 +1,24 @@
-{ "name": "slotmap-modern" }
+{
+  "name": "slotmap-modern",
+  "version-string": "0.1.0",
+  "builtin-baseline": "dfb72f61c5a066ab75cd0bdcb2e007228bfc3270",
+  "dependencies": [
+    "fmt",
+    "ms-gsl",
+    "highway",
+    "quill",
+    "gtest",
+    {
+      "name": "boost-ext-outcome"
+    },
+    {
+      "name": "cib"
+    },
+    {
+      "name": "stdx"
+    },
+    {
+      "name": "qlibs-core"
+    }
+  ]
+}
