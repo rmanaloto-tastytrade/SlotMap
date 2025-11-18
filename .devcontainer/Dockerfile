@@ -5,6 +5,7 @@ ARG USERNAME=slotmap
 ARG USER_UID=1000
 ARG USER_GID=1000
 ARG VCPKG_ROOT=/opt/vcpkg
+ARG MRDOCS_VERSION=v0.3.1
 
 ENV TZ=UTC \
     VCPKG_ROOT=${VCPKG_ROOT} \
@@ -33,6 +34,7 @@ RUN set -eux; \
         python3-venv \
         rsync \
         tzdata \
+        xz-utils \
         graphviz \
         doxygen \
         nodejs \
@@ -57,11 +59,11 @@ RUN set -eux; \
         libc++abi-21-dev; \
     rm -rf /var/lib/apt/lists/*
 
-# Python tooling for documentation + MRDocs (isolated venv)
-RUN python3 -m venv /opt/mrdocs-venv && \
-    /opt/mrdocs-venv/bin/pip install --upgrade pip && \
-    /opt/mrdocs-venv/bin/pip install "mrdocs~=0.3" && \
-    ln -s /opt/mrdocs-venv/bin/mrdocs /usr/local/bin/mrdocs
+# MRDocs release binary
+RUN curl -fsSL "https://github.com/cppalliance/mrdox/releases/download/${MRDOCS_VERSION}/mrdox-${MRDOCS_VERSION}-linux-x86_64.tar.xz" \
+    | tar -xJ -C /opt && \
+    mv /opt/mrdox-${MRDOCS_VERSION} /opt/mrdocs && \
+    ln -s /opt/mrdocs/bin/mrdocs /usr/local/bin/mrdocs
 
 # Mermaid CLI for architecture diagrams
 RUN npm install -g @mermaid-js/mermaid-cli
