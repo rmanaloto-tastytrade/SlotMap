@@ -77,8 +77,12 @@ RUN git clone https://github.com/microsoft/vcpkg.git ${VCPKG_ROOT} && \
     ln -s ${VCPKG_ROOT}/vcpkg /usr/local/bin/vcpkg
 
 # Create non-root user for IDE/devcontainer usage
-RUN if ! getent group ${USER_GID} >/dev/null; then \
-        groupadd --gid ${USER_GID} ${USERNAME}; \
+RUN if ! getent group ${USERNAME} >/dev/null; then \
+        if getent group ${USER_GID} >/dev/null; then \
+            groupadd --non-unique --gid ${USER_GID} ${USERNAME}; \
+        else \
+            groupadd --gid ${USER_GID} ${USERNAME}; \
+        fi; \
     fi && \
     if ! id -u ${USERNAME} >/dev/null 2>&1; then \
         useradd --non-unique --uid ${USER_UID} --gid ${USER_GID} --shell /bin/bash --create-home ${USERNAME}; \
