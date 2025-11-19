@@ -10,6 +10,7 @@ ARG MRDOCS_ARCHIVE=MrDocs-0.8.0-Linux.tar.xz
 ARG MRDOCS_DIR=MrDocs-0.8.0-Linux
 ARG NINJA_VERSION=1.13.1
 ARG MOLD_VERSION=2.40.4
+ARG MOLD_ARCHIVE=mold-${MOLD_VERSION}-x86_64-linux.tar.gz
 ARG GH_CLI_VERSION=2.83.1
 
 ENV TZ=UTC \
@@ -78,12 +79,12 @@ RUN set -eux; \
 
 # Mold linker
 RUN set -eux; \
-    curl -fsSL "https://github.com/rui314/mold/releases/download/v${MOLD_VERSION}/mold-${MOLD_VERSION}-x86_64-linux.tar.xz" -o /tmp/mold.tar.xz; \
-    tar -xJf /tmp/mold.tar.xz -C /opt; \
+    curl -fsSL "https://github.com/rui314/mold/releases/download/v${MOLD_VERSION}/${MOLD_ARCHIVE}" -o /tmp/mold.tar.gz; \
+    tar -xzf /tmp/mold.tar.gz -C /opt; \
     MOLD_DIR=/opt/mold-${MOLD_VERSION}-x86_64-linux; \
     install -m 0755 ${MOLD_DIR}/bin/mold /usr/local/bin/mold; \
     install -m 0755 ${MOLD_DIR}/bin/ld.mold /usr/local/bin/ld.mold; \
-    rm -rf /tmp/mold.tar.xz ${MOLD_DIR}
+    rm -rf /tmp/mold.tar.gz ${MOLD_DIR}
 
 # GitHub CLI
 RUN set -eux; \
