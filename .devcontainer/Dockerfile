@@ -117,7 +117,7 @@ RUN if ! getent group ${USERNAME} >/dev/null; then \
         fi; \
     fi && \
     if ! id -u ${USERNAME} >/dev/null 2>&1; then \
-        useradd --non-unique --uid ${USER_UID} --gid ${USER_GID} --shell /bin/bash --create-home ${USERNAME}; \
+        useradd --non-unique --uid ${USER_UID} --gid ${USERNAME} --shell /bin/bash --create-home ${USERNAME}; \
     fi && \
     usermod -aG sudo ${USERNAME} && \
     echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/99-${USERNAME} && \
