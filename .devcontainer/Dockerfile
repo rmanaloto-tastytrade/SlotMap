@@ -103,4 +103,4 @@ ENV CC=clang-21 \
     CMAKE_GENERATOR=Ninja \
     PATH="${VCPKG_ROOT}:${PATH}"
 
-CMD ["/bin/bash"]
+CMD ["sleep", "infinity"]
