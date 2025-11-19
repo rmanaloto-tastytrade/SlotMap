@@ -77,8 +77,12 @@ RUN git clone https://github.com/microsoft/vcpkg.git ${VCPKG_ROOT} && \
     ln -s ${VCPKG_ROOT}/vcpkg /usr/local/bin/vcpkg
 
 # Create non-root user for IDE/devcontainer usage
-RUN groupadd --gid ${USER_GID} ${USERNAME} && \
-    useradd --uid ${USER_UID} --gid ${USER_GID} --shell /bin/bash --create-home ${USERNAME} && \
+RUN if ! getent group ${USER_GID} >/dev/null; then \
+        groupadd --gid ${USER_GID} ${USERNAME}; \
+    fi && \
+    if ! id -u ${USERNAME} >/dev/null 2>&1; then \
+        useradd --uid ${USER_UID} --gid ${USER_GID} --shell /bin/bash --create-home ${USERNAME}; \
+    fi && \
     usermod -aG sudo ${USERNAME} && \
     echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/99-${USERNAME} && \
     chmod 0440 /etc/sudoers.d/99-${USERNAME}
