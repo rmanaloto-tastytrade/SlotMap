@@ -22,6 +22,8 @@
     "ghcr.io/devcontainers/features/sshd:1": {
       "version": "latest",
       "port": "9222",
+      "publishPort": true,
+      "gatewayPorts": "clientspecified",
       "options": "PermitRootLogin no"
     }
   },
