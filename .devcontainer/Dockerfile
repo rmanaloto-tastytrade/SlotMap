@@ -8,6 +8,9 @@ ARG VCPKG_ROOT=/opt/vcpkg
 ARG MRDOCS_VERSION=v0.8.0
 ARG MRDOCS_ARCHIVE=MrDocs-0.8.0-Linux.tar.xz
 ARG MRDOCS_DIR=MrDocs-0.8.0-Linux
+ARG NINJA_VERSION=1.12.1
+ARG MOLD_VERSION=2.40.4
+ARG GH_CLI_VERSION=2.83.1
 
 ENV TZ=UTC \
     VCPKG_ROOT=${VCPKG_ROOT} \
@@ -26,8 +29,6 @@ RUN set -eux; \
         software-properties-common \
         pkg-config \
         build-essential \
-        ninja-build \
-        cmake \
         unzip \
         zip \
         tar \
@@ -41,7 +42,6 @@ RUN set -eux; \
         doxygen \
         nodejs \
         npm \
-        mold \
         openssh-client; \
     rm -rf /var/lib/apt/lists/*
 
@@ -60,6 +60,37 @@ RUN set -eux; \
         libc++-21-dev \
         libc++abi-21-dev; \
     rm -rf /var/lib/apt/lists/*
+
+# Kitware repository for latest CMake
+RUN set -eux; \
+    curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor -o /usr/share/keyrings/kitware-archive.gpg; \
+    echo "deb [signed-by=/usr/share/keyrings/kitware-archive.gpg] https://apt.kitware.com/ubuntu/ noble main" > /etc/apt/sources.list.d/kitware.list; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends cmake; \
+    rm -rf /var/lib/apt/lists/*
+
+# Ninja (latest GitHub release)
+RUN set -eux; \
+    curl -fsSL "https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip" -o /tmp/ninja.zip; \
+    unzip -d /tmp /tmp/ninja.zip; \
+    install -m 0755 /tmp/ninja /usr/local/bin/ninja; \
+    rm -rf /tmp/ninja /tmp/ninja.zip
+
+# Mold linker
+RUN set -eux; \
+    curl -fsSL "https://github.com/rui314/mold/releases/download/v${MOLD_VERSION}/mold-${MOLD_VERSION}-x86_64-linux.tar.xz" -o /tmp/mold.tar.xz; \
+    tar -xJf /tmp/mold.tar.xz -C /opt; \
+    MOLD_DIR=/opt/mold-${MOLD_VERSION}-x86_64-linux; \
+    install -m 0755 ${MOLD_DIR}/bin/mold /usr/local/bin/mold; \
+    install -m 0755 ${MOLD_DIR}/bin/ld.mold /usr/local/bin/ld.mold; \
+    rm -rf /tmp/mold.tar.xz ${MOLD_DIR}
+
+# GitHub CLI
+RUN set -eux; \
+    curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_CLI_VERSION}/gh_${GH_CLI_VERSION}_linux_amd64.tar.gz" -o /tmp/gh.tar.gz; \
+    tar -xzf /tmp/gh.tar.gz -C /tmp; \
+    install -m 0755 /tmp/gh_${GH_CLI_VERSION}_linux_amd64/bin/gh /usr/local/bin/gh; \
+    rm -rf /tmp/gh.tar.gz /tmp/gh_${GH_CLI_VERSION}_linux_amd64
 
 # MRDocs release binary
 RUN curl -fsSL "https://github.com/cppalliance/mrdocs/releases/download/${MRDOCS_VERSION}/${MRDOCS_ARCHIVE}" -o /tmp/mrdocs.tar.xz && \
