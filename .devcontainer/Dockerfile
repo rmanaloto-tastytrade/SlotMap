@@ -121,7 +121,10 @@ RUN if ! getent group ${USERNAME} >/dev/null; then \
     fi && \
     usermod -aG sudo ${USERNAME} && \
     echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/99-${USERNAME} && \
-    chmod 0440 /etc/sudoers.d/99-${USERNAME}
+    chmod 0440 /etc/sudoers.d/99-${USERNAME} && \
+    chown -R ${USERNAME}:${USERNAME} /home/${USERNAME} && \
+    chmod 0750 /home/${USERNAME} && \
+    install -d -m 700 -o ${USERNAME} -g ${USERNAME} /home/${USERNAME}/.ssh
 
 # Prepare shared directories for vcpkg, cmake, and caches
 RUN mkdir -p /workspaces /var/cache/ccache && \
