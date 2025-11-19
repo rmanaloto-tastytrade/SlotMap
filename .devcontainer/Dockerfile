@@ -5,7 +5,9 @@ ARG USERNAME=slotmap
 ARG USER_UID=1000
 ARG USER_GID=1000
 ARG VCPKG_ROOT=/opt/vcpkg
-ARG MRDOCS_VERSION=v0.3.1
+ARG MRDOCS_VERSION=v0.8.0
+ARG MRDOCS_ARCHIVE=MrDocs-0.8.0-Linux.tar.xz
+ARG MRDOCS_DIR=MrDocs-0.8.0-Linux
 
 ENV TZ=UTC \
     VCPKG_ROOT=${VCPKG_ROOT} \
@@ -60,10 +62,11 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 
 # MRDocs release binary
-RUN curl -fsSL "https://github.com/cppalliance/mrdox/releases/download/${MRDOCS_VERSION}/mrdox-${MRDOCS_VERSION}-linux-x86_64.tar.xz" \
-    | tar -xJ -C /opt && \
-    mv /opt/mrdox-${MRDOCS_VERSION} /opt/mrdocs && \
-    ln -s /opt/mrdocs/bin/mrdocs /usr/local/bin/mrdocs
+RUN curl -fsSL "https://github.com/cppalliance/mrdocs/releases/download/${MRDOCS_VERSION}/${MRDOCS_ARCHIVE}" -o /tmp/mrdocs.tar.xz && \
+    tar -xJf /tmp/mrdocs.tar.xz -C /opt && \
+    mv /opt/${MRDOCS_DIR} /opt/mrdocs && \
+    ln -s /opt/mrdocs/bin/mrdocs /usr/local/bin/mrdocs && \
+    rm /tmp/mrdocs.tar.xz
 
 # Mermaid CLI for architecture diagrams
 RUN npm install -g @mermaid-js/mermaid-cli
