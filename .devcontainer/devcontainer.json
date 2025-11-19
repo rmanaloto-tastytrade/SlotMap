@@ -14,7 +14,6 @@
     "VCPKG_OVERLAY_PORTS": "/workspaces/SlotMap/vcpkg-overlays/cib/ports;/workspaces/SlotMap/vcpkg-overlays/stdx/ports;/workspaces/SlotMap/vcpkg-overlays/qlibs/ports;/workspaces/SlotMap/vcpkg-overlays/boost-ext/ports"
   },
   "mounts": [
-    "source=${localWorkspaceFolder},target=/workspaces/SlotMap,type=bind,consistency=cached",
     "source=slotmap-vcpkg,target=/opt/vcpkg/downloads,type=volume"
   ],
   "forwardPorts": [9222],
