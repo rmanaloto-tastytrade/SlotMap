@@ -26,3 +26,13 @@ This repository hosts the policy-driven rewrite of Sergey Makeev's SlotMap conta
 
 5. **Policies & sources**  
    Policy headers live under `include/slotmap/`. When changing or adding policies, keep the accompanying documentation in `docs/Architecture/` and `docs/Policies/` synchronized and update diagrams in `docs/Diagrams/`.
+
+### Direct Devcontainer SSH
+
+The devcontainer now bakes in the official sshd feature and forwards port `9222`. Run the deployment helper with `--setup-ssh` once to copy your public key into the container, then connect directly:
+
+```bash
+ssh -p 9222 slotmap@<remote-host>
+```
+
+Replace `<remote-host>` with hosts such as `c24s1.ch2`. This bypasses the extra hop through the host shell while keeping the container running under the managed devcontainer workflow.

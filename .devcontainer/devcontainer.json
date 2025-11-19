@@ -19,7 +19,13 @@
   ],
   "forwardPorts": [9222],
   "postCreateCommand": "cmake --preset clang-debug",
-  "features": {},
+  "features": {
+    "ghcr.io/devcontainers/features/sshd:1": {
+      "version": "latest",
+      "port": "9222",
+      "options": "PermitRootLogin no"
+    }
+  },
   "customizations": {
     "jetbrains": {
       "clion": {
