@@ -17,7 +17,7 @@
     "source=slotmap-vcpkg,target=/opt/vcpkg/downloads,type=volume"
   ],
   "forwardPorts": [9222],
-  "postCreateCommand": "cmake --preset clang-debug",
+  "postCreateCommand": ".devcontainer/scripts/post_create.sh",
   "features": {
     "ghcr.io/devcontainers/features/sshd:1": {
       "version": "latest",
