@@ -45,7 +45,9 @@ if compgen -G "$KEY_CACHE/*.pub" > /dev/null; then
     cp "$pub" "$SSH_TARGET/$base"
   done
 else
-  echo "[remote] WARNING: No *.pub files found in $KEY_CACHE; SSH access may not work."
+  echo "[remote] ERROR: No *.pub files found in $KEY_CACHE."
+  echo "         Copy your public key to $KEY_CACHE before rerunning."
+  exit 1
 fi
 
 echo "[remote] Running devcontainer up..."
