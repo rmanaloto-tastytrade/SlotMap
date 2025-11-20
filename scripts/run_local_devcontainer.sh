@@ -54,16 +54,16 @@ CONTAINER_USER=${CONTAINER_USER:-$(id -un)}
 CONTAINER_UID=${CONTAINER_UID:-$(id -u)}
 CONTAINER_GID=${CONTAINER_GID:-$(id -g)}
 
+export DEVCONTAINER_USER="${CONTAINER_USER}"
+export DEVCONTAINER_UID="${CONTAINER_UID}"
+export DEVCONTAINER_GID="${CONTAINER_GID}"
+
 echo "[remote] Building container user ${CONTAINER_USER} (uid=${CONTAINER_UID}, gid=${CONTAINER_GID})"
 
 echo "[remote] Running devcontainer up..."
 devcontainer up \
   --workspace-folder "$SANDBOX_PATH" \
   --remove-existing-container \
-  --build-no-cache \
-  --build-arg USERNAME="${CONTAINER_USER}" \
-  --build-arg USER_UID="${CONTAINER_UID}" \
-  --build-arg USER_GID="${CONTAINER_GID}" \
-  --container-env DEVCONTAINER_USER="${CONTAINER_USER}"
+  --build-no-cache
 
 echo "[remote] Devcontainer ready. Workspace: $SANDBOX_PATH"
