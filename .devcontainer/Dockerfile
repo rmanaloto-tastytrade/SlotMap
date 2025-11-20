@@ -13,7 +13,8 @@ ARG NINJA_VERSION=1.13.1
 ARG MOLD_VERSION=2.40.4
 ARG MOLD_ARCHIVE=mold-${MOLD_VERSION}-x86_64-linux.tar.gz
 ARG GH_CLI_VERSION=2.83.1
-ARG IWYU_COMMIT=clang_21
+ARG LLVM_VERSION=21
+ARG IWYU_COMMIT=clang_${LLVM_VERSION}
 ARG GCC_VERSION=14
 ARG CCACHE_VERSION=4.12.1
 ARG CCACHE_ARCHIVE=ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz
@@ -29,7 +30,7 @@ ENV TZ=UTC \
     VCPKG_ROOT=${VCPKG_ROOT} \
     VCPKG_DOWNLOADS=${VCPKG_DOWNLOADS} \
     VCPKG_FORCE_SYSTEM_BINARIES=1 \
-    LLVM_VERSION=21 \
+    LLVM_VERSION=${LLVM_VERSION} \
     CCACHE_DIR=/var/cache/ccache \
     SCCACHE_DIR=/var/cache/sccache \
     PATH="/usr/lib/llvm-${LLVM_VERSION}/bin:${PATH}"
@@ -103,23 +104,45 @@ RUN set -eux; \
     ln -sf /usr/local/nodejs/${NODE_DIST}/bin/npx /usr/local/bin/npx; \
     rm -rf /tmp/node.tar.xz
 
-# LLVM/Clang 21 repository and toolchain
+# LLVM/Clang toolchain
 RUN set -eux; \
     curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /usr/share/keyrings/llvm.gpg; \
-    echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" > /etc/apt/sources.list.d/llvm-toolchain.list; \
+    echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-${LLVM_VERSION} main" > /etc/apt/sources.list.d/llvm-toolchain.list; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-        clang-21 \
-        clang++-21 \
-        clang-tidy-21 \
-        clang-format-21 \
-        lld-21 \
-        lldb-21 \
-        llvm-21 \
-        llvm-21-dev \
-        libclang-21-dev \
-        libc++-21-dev \
-        libc++abi-21-dev; \
+        libllvm-${LLVM_VERSION}-ocaml-dev \
+        libllvm${LLVM_VERSION} \
+        llvm-${LLVM_VERSION} \
+        llvm-${LLVM_VERSION}-dev \
+        llvm-${LLVM_VERSION}-doc \
+        llvm-${LLVM_VERSION}-examples \
+        llvm-${LLVM_VERSION}-runtime \
+        clang-${LLVM_VERSION} \
+        clang-tools-${LLVM_VERSION} \
+        clang-${LLVM_VERSION}-doc \
+        libclang-common-${LLVM_VERSION}-dev \
+        libclang-${LLVM_VERSION}-dev \
+        libclang1-${LLVM_VERSION} \
+        clang-format-${LLVM_VERSION} \
+        python3-clang-${LLVM_VERSION} \
+        clangd-${LLVM_VERSION} \
+        clang-tidy-${LLVM_VERSION} \
+        libclang-rt-${LLVM_VERSION}-dev \
+        libpolly-${LLVM_VERSION}-dev \
+        libfuzzer-${LLVM_VERSION}-dev \
+        lldb-${LLVM_VERSION} \
+        lld-${LLVM_VERSION} \
+        libc++-${LLVM_VERSION}-dev \
+        libc++abi-${LLVM_VERSION}-dev \
+        libomp-${LLVM_VERSION}-dev \
+        libclc-${LLVM_VERSION}-dev \
+        libunwind-${LLVM_VERSION}-dev \
+        libmlir-${LLVM_VERSION}-dev \
+        mlir-${LLVM_VERSION}-tools \
+        libbolt-${LLVM_VERSION}-dev \
+        bolt-${LLVM_VERSION} \
+        flang-${LLVM_VERSION} \
+        libllvmlibc-${LLVM_VERSION}-dev; \
     rm -rf /var/lib/apt/lists/*
 
 # Ubuntu toolchain PPA for latest GCC
