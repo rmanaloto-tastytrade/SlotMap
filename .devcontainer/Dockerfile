@@ -63,7 +63,6 @@ RUN set -eux; \
         zsh \
         cppcheck \
         valgrind \
-        gdb \
         flex \
         bison \
         texinfo \
