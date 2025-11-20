@@ -12,7 +12,7 @@ ARG NINJA_VERSION=1.13.1
 ARG MOLD_VERSION=2.40.4
 ARG MOLD_ARCHIVE=mold-${MOLD_VERSION}-x86_64-linux.tar.gz
 ARG GH_CLI_VERSION=2.83.1
-ARG IWYU_COMMIT=master
+ARG IWYU_COMMIT=clang_21
 ARG GCC_VERSION=14
 
 ENV TZ=UTC \
@@ -60,6 +60,9 @@ RUN set -eux; \
         clang-format-21 \
         lld-21 \
         lldb-21 \
+        llvm-21 \
+        llvm-21-dev \
+        libclang-21-dev \
         libc++-21-dev \
         libc++abi-21-dev; \
     rm -rf /var/lib/apt/lists/*
