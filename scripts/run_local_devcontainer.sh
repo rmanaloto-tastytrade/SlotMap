@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This script is meant to be executed directly on the remote Linux host.
+# It rebuilds the sandbox workspace and launches the Dev Container via the
+# Dev Containers CLI. No git changes occur in the sandbox; it is recreated
+# from the clean repo checkout on every run.
+#
+# Directory layout (defaults can be overridden via environment variables):
+#   REPO_PATH    : $HOME/dev/github/SlotMap            (clean git clone)
+#   SANDBOX_PATH : $HOME/dev/devcontainers/SlotMap     (recreated each run)
+#   KEY_CACHE    : $HOME/macbook_ssh_keys              (rsynced from your Mac)
+#
+# Requirements: devcontainer CLI installed on the remote host, Docker running,
+# and your public key(s) copied into $KEY_CACHE (e.g., ~/.ssh/id_ed25519.pub).
+
+REPO_PATH=${REPO_PATH:-"$HOME/dev/github/SlotMap"}
+SANDBOX_PATH=${SANDBOX_PATH:-"$HOME/dev/devcontainers/SlotMap"}
+KEY_CACHE=${KEY_CACHE:-"$HOME/macbook_ssh_keys"}
+SSH_SUBDIR=".devcontainer/ssh"
+
+echo "[remote] Repo source       : $REPO_PATH"
+echo "[remote] Sandbox workspace : $SANDBOX_PATH"
+echo "[remote] Mac key cache     : $KEY_CACHE"
+echo
+
+[[ -d "$REPO_PATH" ]] || { echo "[remote] ERROR: Repo path not found."; exit 1; }
+[[ -d "$KEY_CACHE" ]] || { echo "[remote] WARNING: Key cache $KEY_CACHE missing; create and rsync your .pub keys there."; mkdir -p "$KEY_CACHE"; }
+
+echo "[remote] Removing previous sandbox..."
+rm -rf "$SANDBOX_PATH"
+mkdir -p "$SANDBOX_PATH"
+
+echo "[remote] Copying repo into sandbox..."
+rsync -a --delete "$REPO_PATH"/ "$SANDBOX_PATH"/
+
+SSH_TARGET="$SANDBOX_PATH/$SSH_SUBDIR"
+mkdir -p "$SSH_TARGET"
+
+if compgen -G "$KEY_CACHE/*.pub" > /dev/null; then
+  echo "[remote] Staging SSH keys:"
+  for pub in "$KEY_CACHE"/*.pub; do
+    base=$(basename "$pub")
+    echo "  -> $pub"
+    cp "$pub" "$SSH_TARGET/$base"
+  done
+else
+  echo "[remote] WARNING: No *.pub files found in $KEY_CACHE; SSH access may not work."
+fi
+
+echo "[remote] Running devcontainer up..."
+devcontainer up \
+  --workspace-folder "$SANDBOX_PATH" \
+  --remove-existing-container \
+  --build-no-cache
+
+echo "[remote] Devcontainer ready. Workspace: $SANDBOX_PATH"
