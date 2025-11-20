@@ -6,7 +6,7 @@ This document captures the contents of `.devcontainer/Dockerfile`, similar in sp
 | Item | Details |
 | --- | --- |
 | Base | `ubuntu:24.04` |
-| Dev user | `slotmap` (UID/GID configurable via build args) with passwordless sudo |
+| Dev user | Matches remote host user (passed via build args; defaults to `vscode`) with passwordless sudo |
 | Shells | bash + zsh (Oh-My-Zsh not installed) |
 | Timezone | `UTC` |
 
@@ -48,8 +48,8 @@ Environment variables:
 | Path | Description |
 | --- | --- |
 | `/workspaces/SlotMap` | Default working directory (mounted from host) |
-| `/var/cache/ccache` | Shared cache owned by `slotmap` |
-| `/var/cache/sccache` | Shared cache owned by `slotmap` |
+| `/var/cache/ccache` | Shared cache owned by the devcontainer user |
+| `/var/cache/sccache` | Shared cache owned by the devcontainer user |
 | `/opt/vcpkg` | vcpkg clone/tools |
 | `/opt/vcpkg-downloads` | vcpkg download cache |
 | `/opt/mrdocs` | MRDocs install |

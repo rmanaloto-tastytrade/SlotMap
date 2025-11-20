@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-sudo chown -R slotmap:slotmap /opt/vcpkg || true
-sudo chown -R slotmap:slotmap /opt/vcpkg/downloads || true
-sudo chown -R slotmap:slotmap /workspaces || true
+CURRENT_USER="${DEVCONTAINER_USER:-$(id -un)}"
+CURRENT_GROUP="$(id -gn "$CURRENT_USER" 2>/dev/null || id -gn)"
+
+sudo chown -R "${CURRENT_USER}:${CURRENT_GROUP}" /opt/vcpkg || true
+sudo chown -R "${CURRENT_USER}:${CURRENT_GROUP}" /opt/vcpkg/downloads || true
+sudo chown -R "${CURRENT_USER}:${CURRENT_GROUP}" /workspaces || true
 
 if ! command -v clang++-21 >/dev/null 2>&1; then
   echo "[post_create] ERROR: clang++-21 not found in PATH" >&2

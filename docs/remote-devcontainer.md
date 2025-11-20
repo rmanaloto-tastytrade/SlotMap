@@ -14,7 +14,7 @@ This document describes how the SlotMap devcontainer is deployed on a shared Lin
 | `~/dev/github/SlotMap` | Clean git clone on the remote host. No untracked files; only `git pull` and script execution happen here. |
 | `~/macbook_ssh_keys` | Remote cache for `.pub` files copied from laptops. Managed per-user; never committed. |
 | `~/dev/devcontainers/SlotMap` | Sandbox used by `run_local_devcontainer.sh`. Recreated from the clean repo and includes `.devcontainer/ssh/*.pub` copied from the cache. |
-| `/workspaces/SlotMap` | Path inside the container where the sandbox is mounted. `post_create.sh` copies staged keys into `/home/slotmap/.ssh/authorized_keys`. |
+| `/workspaces/SlotMap` | Path inside the container where the sandbox is mounted. `post_create.sh` copies staged keys into `/home/<dev-user>/.ssh/authorized_keys`. |
 
 ### Workflow Diagram
 ```mermaid
@@ -23,7 +23,7 @@ flowchart TD
     A -->|scp .pub key| C[/~/macbook_ssh_keys on remote/]
     A -->|ssh remote| D[Remote host shell]
     D -->|run_local_devcontainer.sh| E[/~/dev/devcontainers/SlotMap sandbox/]
-    E -->|devcontainer up| F[(Docker container\nslotmap user + sshd)]
+    E -->|devcontainer up| F[(Docker container\nhost-matching user + sshd)]
     F -->|port 2222 published as 9222| A
 ```
 
@@ -43,26 +43,26 @@ flowchart TD
 3. **Devcontainer lifecycle**  
    - Docker builds `.devcontainer/Dockerfile` (LLVM 21 toolchain, Ninja, mold, MRDocs, IWYU, etc.).  
    - Feature `ghcr.io/devcontainers/features/sshd` starts an SSH server that listens on container port `2222`. `runArgs` map host `9222` to container `2222`.  
-   - `.devcontainer/scripts/post_create.sh` fixes permissions, copies staged `.pub` files to `/home/slotmap/.ssh/authorized_keys`, and runs `cmake --preset clang-debug`.  
+   - `.devcontainer/scripts/post_create.sh` fixes permissions, copies staged `.pub` files to `/home/<dev-user>/.ssh/authorized_keys`, and runs `cmake --preset clang-debug`.  
    - The deploy script logs output under `logs/deploy_remote_devcontainer_<timestamp>.log` for later review.
 
 4. **Connecting from the laptop**  
-   - After the script reports success, connect with `ssh -i ~/.ssh/id_ed25519 -p 9222 slotmap@c24s1.ch2`.  
+   - After the script reports success, connect with `ssh -i ~/.ssh/id_ed25519 -p 9222 <remote-username>@c24s1.ch2`. The username equals the Linux account on the host because build args set the devcontainer user accordingly.  
    - CLion or VS Code can reuse the same host/port if they prefer direct SSH.
 
 ### Troubleshooting & Validation Checklist
 | Check | Command |
 | --- | --- |
 | Confirm container is running and exposing the port | `ssh ${REMOTE_USER}@${REMOTE_HOST} "docker ps --filter label=devcontainer.local_folder=/home/${REMOTE_USER}/dev/devcontainers/SlotMap --format 'table {{.ID}}\t{{.Ports}}\t{{.Names}}'"` |
-| Inspect staged keys inside the container | `docker exec -u slotmap <container> ls -l /home/slotmap/.ssh/authorized_keys` |
+| Inspect staged keys inside the container | `docker exec -u <remote-username> <container> ls -l /home/<remote-username>/.ssh/authorized_keys` |
 | View SSHD logs | `docker exec -u root <container> tail -n 100 /var/log/auth.log` |
 | Clean up stuck containers/images | `docker rm -fv $(docker ps -aq --filter label=devcontainer.local_folder=/home/${REMOTE_USER}/dev/devcontainers/SlotMap)` and `docker system prune -af --volumes` |
-| Validate toolchain bits (cmake/ninja/IWYU/etc.) | `docker exec -u slotmap <container> include-what-you-use --version` |
-| Validate GCC from toolchain PPA | `docker exec -u slotmap <container> gcc-14 --version` |
-| Confirm caching/search helpers | `docker exec -u slotmap <container> ccache --version && sccache --version && rg --version` |
+| Validate toolchain bits (cmake/ninja/IWYU/etc.) | `docker exec -u <remote-username> <container> include-what-you-use --version` |
+| Validate GCC from toolchain PPA | `docker exec -u <remote-username> <container> gcc-14 --version` |
+| Confirm caching/search helpers | `docker exec -u <remote-username> <container> ccache --version && sccache --version && rg --version` |
 | Rebuild sandbox manually on remote | `cd ~/dev/github/SlotMap && ./scripts/run_local_devcontainer.sh` |
 
-If SSH fails with `Connection reset by peer`, verify that `/home/slotmap/.ssh/authorized_keys` exists and the runArgs publish `9222:2222`.
+If SSH fails with `Connection reset by peer`, verify that `/home/<remote-username>/.ssh/authorized_keys` exists and the runArgs publish `9222:2222`.
 
 ### Notes
 - The sandbox copy is refreshed on every deployment, so local edits must be committed/pushed before running the helper.
