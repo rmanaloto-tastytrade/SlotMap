@@ -5,7 +5,7 @@ ARG USERNAME=slotmap
 ARG USER_UID=1000
 ARG USER_GID=1000
 ARG VCPKG_ROOT=/opt/vcpkg
-ARG VCPKG_DOWNLOADS=/opt/vcpkg-downloads
+ARG VCPKG_DOWNLOADS=/opt/vcpkg/downloads
 ARG MRDOCS_VERSION=v0.8.0
 ARG MRDOCS_ARCHIVE=MrDocs-0.8.0-Linux.tar.xz
 ARG MRDOCS_DIR=MrDocs-0.8.0-Linux
@@ -28,7 +28,8 @@ ENV TZ=UTC \
     VCPKG_FORCE_SYSTEM_BINARIES=1 \
     LLVM_VERSION=21 \
     CCACHE_DIR=/var/cache/ccache \
-    SCCACHE_DIR=/var/cache/sccache
+    SCCACHE_DIR=/var/cache/sccache \
+    PATH="/usr/lib/llvm-${LLVM_VERSION}/bin:${PATH}"
 
 # Core OS packages, tooling, and dependencies required for building and docs
 RUN set -eux; \
@@ -66,7 +67,8 @@ RUN set -eux; \
         automake \
         libtool \
         m4 \
-        autoconf-archive; \
+        autoconf-archive \
+        patchelf; \
     rm -rf /var/lib/apt/lists/*
 
 # LLVM/Clang 21 repository and toolchain
