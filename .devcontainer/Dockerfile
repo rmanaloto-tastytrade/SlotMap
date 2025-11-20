@@ -21,6 +21,8 @@ ARG SCCACHE_VERSION=0.12.0
 ARG SCCACHE_ARCHIVE=sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl.tar.gz
 ARG RIPGREP_VERSION=14.1.0
 ARG RIPGREP_ARCHIVE=ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl.tar.gz
+ARG NODE_VERSION=22.11.0
+ARG NODE_DIST=node-v${NODE_VERSION}-linux-x64
 
 ENV TZ=UTC \
     VCPKG_ROOT=${VCPKG_ROOT} \
@@ -83,13 +85,15 @@ RUN set -eux; \
     install -m 0755 /tmp/ninja /usr/local/bin/ninja; \
     rm -rf /tmp/ninja /tmp/ninja.zip
 
-# Node.js (latest LTS from NodeSource)
+# Node.js (official tarball install)
 RUN set -eux; \
-    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /usr/share/keyrings/nodesource.gpg; \
-    echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x noble main" > /etc/apt/sources.list.d/nodesource.list; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends nodejs; \
-    rm -rf /var/lib/apt/lists/*
+    curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/${NODE_DIST}.tar.xz" -o /tmp/node.tar.xz; \
+    mkdir -p /usr/local/nodejs; \
+    tar -xJf /tmp/node.tar.xz -C /usr/local/nodejs; \
+    ln -sf /usr/local/nodejs/${NODE_DIST}/bin/node /usr/local/bin/node; \
+    ln -sf /usr/local/nodejs/${NODE_DIST}/bin/npm /usr/local/bin/npm; \
+    ln -sf /usr/local/nodejs/${NODE_DIST}/bin/npx /usr/local/bin/npx; \
+    rm -rf /tmp/node.tar.xz
 
 # LLVM/Clang 21 repository and toolchain
 RUN set -eux; \
