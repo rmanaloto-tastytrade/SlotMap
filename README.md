@@ -5,7 +5,7 @@ This repository hosts the policy-driven rewrite of Sergey Makeev's SlotMap conta
 ## Developer Workflow
 
 1. **Bootstrap dependencies**  
-   Use the provided devcontainer (`.devcontainer/`) on any Ubuntu 24.04 host or bootstrap the toolchain manually with clang-21, gcc-14 (from the Ubuntu Toolchain PPA), cmake 3.28+, ninja, mold, vcpkg, Graphviz, Doxygen, MRDocs, and IWYU.
+   Use the provided devcontainer (`.devcontainer/`) on any Ubuntu 24.04 host or bootstrap the toolchain manually with clang-21, gcc-14 (from the Ubuntu Toolchain PPA), cmake 3.28+, ninja, mold, vcpkg, Graphviz, Doxygen, MRDocs, IWYU, and the productivity tooling we bundle (ccache, sccache, ripgrep).
 
 2. **Configure & build**  
    ```bash

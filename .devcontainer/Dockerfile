@@ -15,12 +15,20 @@ ARG MOLD_ARCHIVE=mold-${MOLD_VERSION}-x86_64-linux.tar.gz
 ARG GH_CLI_VERSION=2.83.1
 ARG IWYU_COMMIT=clang_21
 ARG GCC_VERSION=14
+ARG CCACHE_VERSION=4.12.1
+ARG CCACHE_ARCHIVE=ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz
+ARG SCCACHE_VERSION=0.12.0
+ARG SCCACHE_ARCHIVE=sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl.tar.gz
+ARG RIPGREP_VERSION=14.1.0
+ARG RIPGREP_ARCHIVE=ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl.tar.gz
 
 ENV TZ=UTC \
     VCPKG_ROOT=${VCPKG_ROOT} \
     VCPKG_DOWNLOADS=${VCPKG_DOWNLOADS} \
     VCPKG_FORCE_SYSTEM_BINARIES=1 \
-    LLVM_VERSION=21
+    LLVM_VERSION=21 \
+    CCACHE_DIR=/var/cache/ccache \
+    SCCACHE_DIR=/var/cache/sccache
 
 # Core OS packages, tooling, and dependencies required for building and docs
 RUN set -eux; \
@@ -122,6 +130,27 @@ RUN set -eux; \
     install -m 0755 /tmp/gh_${GH_CLI_VERSION}_linux_amd64/bin/gh /usr/local/bin/gh; \
     rm -rf /tmp/gh.tar.gz /tmp/gh_${GH_CLI_VERSION}_linux_amd64
 
+# ccache (prebuilt binary)
+RUN set -eux; \
+    curl -fsSL "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/${CCACHE_ARCHIVE}" -o /tmp/ccache.tar.xz; \
+    tar -xJf /tmp/ccache.tar.xz -C /tmp; \
+    install -m 0755 /tmp/ccache-${CCACHE_VERSION}-linux-x86_64/ccache /usr/local/bin/ccache; \
+    rm -rf /tmp/ccache.tar.xz /tmp/ccache-${CCACHE_VERSION}-linux-x86_64
+
+# sccache
+RUN set -eux; \
+    curl -fsSL "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/${SCCACHE_ARCHIVE}" -o /tmp/sccache.tar.gz; \
+    tar -xzf /tmp/sccache.tar.gz -C /tmp; \
+    install -m 0755 /tmp/sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl/sccache /usr/local/bin/sccache; \
+    rm -rf /tmp/sccache.tar.gz /tmp/sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl
+
+# ripgrep
+RUN set -eux; \
+    curl -fsSL "https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_VERSION}/${RIPGREP_ARCHIVE}" -o /tmp/rg.tar.gz; \
+    tar -xzf /tmp/rg.tar.gz -C /tmp; \
+    install -m 0755 /tmp/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl/rg /usr/local/bin/rg; \
+    rm -rf /tmp/rg.tar.gz /tmp/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl
+
 # Include-What-You-Use (built from source to match LLVM ${LLVM_VERSION})
 RUN set -eux; \
     git clone https://github.com/include-what-you-use/include-what-you-use.git /tmp/iwyu; \
@@ -167,8 +196,8 @@ RUN if ! getent group ${USERNAME} >/dev/null; then \
     install -d -m 700 -o ${USERNAME} -g ${USERNAME} /home/${USERNAME}/.ssh
 
 # Prepare shared directories for vcpkg, cmake, and caches
-RUN mkdir -p /workspaces /var/cache/ccache && \
-    chown -R ${USERNAME}:${USERNAME} /workspaces /var/cache/ccache ${VCPKG_ROOT} ${VCPKG_DOWNLOADS}
+RUN mkdir -p /workspaces /var/cache/ccache /var/cache/sccache && \
+    chown -R ${USERNAME}:${USERNAME} /workspaces /var/cache/ccache /var/cache/sccache ${VCPKG_ROOT} ${VCPKG_DOWNLOADS}
 
 # Enable vcpkg shell integration for the dev user (bash/zsh)
 RUN su - ${USERNAME} -c "${VCPKG_ROOT}/vcpkg integrate bash" && \
