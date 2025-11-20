@@ -36,6 +36,10 @@ See `docs/remote-devcontainer.md` for the end-to-end diagram and detailed instru
 
 Troubleshooting tips, cleanup commands, and logging locations are captured in the doc so multiple developers can share the same remote workflow safely.
 
+### Devcontainer Tooling Inventory
+
+For a full list of packages and tools bundled by `.devcontainer/Dockerfile` (clang/LLVM, GCC, mold, MRDocs, vcpkg, ccache/sccache, ripgrep, etc.), see `docs/devcontainer-tools.md`. It mirrors the structure of the official devcontainers C++ image docs so you can quickly audit versions when planning upgrades.
+
 ### Devcontainer Build Automation Inspiration
 
 We are aligning our container build steps with the [Beman Project infra-containers](https://github.com/bemanproject/infra-containers) model. Their `Dockerfile.devcontainer` and GitHub Actions workflow (`.github/workflows/devcontainer_ci.yml`) demonstrate how to matrix-build clang/gcc variants, push them to GHCR, and keep toolchains current via PPAs and Kitware mirrors. Future automation for SlotMap will follow a similar pattern (publish the devcontainer image after every main-branch update) so remote hosts can simply `docker pull` the latest image.
