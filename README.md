@@ -27,12 +27,11 @@ This repository hosts the policy-driven rewrite of Sergey Makeev's SlotMap conta
 5. **Policies & sources**  
    Policy headers live under `include/slotmap/`. When changing or adding policies, keep the accompanying documentation in `docs/Architecture/` and `docs/Policies/` synchronized and update diagrams in `docs/Diagrams/`.
 
-### Direct Devcontainer SSH
+### Remote Devcontainer Workflow
 
-The devcontainer now bakes in the official sshd feature and forwards port `9222`. Run the deployment helper with `--setup-ssh` once to copy your public key into the container, then connect directly:
+See `docs/remote-devcontainer.md` for the end-to-end diagram and detailed instructions. In short:
+- Run `./scripts/deploy_remote_devcontainer.sh` from your laptop. It pushes the current branch, copies your `.pub` key to the remote cache, and triggers `run_local_devcontainer.sh` on the host.
+- The remote script rebuilds the sandbox (`~/dev/devcontainers/SlotMap`), stages your keys under `.devcontainer/ssh/`, and runs `devcontainer up --remove-existing-container`.
+- Container port `2222` is published as host `9222`, so you can connect directly with `ssh -i ~/.ssh/id_ed25519 -p 9222 slotmap@c24s1.ch2` once the deploy finishes.
 
-```bash
-ssh -p 9222 slotmap@<remote-host>
-```
-
-Replace `<remote-host>` with hosts such as `c24s1.ch2`. This bypasses the extra hop through the host shell while keeping the container running under the managed devcontainer workflow.
+Troubleshooting tips, cleanup commands, and logging locations are captured in the doc so multiple developers can share the same remote workflow safely.

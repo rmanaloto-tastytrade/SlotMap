@@ -12,6 +12,7 @@ ARG NINJA_VERSION=1.13.1
 ARG MOLD_VERSION=2.40.4
 ARG MOLD_ARCHIVE=mold-${MOLD_VERSION}-x86_64-linux.tar.gz
 ARG GH_CLI_VERSION=2.83.1
+ARG IWYU_COMMIT=master
 
 ENV TZ=UTC \
     VCPKG_ROOT=${VCPKG_ROOT} \
@@ -92,6 +93,16 @@ RUN set -eux; \
     tar -xzf /tmp/gh.tar.gz -C /tmp; \
     install -m 0755 /tmp/gh_${GH_CLI_VERSION}_linux_amd64/bin/gh /usr/local/bin/gh; \
     rm -rf /tmp/gh.tar.gz /tmp/gh_${GH_CLI_VERSION}_linux_amd64
+
+# Include-What-You-Use (built from source to match LLVM ${LLVM_VERSION})
+RUN set -eux; \
+    git clone https://github.com/include-what-you-use/include-what-you-use.git /tmp/iwyu; \
+    cd /tmp/iwyu; \
+    git checkout ${IWYU_COMMIT}; \
+    cmake -S . -B build -G Ninja -DIWYU_LLVM_ROOT_PATH=/usr/lib/llvm-${LLVM_VERSION}; \
+    cmake --build build; \
+    install -m 0755 build/bin/include-what-you-use /usr/local/bin/include-what-you-use; \
+    rm -rf /tmp/iwyu
 
 # MRDocs release binary
 RUN curl -fsSL "https://github.com/cppalliance/mrdocs/releases/download/${MRDOCS_VERSION}/${MRDOCS_ARCHIVE}" -o /tmp/mrdocs.tar.xz && \
