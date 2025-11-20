@@ -13,6 +13,7 @@ ARG MOLD_VERSION=2.40.4
 ARG MOLD_ARCHIVE=mold-${MOLD_VERSION}-x86_64-linux.tar.gz
 ARG GH_CLI_VERSION=2.83.1
 ARG IWYU_COMMIT=master
+ARG GCC_VERSION=14
 
 ENV TZ=UTC \
     VCPKG_ROOT=${VCPKG_ROOT} \
@@ -61,6 +62,17 @@ RUN set -eux; \
         lldb-21 \
         libc++-21-dev \
         libc++abi-21-dev; \
+    rm -rf /var/lib/apt/lists/*
+
+# Ubuntu toolchain PPA for latest GCC
+RUN set -eux; \
+    add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        gcc-${GCC_VERSION} \
+        g++-${GCC_VERSION}; \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_VERSION} 20; \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${GCC_VERSION} 20; \
     rm -rf /var/lib/apt/lists/*
 
 # Kitware repository for latest CMake

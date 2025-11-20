@@ -58,6 +58,7 @@ flowchart TD
 | View SSHD logs | `docker exec -u root <container> tail -n 100 /var/log/auth.log` |
 | Clean up stuck containers/images | `docker rm -fv $(docker ps -aq --filter label=devcontainer.local_folder=/home/${REMOTE_USER}/dev/devcontainers/SlotMap)` and `docker system prune -af --volumes` |
 | Validate toolchain bits (cmake/ninja/IWYU/etc.) | `docker exec -u slotmap <container> include-what-you-use --version` |
+| Validate GCC from toolchain PPA | `docker exec -u slotmap <container> gcc-14 --version` |
 | Rebuild sandbox manually on remote | `cd ~/dev/github/SlotMap && ./scripts/run_local_devcontainer.sh` |
 
 If SSH fails with `Connection reset by peer`, verify that `/home/slotmap/.ssh/authorized_keys` exists and the runArgs publish `9222:2222`.
