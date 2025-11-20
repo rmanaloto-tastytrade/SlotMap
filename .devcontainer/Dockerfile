@@ -5,6 +5,7 @@ ARG USERNAME=slotmap
 ARG USER_UID=1000
 ARG USER_GID=1000
 ARG VCPKG_ROOT=/opt/vcpkg
+ARG VCPKG_DOWNLOADS=/opt/vcpkg-downloads
 ARG MRDOCS_VERSION=v0.8.0
 ARG MRDOCS_ARCHIVE=MrDocs-0.8.0-Linux.tar.xz
 ARG MRDOCS_DIR=MrDocs-0.8.0-Linux
@@ -17,6 +18,8 @@ ARG GCC_VERSION=14
 
 ENV TZ=UTC \
     VCPKG_ROOT=${VCPKG_ROOT} \
+    VCPKG_DOWNLOADS=${VCPKG_DOWNLOADS} \
+    VCPKG_FORCE_SYSTEM_BINARIES=1 \
     LLVM_VERSION=21
 
 # Core OS packages, tooling, and dependencies required for building and docs
@@ -31,6 +34,7 @@ RUN set -eux; \
         gnupg \
         software-properties-common \
         pkg-config \
+        bash-completion \
         build-essential \
         unzip \
         zip \
@@ -45,7 +49,16 @@ RUN set -eux; \
         doxygen \
         nodejs \
         npm \
-        openssh-client; \
+        openssh-client \
+        zsh \
+        cppcheck \
+        valgrind \
+        gdb \
+        autoconf \
+        automake \
+        libtool \
+        m4 \
+        autoconf-archive; \
     rm -rf /var/lib/apt/lists/*
 
 # LLVM/Clang 21 repository and toolchain
@@ -131,6 +144,7 @@ RUN npm install -g @mermaid-js/mermaid-cli
 
 # Bootstrap vcpkg and keep ownership consistent for dev user
 RUN git clone https://github.com/microsoft/vcpkg.git ${VCPKG_ROOT} && \
+    mkdir -p ${VCPKG_DOWNLOADS} && \
     ${VCPKG_ROOT}/bootstrap-vcpkg.sh -disableMetrics && \
     ln -s ${VCPKG_ROOT}/vcpkg /usr/local/bin/vcpkg
 
@@ -154,7 +168,11 @@ RUN if ! getent group ${USERNAME} >/dev/null; then \
 
 # Prepare shared directories for vcpkg, cmake, and caches
 RUN mkdir -p /workspaces /var/cache/ccache && \
-    chown -R ${USERNAME}:${USERNAME} /workspaces /var/cache/ccache ${VCPKG_ROOT}
+    chown -R ${USERNAME}:${USERNAME} /workspaces /var/cache/ccache ${VCPKG_ROOT} ${VCPKG_DOWNLOADS}
+
+# Enable vcpkg shell integration for the dev user (bash/zsh)
+RUN su - ${USERNAME} -c "${VCPKG_ROOT}/vcpkg integrate bash" && \
+    su - ${USERNAME} -c "${VCPKG_ROOT}/vcpkg integrate zsh" || true
 
 USER ${USERNAME}
 WORKDIR /workspaces/SlotMap
