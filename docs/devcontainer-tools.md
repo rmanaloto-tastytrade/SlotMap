@@ -28,7 +28,7 @@ Installed via `apt-get` in the first layer:
 | IWYU | `clang_21` branch built from source (matches LLVM 21 install) |
 | MRDocs | v0.8.0 binary release |
 | Mermaid CLI | installed globally via npm |
-| Node.js / npm | NodeSource 22.x repo |
+| Node.js / npm | Official Node.js tarball v22.11.0 |
 | Linux perf | `linux-tools-common` + `linux-tools-generic` (+ best-effort `linux-tools-$(uname -r)`) |
 | uv / ruff / ty | Astral install scripts (`/usr/local/bin`) |
 | pixi | Official installer, binary moved to `/usr/local/bin` |
