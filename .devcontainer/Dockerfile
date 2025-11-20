@@ -9,7 +9,6 @@ ARG VCPKG_DOWNLOADS=/opt/vcpkg/downloads
 ARG MRDOCS_VERSION=v0.8.0
 ARG MRDOCS_ARCHIVE=MrDocs-0.8.0-Linux.tar.xz
 ARG MRDOCS_DIR=MrDocs-0.8.0-Linux
-ARG NINJA_VERSION=1.13.1
 ARG MOLD_VERSION=2.40.4
 ARG MOLD_ARCHIVE=mold-${MOLD_VERSION}-x86_64-linux.tar.gz
 ARG GH_CLI_VERSION=2.83.1
@@ -63,6 +62,7 @@ RUN set -eux; \
         cppcheck \
         valgrind \
         gdb \
+        ninja-build \
         autoconf \
         automake \
         libtool \
@@ -108,13 +108,6 @@ RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends cmake; \
     rm -rf /var/lib/apt/lists/*
-
-# Ninja (latest GitHub release)
-RUN set -eux; \
-    curl -fsSL "https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip" -o /tmp/ninja.zip; \
-    unzip -d /tmp /tmp/ninja.zip; \
-    install -m 0755 /tmp/ninja /usr/local/bin/ninja; \
-    rm -rf /tmp/ninja /tmp/ninja.zip
 
 # Mold linker
 RUN set -eux; \
