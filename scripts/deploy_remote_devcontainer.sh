@@ -21,14 +21,11 @@ Options:
 USAGE
 }
 
-LOCAL_USER="$(id -un)"
-SANITIZED_USER="${LOCAL_USER%%@*}"
-if [[ -z "$SANITIZED_USER" ]]; then
-  SANITIZED_USER="$LOCAL_USER"
-fi
+die(){ echo "Error: $*" >&2; exit 1; }
 
-REMOTE_HOST="${REMOTE_HOST:-c24s1.ch2}"
-REMOTE_USER="${REMOTE_USER:-$SANITIZED_USER}"
+LOCAL_USER="$(id -un)"
+REMOTE_HOST="c24s1.ch2"
+REMOTE_USER="rmanaloto"
 SSH_KEY_PATH="$HOME/.ssh/id_ed25519.pub"
 REMOTE_KEY_CACHE="~/macbook_ssh_keys"
 REMOTE_REPO_PATH="~/dev/github/SlotMap"
@@ -61,12 +58,22 @@ done
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 cd "$REPO_ROOT"
+
+CONFIG_REMOTE_USER="$(git config --get slotmap.remoteUser || true)"
+if [[ -z "$REMOTE_USER" ]]; then
+  if [[ -n "$CONFIG_REMOTE_USER" ]]; then
+    REMOTE_USER="$CONFIG_REMOTE_USER"
+  elif [[ "$LOCAL_USER" == *"@"* ]]; then
+    die "Remote user is required (pass --remote-user or run 'git config slotmap.remoteUser <username>')"
+  else
+    REMOTE_USER="$LOCAL_USER"
+  fi
+fi
+
 LOG_DIR="$REPO_ROOT/logs"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/deploy_remote_devcontainer_$(date +%Y%m%d-%H%M%S).log"
 exec > >(tee -a "$LOG_FILE") 2>&1
-
-die(){ echo "Error: $*" >&2; exit 1; }
 
 [[ -n "$(git status --porcelain)" ]] && die "working tree is dirty"
 
