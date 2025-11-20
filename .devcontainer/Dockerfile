@@ -38,12 +38,12 @@ RUN set -eux; \
         ca-certificates \
         curl \
         wget \
-        git \
         sudo \
         gnupg \
         software-properties-common \
         pkg-config \
         bash-completion \
+        binutils \
         build-essential \
         unzip \
         zip \
@@ -56,8 +56,6 @@ RUN set -eux; \
         xz-utils \
         graphviz \
         doxygen \
-        nodejs \
-        npm \
         openssh-client \
         zsh \
         cppcheck \
@@ -71,12 +69,27 @@ RUN set -eux; \
         patchelf; \
     rm -rf /var/lib/apt/lists/*
 
+# Latest Git via official PPA
+RUN set -eux; \
+    add-apt-repository -y ppa:git-core/ppa; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends git; \
+    rm -rf /var/lib/apt/lists/*
+
 # Ninja (latest GitHub release with retries)
 RUN set -eux; \
     curl -fSL --retry 5 --retry-delay 5 "https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip" -o /tmp/ninja.zip; \
     unzip -d /tmp /tmp/ninja.zip; \
     install -m 0755 /tmp/ninja /usr/local/bin/ninja; \
     rm -rf /tmp/ninja /tmp/ninja.zip
+
+# Node.js (latest LTS from NodeSource)
+RUN set -eux; \
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /usr/share/keyrings/nodesource.gpg; \
+    echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x noble main" > /etc/apt/sources.list.d/nodesource.list; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends nodejs; \
+    rm -rf /var/lib/apt/lists/*
 
 # LLVM/Clang 21 repository and toolchain
 RUN set -eux; \
@@ -132,6 +145,14 @@ RUN set -eux; \
     install -m 0755 /tmp/gh_${GH_CLI_VERSION}_linux_amd64/bin/gh /usr/local/bin/gh; \
     rm -rf /tmp/gh.tar.gz /tmp/gh_${GH_CLI_VERSION}_linux_amd64
 
+# Linux perf tooling
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends linux-tools-common linux-tools-generic; \
+    KERNEL="$(uname -r)"; \
+    apt-get install -y --no-install-recommends "linux-tools-${KERNEL}" || true; \
+    rm -rf /var/lib/apt/lists/*
+
 # ccache (prebuilt binary)
 RUN set -eux; \
     curl -fsSL "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/${CCACHE_ARCHIVE}" -o /tmp/ccache.tar.xz; \
@@ -152,6 +173,18 @@ RUN set -eux; \
     tar -xzf /tmp/rg.tar.gz -C /tmp; \
     install -m 0755 /tmp/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl/rg /usr/local/bin/rg; \
     rm -rf /tmp/rg.tar.gz /tmp/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl
+
+# Python developer utilities (uv, ruff, ty)
+RUN set -eux; \
+    curl -LsSf https://astral.sh/uv/install.sh | sh -s -- --install-dir /usr/local/bin --force; \
+    curl -LsSf https://astral.sh/ruff/install.sh | sh -s -- --install-dir /usr/local/bin --force; \
+    curl -LsSf https://astral.sh/ty/install.sh | sh -s -- --install-dir /usr/local/bin --force
+
+# Pixi package manager
+RUN set -eux; \
+    curl -fsSL https://pixi.sh/install.sh | bash -s -- -y; \
+    mv /root/.pixi/bin/pixi /usr/local/bin/pixi; \
+    rm -rf /root/.pixi
 
 # Include-What-You-Use (built from source to match LLVM ${LLVM_VERSION})
 RUN set -eux; \
