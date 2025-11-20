@@ -21,8 +21,9 @@ ARG SCCACHE_VERSION=0.12.0
 ARG SCCACHE_ARCHIVE=sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl.tar.gz
 ARG RIPGREP_VERSION=14.1.0
 ARG RIPGREP_ARCHIVE=ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl.tar.gz
-ARG NODE_VERSION=22.11.0
+ARG NODE_VERSION=25.2.1
 ARG NODE_DIST=node-v${NODE_VERSION}-linux-x64
+ARG BINUTILS_GDB_TAG=binutils-2_45_1
 
 ENV TZ=UTC \
     VCPKG_ROOT=${VCPKG_ROOT} \
@@ -63,6 +64,14 @@ RUN set -eux; \
         cppcheck \
         valgrind \
         gdb \
+        flex \
+        bison \
+        texinfo \
+        libgmp-dev \
+        libmpfr-dev \
+        libmpc-dev \
+        libexpat1-dev \
+        zlib1g-dev \
         autoconf \
         automake \
         libtool \
@@ -177,6 +186,18 @@ RUN set -eux; \
     tar -xzf /tmp/rg.tar.gz -C /tmp; \
     install -m 0755 /tmp/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl/rg /usr/local/bin/rg; \
     rm -rf /tmp/rg.tar.gz /tmp/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl
+
+# binutils + gdb (latest release)
+RUN set -eux; \
+    curl -fsSL "https://github.com/bminor/binutils-gdb/archive/refs/tags/${BINUTILS_GDB_TAG}.tar.gz" -o /tmp/binutils-gdb.tar.gz; \
+    mkdir -p /tmp/binutils-gdb; \
+    tar -xzf /tmp/binutils-gdb.tar.gz -C /tmp/binutils-gdb --strip-components=1; \
+    mkdir -p /tmp/binutils-gdb/build; \
+    cd /tmp/binutils-gdb/build; \
+    ../configure --disable-multilib --enable-gold --enable-plugins --with-system-zlib; \
+    make -j"$(nproc)"; \
+    make install; \
+    rm -rf /tmp/binutils-gdb.tar.gz /tmp/binutils-gdb
 
 # Python developer utilities (uv, ruff, ty)
 RUN set -eux; \

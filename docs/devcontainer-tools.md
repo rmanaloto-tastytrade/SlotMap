@@ -28,8 +28,9 @@ Installed via `apt-get` in the first layer:
 | IWYU | `clang_21` branch built from source (matches LLVM 21 install) |
 | MRDocs | v0.8.0 binary release |
 | Mermaid CLI | installed globally via npm |
-| Node.js / npm | Official Node.js tarball v22.11.0 |
+| Node.js / npm | Official Node.js tarball v25.2.1 |
 | Linux perf | `linux-tools-common` + `linux-tools-generic` (+ best-effort `linux-tools-$(uname -r)`) |
+| binutils + gdb | Built from source (`bminor/binutils-gdb` tag `binutils-2_45_1`) |
 | uv / ruff / ty | Astral install scripts (`/usr/local/bin`) |
 | pixi | Official installer, binary moved to `/usr/local/bin` |
 
@@ -71,6 +72,8 @@ node --version
 npm --version
 mold --version
 include-what-you-use --version
+gdb --version
+objdump --version
 perf --version || perf --help
 ccache --version
 sccache --version
