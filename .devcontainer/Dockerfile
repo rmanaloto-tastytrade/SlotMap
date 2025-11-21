@@ -98,6 +98,13 @@ RUN set -eux; \
     apt-get install -y --no-install-recommends cmake; \
     rm -rf /var/lib/apt/lists/*
 
+# Ninja (latest GitHub release with retries)
+RUN set -eux; \
+    curl -fSL --retry 5 --retry-delay 5 "https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip" -o /tmp/ninja.zip; \
+    unzip -d /tmp /tmp/ninja.zip; \
+    install -m 0755 /tmp/ninja /usr/local/bin/ninja; \
+    rm -rf /tmp/ninja /tmp/ninja.zip
+
 # GNU Make (latest release)
 RUN set -eux; \
     curl -fsSL "https://ftp.gnu.org/gnu/make/make-${MAKE_VERSION}.tar.gz" -o /tmp/make.tar.gz; \
@@ -139,13 +146,6 @@ RUN set -eux; \
     ln -sf ${CLANG_P2996_PREFIX}/bin/clang ${CLANG_P2996_PREFIX}/bin/clang-p2996; \
     ln -sf ${CLANG_P2996_PREFIX}/bin/clang++ ${CLANG_P2996_PREFIX}/bin/clang++-p2996; \
     rm -rf /tmp/clang-p2996
-
-# Ninja (latest GitHub release with retries)
-RUN set -eux; \
-    curl -fSL --retry 5 --retry-delay 5 "https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip" -o /tmp/ninja.zip; \
-    unzip -d /tmp /tmp/ninja.zip; \
-    install -m 0755 /tmp/ninja /usr/local/bin/ninja; \
-    rm -rf /tmp/ninja /tmp/ninja.zip
 
 # Node.js (official tarball install)
 RUN set -eux; \
