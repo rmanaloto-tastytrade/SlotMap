@@ -26,6 +26,9 @@ ARG NODE_VERSION=25.2.1
 ARG NODE_DIST=node-v${NODE_VERSION}-linux-x64
 ARG BINUTILS_GDB_TAG=binutils-2_45_1
 ARG MAKE_VERSION=4.4.1
+ARG CLANG_P2996_BRANCH=p2996
+ARG CLANG_P2996_REPO=https://github.com/bloomberg/clang-p2996.git
+ARG CLANG_P2996_PREFIX=/opt/clang-p2996
 
 ENV TZ=UTC \
     VCPKG_ROOT=${VCPKG_ROOT} \
@@ -34,7 +37,7 @@ ENV TZ=UTC \
     LLVM_VERSION=${LLVM_VERSION} \
     CCACHE_DIR=/var/cache/ccache \
     SCCACHE_DIR=/var/cache/sccache \
-    PATH="/usr/lib/llvm-${LLVM_VERSION}/bin:${PATH}"
+    PATH="${CLANG_P2996_PREFIX}/bin:/usr/lib/llvm-${LLVM_VERSION}/bin:${PATH}"
 
 # Core OS packages, tooling, and dependencies required for building and docs
 RUN set -eux; \
@@ -108,6 +111,26 @@ RUN set -eux; \
     make -j"$(nproc)"; \
     make install; \
     rm -rf /tmp/binutils-gdb.tar.gz /tmp/binutils-gdb
+
+# Bloomberg Clang P2996 compiler
+RUN set -eux; \
+    git clone --depth=1 -b ${CLANG_P2996_BRANCH} ${CLANG_P2996_REPO} /tmp/clang-p2996; \
+    cmake -S /tmp/clang-p2996/llvm -B /tmp/clang-p2996/build -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DLLVM_ENABLE_PROJECTS="clang" \
+        -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
+        -DLLVM_TARGETS_TO_BUILD="X86" \
+        -DCMAKE_INSTALL_PREFIX="${CLANG_P2996_PREFIX}" \
+        -DLLVM_INCLUDE_TESTS=OFF \
+        -DLLVM_BUILD_TESTS=OFF \
+        -DLLVM_ENABLE_ASSERTIONS=OFF \
+        -DLLVM_OPTIMIZED_TABLEGEN=ON \
+        -DLIBCXX_ENABLE_EXPERIMENTAL_LIBRARY=ON; \
+    cmake --build /tmp/clang-p2996/build -j"$(nproc)"; \
+    cmake --install /tmp/clang-p2996/build; \
+    ln -sf ${CLANG_P2996_PREFIX}/bin/clang ${CLANG_P2996_PREFIX}/bin/clang-p2996; \
+    ln -sf ${CLANG_P2996_PREFIX}/bin/clang++ ${CLANG_P2996_PREFIX}/bin/clang++-p2996; \
+    rm -rf /tmp/clang-p2996
 
 # Ninja (latest GitHub release with retries)
 RUN set -eux; \
