@@ -198,6 +198,7 @@ ARG CLANG_P2996_PREFIX
 RUN --mount=type=cache,target=/tmp/clang-p2996/build \
     set -eux; \
     STAGE_PREFIX="/opt/stage${CLANG_P2996_PREFIX}"; \
+    rm -rf /tmp/clang-p2996; \
     git clone --depth=1 -b ${CLANG_P2996_BRANCH} ${CLANG_P2996_REPO} /tmp/clang-p2996; \
     cmake -S /tmp/clang-p2996/llvm -B /tmp/clang-p2996/build -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
