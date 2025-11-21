@@ -59,7 +59,21 @@ pushd "$SANDBOX_PATH" >/dev/null
 "$SCRIPT_DIR/check_docker_bake.sh" "$SANDBOX_PATH"
 # Validate devcontainer configuration syntax
 "$SCRIPT_DIR/check_devcontainer_config.sh" "$SANDBOX_PATH"
+# Build base if missing
+if ! docker image inspect "$BASE_IMAGE" >/dev/null 2>&1; then
+  echo "[remote] Base image $BASE_IMAGE missing; baking base..."
+  docker buildx bake \
+    -f "$SANDBOX_PATH/.devcontainer/docker-bake.hcl" \
+    base \
+    --set base.tags="$BASE_IMAGE" \
+    --set '*.args.BASE_IMAGE'="$BASE_IMAGE"
+else
+  echo "[remote] Found base image $BASE_IMAGE."
+fi
+
+# Build devcontainer if missing
 if ! docker image inspect "$DEV_IMAGE" >/dev/null 2>&1; then
+  echo "[remote] Dev image $DEV_IMAGE missing; baking devcontainer..."
   docker buildx bake \
     -f "$SANDBOX_PATH/.devcontainer/docker-bake.hcl" \
     devcontainer \
