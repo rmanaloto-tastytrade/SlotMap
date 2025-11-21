@@ -80,3 +80,15 @@ flowchart TB
 - Always run `scripts/pre_commit.sh` (bake/devcontainer validation + lint) before committing/pushing; only trigger remote rebuild scripts after these checks pass.
 - Prefer Dev Container features for common tooling (SSH, shells, helpers) before adding Dockerfile steps; use bake args/targets for env-specific tweaks to keep the Dockerfile lean.
 - Validation order: 1) run `scripts/pre_commit.sh` locally and fix issues; 2) commit/push; 3) trigger and wait for the Devcontainer Lint workflow to succeed; 4) only then run remote deploy/rebuild scripts.
+
+### Validation / linting flow (local)
+- Run `scripts/pre_commit.sh` before committing:
+  - `scripts/check_docker_bake.sh` → `buildx bake --print` (+ `--dry-run` when supported) and HCL formatting check (`hclfmt` or `terraform fmt` if installed)
+  - `scripts/check_devcontainer_config.sh` (skips if Docker unavailable)
+  - `hadolint` on `.devcontainer/Dockerfile` (warnings allowed)
+  - `shellcheck` on scripts (errors only)
+
+### Developer tooling
+- Docker or at least `docker buildx`
+- `hadolint`, `shellcheck`, `hclfmt` (or `terraform` for fmt)
+- Dev Containers CLI (`npm install -g @devcontainers/cli`)
