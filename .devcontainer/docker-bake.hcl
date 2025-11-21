@@ -53,22 +53,86 @@ target "_base" {
 target "base" {
   inherits = ["_base"]
   target   = "base"
-  tags     = [variable.BASE_TAG]
+  tags     = ["${BASE_TAG}"]
 }
 
-target "clang_p2996" { inherits = ["_base"]; target = "clang_p2996"; dependsOn = ["base"] }
-target "node_mermaid" { inherits = ["_base"]; target = "node_mermaid"; dependsOn = ["base"] }
-target "mold" { inherits = ["_base"]; target = "mold"; dependsOn = ["base"] }
-target "gh_cli" { inherits = ["_base"]; target = "gh_cli"; dependsOn = ["base"] }
-target "ccache" { inherits = ["_base"]; target = "ccache"; dependsOn = ["base"] }
-target "sccache" { inherits = ["_base"]; target = "sccache"; dependsOn = ["base"] }
-target "ripgrep" { inherits = ["_base"]; target = "ripgrep"; dependsOn = ["base"] }
-target "cppcheck" { inherits = ["_base"]; target = "cppcheck"; dependsOn = ["base"] }
-target "valgrind" { inherits = ["_base"]; target = "valgrind"; dependsOn = ["base"] }
-target "python_tools" { inherits = ["_base"]; target = "python_tools"; dependsOn = ["base"] }
-target "pixi" { inherits = ["_base"]; target = "pixi"; dependsOn = ["base"] }
-target "iwyu" { inherits = ["_base"]; target = "iwyu"; dependsOn = ["base"] }
-target "mrdocs" { inherits = ["_base"]; target = "mrdocs"; dependsOn = ["base"] }
+target "clang_p2996" {
+  inherits  = ["_base"]
+  target    = "clang_p2996"
+  dependsOn = ["base"]
+}
+
+target "node_mermaid" {
+  inherits  = ["_base"]
+  target    = "node_mermaid"
+  dependsOn = ["base"]
+}
+
+target "mold" {
+  inherits  = ["_base"]
+  target    = "mold"
+  dependsOn = ["base"]
+}
+
+target "gh_cli" {
+  inherits  = ["_base"]
+  target    = "gh_cli"
+  dependsOn = ["base"]
+}
+
+target "ccache" {
+  inherits  = ["_base"]
+  target    = "ccache"
+  dependsOn = ["base"]
+}
+
+target "sccache" {
+  inherits  = ["_base"]
+  target    = "sccache"
+  dependsOn = ["base"]
+}
+
+target "ripgrep" {
+  inherits  = ["_base"]
+  target    = "ripgrep"
+  dependsOn = ["base"]
+}
+
+target "cppcheck" {
+  inherits  = ["_base"]
+  target    = "cppcheck"
+  dependsOn = ["base"]
+}
+
+target "valgrind" {
+  inherits  = ["_base"]
+  target    = "valgrind"
+  dependsOn = ["base"]
+}
+
+target "python_tools" {
+  inherits  = ["_base"]
+  target    = "python_tools"
+  dependsOn = ["base"]
+}
+
+target "pixi" {
+  inherits  = ["_base"]
+  target    = "pixi"
+  dependsOn = ["base"]
+}
+
+target "iwyu" {
+  inherits  = ["_base"]
+  target    = "iwyu"
+  dependsOn = ["base"]
+}
+
+target "mrdocs" {
+  inherits  = ["_base"]
+  target    = "mrdocs"
+  dependsOn = ["base"]
+}
 
 group "tools" {
   targets = [
@@ -98,7 +162,7 @@ target "devcontainer" {
   inherits  = ["_base"]
   target    = "devcontainer"
   dependsOn = ["tools_merge"]
-  tags      = [variable.TAG]
+  tags      = ["${TAG}"]
   labels = {
     "org.opencontainers.image.title"       = "Devcontainer"
     "org.opencontainers.image.description" = "Generic C++ tooling devcontainer image"
