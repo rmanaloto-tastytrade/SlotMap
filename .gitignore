@@ -6,3 +6,5 @@ CoverageReport*
 LastCoverageResults.log
 xcode
 logs/
+
+.idea/
