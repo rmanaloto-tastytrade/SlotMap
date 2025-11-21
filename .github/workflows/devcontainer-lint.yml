@@ -27,6 +27,7 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: .devcontainer/Dockerfile
+          args: --failure-threshold error
 
       - name: Shellcheck scripts
         run: sudo apt-get update && sudo apt-get install -y shellcheck && shellcheck scripts/*.sh
