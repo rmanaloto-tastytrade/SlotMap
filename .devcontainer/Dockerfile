@@ -87,6 +87,28 @@ RUN set -eux; \
     apt-get install -y --no-install-recommends git; \
     rm -rf /var/lib/apt/lists/*
 
+# GNU Make (latest release)
+RUN set -eux; \
+    curl -fsSL "https://ftp.gnu.org/gnu/make/make-${MAKE_VERSION}.tar.gz" -o /tmp/make.tar.gz; \
+    tar -xzf /tmp/make.tar.gz -C /tmp; \
+    cd /tmp/make-${MAKE_VERSION}; \
+    ./configure --prefix=/usr/local; \
+    make -j"$(nproc)"; \
+    make install; \
+    rm -rf /tmp/make.tar.gz /tmp/make-${MAKE_VERSION}
+
+# binutils + gdb (latest release)
+RUN set -eux; \
+    curl -fsSL "https://github.com/bminor/binutils-gdb/archive/refs/tags/${BINUTILS_GDB_TAG}.tar.gz" -o /tmp/binutils-gdb.tar.gz; \
+    mkdir -p /tmp/binutils-gdb; \
+    tar -xzf /tmp/binutils-gdb.tar.gz -C /tmp/binutils-gdb --strip-components=1; \
+    mkdir -p /tmp/binutils-gdb/build; \
+    cd /tmp/binutils-gdb/build; \
+    ../configure --disable-multilib --enable-gold --enable-plugins --with-system-zlib; \
+    make -j"$(nproc)"; \
+    make install; \
+    rm -rf /tmp/binutils-gdb.tar.gz /tmp/binutils-gdb
+
 # Ninja (latest GitHub release with retries)
 RUN set -eux; \
     curl -fSL --retry 5 --retry-delay 5 "https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip" -o /tmp/ninja.zip; \
@@ -157,16 +179,6 @@ RUN set -eux; \
     tar -xzf /tmp/gh.tar.gz -C /tmp; \
     install -m 0755 /tmp/gh_${GH_CLI_VERSION}_linux_amd64/bin/gh /usr/local/bin/gh; \
     rm -rf /tmp/gh.tar.gz /tmp/gh_${GH_CLI_VERSION}_linux_amd64
-
-# GNU Make (latest release)
-RUN set -eux; \
-    curl -fsSL "https://ftp.gnu.org/gnu/make/make-${MAKE_VERSION}.tar.gz" -o /tmp/make.tar.gz; \
-    tar -xzf /tmp/make.tar.gz -C /tmp; \
-    cd /tmp/make-${MAKE_VERSION}; \
-    ./configure --prefix=/usr/local; \
-    make -j"$(nproc)"; \
-    make install; \
-    rm -rf /tmp/make.tar.gz /tmp/make-${MAKE_VERSION}
 
 # Linux perf tooling
 RUN set -eux; \
