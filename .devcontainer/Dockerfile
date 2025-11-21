@@ -144,10 +144,15 @@ RUN set -eux; \
 
 # GNU Make (latest release)
 RUN set -eux; \
-    MAKE_URL_PRIMARY="https://ftp.gnu.org/gnu/make/make-${MAKE_VERSION}.tar.gz"; \
-    MAKE_URL_MIRROR="https://ftpmirror.gnu.org/gnu/make/make-${MAKE_VERSION}.tar.gz"; \
-    curl -fsSL --retry 5 --retry-delay 5 "${MAKE_URL_PRIMARY}" -o /tmp/make.tar.gz \
-    || curl -fsSL --retry 5 --retry-delay 5 "${MAKE_URL_MIRROR}" -o /tmp/make.tar.gz; \
+    MAKE_URLS="https://ftpmirror.gnu.org/gnu/make/make-${MAKE_VERSION}.tar.gz \
+               https://mirrors.kernel.org/gnu/make/make-${MAKE_VERSION}.tar.gz \
+               https://ftp.gnu.org/gnu/make/make-${MAKE_VERSION}.tar.gz"; \
+    for url in ${MAKE_URLS}; do \
+        if curl -fsSL --retry 3 --retry-delay 5 --connect-timeout 10 --max-time 60 "${url}" -o /tmp/make.tar.gz; then \
+            break; \
+        fi; \
+    done; \
+    [ -s /tmp/make.tar.gz ] || { echo "Make source download failed" >&2; exit 1; }; \
     tar -xzf /tmp/make.tar.gz -C /tmp; \
     cd /tmp/make-${MAKE_VERSION}; \
     ./configure --prefix=/usr/local; \
