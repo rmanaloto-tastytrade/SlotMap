@@ -14,8 +14,6 @@ target "_base" {
   context    = "."
   dockerfile = ".devcontainer/Dockerfile"
   platform   = [variable.PLATFORM]
-  cache-from = ["type=local,src=.docker/cache"]
-  cache-to   = ["type=local,dest=.docker/cache,mode=max"]
   args = {
     UBUNTU_VERSION  = "24.04"
     USERNAME        = "slotmap"
