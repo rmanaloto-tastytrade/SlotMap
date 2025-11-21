@@ -48,7 +48,6 @@ RUN set -eux; \
         software-properties-common \
         pkg-config \
         bash-completion \
-        binutils \
         build-essential \
         unzip \
         zip \
@@ -283,3 +282,25 @@ ENV CC=clang-21 \
     PATH="${VCPKG_ROOT}:${PATH}"
 
 CMD ["sleep", "infinity"]
+# cppcheck (latest)
+ARG CPPCHECK_VERSION=2.13.0
+RUN set -eux; \
+    curl -fsSL "https://github.com/danmar/cppcheck/archive/refs/tags/${CPPCHECK_VERSION}.tar.gz" -o /tmp/cppcheck.tar.gz; \
+    tar -xzf /tmp/cppcheck.tar.gz -C /tmp; \
+    cd /tmp/cppcheck-${CPPCHECK_VERSION}; \
+    mkdir build && cd build; \
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local; \
+    cmake --build . -j"$(nproc)"; \
+    cmake --install .; \
+    rm -rf /tmp/cppcheck.tar.gz /tmp/cppcheck-${CPPCHECK_VERSION}
+
+# Valgrind (latest)
+ARG VALGRIND_VERSION=3.23.0
+RUN set -eux; \
+    curl -fsSL "https://sourceware.org/pub/valgrind/valgrind-${VALGRIND_VERSION}.tar.bz2" -o /tmp/valgrind.tar.bz2; \
+    tar -xjf /tmp/valgrind.tar.bz2 -C /tmp; \
+    cd /tmp/valgrind-${VALGRIND_VERSION}; \
+    ./configure --prefix=/usr/local; \
+    make -j"$(nproc)"; \
+    make install; \
+    rm -rf /tmp/valgrind.tar.bz2 /tmp/valgrind-${VALGRIND_VERSION}
