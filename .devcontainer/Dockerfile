@@ -324,7 +324,7 @@ RUN set -eux; \
     tar -xzf /tmp/cppcheck.tar.gz -C /tmp; \
     cd /tmp/cppcheck-${CPPCHECK_VERSION}; \
     mkdir build && cd build; \
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local; \
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_POLICY_VERSION=3.29 -DCMAKE_POLICY_VERSION_MINIMUM=3.5; \
     cmake --build . -j"$(nproc)"; \
     cmake --install .; \
     rm -rf /tmp/cppcheck.tar.gz /tmp/cppcheck-${CPPCHECK_VERSION}
