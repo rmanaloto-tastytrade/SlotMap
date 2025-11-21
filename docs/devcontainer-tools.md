@@ -32,6 +32,8 @@ Installed via `apt-get` in the first layer:
 | MRDocs | v0.8.0 binary release |
 | Mermaid CLI | installed globally via npm |
 | Node.js / npm | Official Node.js tarball v25.2.1 |
+| jq | v1.8.1 GitHub release (`jq-linux-amd64`) |
+| AWS CLI v2 | Latest Linux x86_64 zip installer |
 | Linux perf | `linux-tools-common` + `linux-tools-generic` (+ best-effort `linux-tools-$(uname -r)`) |
 | binutils + gdb | Built from source (`bminor/binutils-gdb` tag `binutils-2_45_1`) |
 | LLVM extras | Installed via `llvm.sh ${LLVM_VERSION} all` plus additional packages (MLIR, BOLT, flang, libclc, libllvmlibc); package list logged to `/opt/llvm-packages-21.txt` |

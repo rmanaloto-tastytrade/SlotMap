@@ -45,6 +45,8 @@ target "_base" {
     CLANG_P2996_BRANCH = "p2996"
     CLANG_P2996_REPO   = "https://github.com/bloomberg/clang-p2996.git"
     CLANG_P2996_PREFIX = "/opt/clang-p2996"
+    JQ_VERSION         = "1.8.1"
+    AWSCLI_VERSION     = "latest"
   }
 }
 
@@ -132,6 +134,18 @@ target "mrdocs" {
   dependsOn = ["base"]
 }
 
+target "jq" {
+  inherits  = ["_base"]
+  target    = "jq"
+  dependsOn = ["base"]
+}
+
+target "awscli" {
+  inherits  = ["_base"]
+  target    = "awscli"
+  dependsOn = ["base"]
+}
+
 group "tools" {
   targets = [
     "clang_p2996",
@@ -147,6 +161,8 @@ group "tools" {
     "pixi",
     "iwyu",
     "mrdocs",
+    "jq",
+    "awscli",
   ]
 }
 
