@@ -16,7 +16,8 @@
     "DEVCONTAINER_USER": "${localEnv:DEVCONTAINER_USER:-slotmap}"
   },
   "mounts": [
-    "source=slotmap-vcpkg,target=/opt/vcpkg/downloads,type=volume"
+    "source=slotmap-vcpkg,target=/opt/vcpkg/downloads,type=volume",
+    "source=${env:HOME}/.ssh,target=/home/${env:USER}/.ssh,type=bind,consistency=cached"
   ],
   "forwardPorts": [9222],
   "postCreateCommand": ".devcontainer/scripts/post_create.sh",

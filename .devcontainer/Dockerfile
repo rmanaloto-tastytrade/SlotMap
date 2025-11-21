@@ -31,6 +31,8 @@ ARG MAKE_SHA256=dd16fb1d67bfab79a72f5e8390735c49e3e8e70b4945a15ab1f81ddb78658fb3
 ARG CLANG_P2996_BRANCH=p2996
 ARG CLANG_P2996_REPO=https://github.com/bloomberg/clang-p2996.git
 ARG CLANG_P2996_PREFIX=/opt/clang-p2996
+ARG JQ_VERSION=1.8.1
+ARG AWSCLI_VERSION=latest
 ARG BASE_IMAGE=dev-base:local
 
 FROM ubuntu:${UBUNTU_VERSION} AS base
@@ -361,6 +363,27 @@ RUN set -eux; \
     ln -s ../../opt/mrdocs/bin/mrdocs /opt/stage/usr/local/bin/mrdocs; \
     rm /tmp/mrdocs.tar.xz
 
+FROM prebuilt_base AS jq
+ARG JQ_VERSION
+RUN set -eux; \
+    mkdir -p /opt/stage/usr/local/bin; \
+    curl -fsSL --retry 5 --retry-delay 3 "https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}/jq-linux-amd64" -o /opt/stage/usr/local/bin/jq; \
+    chmod 0755 /opt/stage/usr/local/bin/jq
+
+FROM prebuilt_base AS awscli
+ARG AWSCLI_VERSION
+RUN set -eux; \
+    mkdir -p /opt/stage/usr/local/bin; \
+    if [ "${AWSCLI_VERSION}" = "latest" ]; then \
+        AWS_URL="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"; \
+    else \
+        AWS_URL="https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWSCLI_VERSION}.zip"; \
+    fi; \
+    curl -fsSL --retry 5 --retry-delay 3 "${AWS_URL}" -o /tmp/awscliv2.zip; \
+    unzip -q /tmp/awscliv2.zip -d /tmp/awscliv2; \
+    /tmp/awscliv2/aws/install --update --bin-dir /opt/stage/usr/local/bin --install-dir /opt/stage/aws-cli; \
+    rm -rf /tmp/awscliv2.zip /tmp/awscliv2
+
 # ---------- Merge tools ----------
 
 FROM prebuilt_base AS tools_merge
@@ -379,6 +402,8 @@ COPY --from=python_tools /opt/stage/ /
 COPY --from=pixi /opt/stage/ /
 COPY --from=iwyu /opt/stage/ /
 COPY --from=mrdocs /opt/stage/ /
+COPY --from=jq /opt/stage/ /
+COPY --from=awscli /opt/stage/ /
 RUN git clone https://github.com/microsoft/vcpkg.git ${VCPKG_ROOT} && \
     mkdir -p ${VCPKG_DOWNLOADS} && \
     ${VCPKG_ROOT}/bootstrap-vcpkg.sh -disableMetrics && \
