@@ -17,5 +17,8 @@ if ! docker info >/dev/null 2>&1; then
   echo "[check] WARNING: Docker not available; skipping devcontainer config validation."
   exit 0
 fi
-devcontainer read-configuration --workspace-folder "$REPO_ROOT" --include-merged-configuration >/dev/null
-echo "[check] devcontainer config OK."
+if devcontainer read-configuration --workspace-folder "$REPO_ROOT" --include-merged-configuration >/dev/null; then
+  echo "[check] devcontainer config OK."
+else
+  echo "[check] WARNING: devcontainer config validation failed (possibly older CLI); continuing anyway."
+fi

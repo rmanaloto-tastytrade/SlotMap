@@ -4,6 +4,7 @@
    - Harden devcontainer (clang-21, mold, cmake/ninja, MRDocs, Graphviz, Doxygen, Mermaid, vcpkg overlays).  
    - Define build presets, documentation scripts, and vcpkg manifests. ✅  
    - Add renderable workflow diagrams (Mermaid/PlantUML + export script to SVG/PNG) for devcontainer/bake flows.
+   - Once the bake/devcontainer pipeline is stable, pin package/tool versions in the Dockerfile/bake (apt/npm) and satisfy Dockerfile lint rules.
 
 2. **Policy & Concept Scaffolding**  
    - Formalize concepts in `include/slotmap/Concepts.hpp` for handles, slots, storage, and lookup.  
