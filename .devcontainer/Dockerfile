@@ -81,6 +81,17 @@ RUN set -eux; \
         patchelf; \
     rm -rf /var/lib/apt/lists/*
 
+# Ubuntu toolchain PPA for latest GCC
+RUN set -eux; \
+    add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        gcc-${GCC_VERSION} \
+        g++-${GCC_VERSION}; \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_VERSION} 20; \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${GCC_VERSION} 20; \
+    rm -rf /var/lib/apt/lists/*
+
 # Latest Git via official PPA
 RUN set -eux; \
     add-apt-repository -y ppa:git-core/ppa; \
@@ -175,36 +186,6 @@ RUN set -eux; \
     ln -sf /usr/local/nodejs/${NODE_DIST}/bin/npm /usr/local/bin/npm; \
     ln -sf /usr/local/nodejs/${NODE_DIST}/bin/npx /usr/local/bin/npx; \
     rm -rf /tmp/node.tar.xz
-
-# LLVM/Clang toolchain (via official installer)
-RUN set -eux; \
-    curl -fsSL https://apt.llvm.org/llvm.sh -o /tmp/llvm.sh; \
-    chmod +x /tmp/llvm.sh; \
-    /tmp/llvm.sh ${LLVM_VERSION} all; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends \
-        libmlir-${LLVM_VERSION}-dev \
-        mlir-${LLVM_VERSION}-tools \
-        libbolt-${LLVM_VERSION}-dev \
-        bolt-${LLVM_VERSION} \
-        flang-${LLVM_VERSION} \
-        libclc-${LLVM_VERSION}-dev \
-        libunwind-${LLVM_VERSION}-dev \
-        libllvmlibc-${LLVM_VERSION}-dev; \
-    LC_ALL=C apt-cache search ${LLVM_VERSION} | sort > /opt/llvm-packages-${LLVM_VERSION}.txt; \
-    rm /tmp/llvm.sh; \
-    rm -rf /var/lib/apt/lists/*
-
-# Ubuntu toolchain PPA for latest GCC
-RUN set -eux; \
-    add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends \
-        gcc-${GCC_VERSION} \
-        g++-${GCC_VERSION}; \
-    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_VERSION} 20; \
-    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${GCC_VERSION} 20; \
-    rm -rf /var/lib/apt/lists/*
 
 # Mold linker
 RUN set -eux; \
