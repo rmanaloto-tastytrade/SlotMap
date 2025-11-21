@@ -195,12 +195,14 @@ FROM prebuilt_base AS clang_p2996
 ARG CLANG_P2996_BRANCH
 ARG CLANG_P2996_REPO
 ARG CLANG_P2996_PREFIX
-RUN --mount=type=cache,target=/tmp/clang-p2996/build \
+RUN --mount=type=cache,target=/tmp/clang-p2996-build \
     set -eux; \
+    CLONE_DIR="/tmp/clang-p2996-src"; \
+    BUILD_DIR="/tmp/clang-p2996-build"; \
     STAGE_PREFIX="/opt/stage${CLANG_P2996_PREFIX}"; \
-    rm -rf /tmp/clang-p2996; \
-    git clone --depth=1 -b ${CLANG_P2996_BRANCH} ${CLANG_P2996_REPO} /tmp/clang-p2996; \
-    cmake -S /tmp/clang-p2996/llvm -B /tmp/clang-p2996/build -G Ninja \
+    rm -rf "${CLONE_DIR}"; \
+    git clone --depth=1 -b ${CLANG_P2996_BRANCH} ${CLANG_P2996_REPO} "${CLONE_DIR}"; \
+    cmake -S "${CLONE_DIR}/llvm" -B "${BUILD_DIR}" -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
         -DLLVM_ENABLE_PROJECTS="clang" \
         -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
@@ -211,11 +213,11 @@ RUN --mount=type=cache,target=/tmp/clang-p2996/build \
         -DLLVM_ENABLE_ASSERTIONS=OFF \
         -DLLVM_OPTIMIZED_TABLEGEN=ON \
         -DLIBCXX_ENABLE_EXPERIMENTAL_LIBRARY=ON; \
-    cmake --build /tmp/clang-p2996/build -j"$(nproc)"; \
-    cmake --install /tmp/clang-p2996/build; \
+    cmake --build "${BUILD_DIR}" -j"$(nproc)"; \
+    cmake --install "${BUILD_DIR}"; \
     ln -sf clang "${STAGE_PREFIX}/bin/clang-p2996"; \
     ln -sf clang++ "${STAGE_PREFIX}/bin/clang++-p2996"; \
-    rm -rf /tmp/clang-p2996
+    rm -rf "${CLONE_DIR}"
 
 FROM prebuilt_base AS node_mermaid
 ARG NODE_VERSION
