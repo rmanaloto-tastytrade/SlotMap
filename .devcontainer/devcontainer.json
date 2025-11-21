@@ -17,7 +17,7 @@
   },
   "mounts": [
     "source=slotmap-vcpkg,target=/opt/vcpkg/downloads,type=volume",
-    "source=${env:HOME}/.ssh,target=/home/${env:USER}/.ssh,type=bind,consistency=cached"
+    "source=${env:HOME}/devcontainers/ssh_keys,target=/home/${env:USER}/.ssh,type=bind,consistency=cached"
   ],
   "forwardPorts": [9222],
   "postCreateCommand": ".devcontainer/scripts/post_create.sh",
