@@ -20,6 +20,7 @@ KEY_CACHE=${KEY_CACHE:-"$HOME/macbook_ssh_keys"}
 SSH_SUBDIR=".devcontainer/ssh"
 DEV_IMAGE=${DEVCONTAINER_IMAGE:-"devcontainer:local"}
 BASE_IMAGE=${DEVCONTAINER_BASE_IMAGE:-"dev-base:local"}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "[remote] Repo source       : $REPO_PATH"
 echo "[remote] Sandbox workspace : $SANDBOX_PATH"
@@ -54,6 +55,8 @@ fi
 
 echo "[remote] Ensuring baked images (base: $BASE_IMAGE, dev: $DEV_IMAGE)..."
 pushd "$SANDBOX_PATH" >/dev/null
+# Validate bake file before building
+"$SCRIPT_DIR/check_docker_bake.sh" "$SANDBOX_PATH"
 if ! docker image inspect "$DEV_IMAGE" >/dev/null 2>&1; then
   docker buildx bake -f "$SANDBOX_PATH/.devcontainer/docker-bake.hcl" devcontainer --set TAG="$DEV_IMAGE" --set BASE_TAG="$BASE_IMAGE"
 else
