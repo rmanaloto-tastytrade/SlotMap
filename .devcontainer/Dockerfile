@@ -223,9 +223,9 @@ RUN set -eux; \
 
 # Python developer utilities (uv, ruff, ty)
 RUN set -eux; \
-    curl -LsSf https://astral.sh/uv/install.sh | sh -s -- --install-dir /usr/local/bin --force; \
-    curl -LsSf https://astral.sh/ruff/install.sh | sh -s -- --install-dir /usr/local/bin --force; \
-    curl -LsSf https://astral.sh/ty/install.sh | sh -s -- --install-dir /usr/local/bin --force
+    curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR=/usr/local/bin sh; \
+    curl -LsSf https://astral.sh/ruff/install.sh | RUFF_INSTALL_DIR=/usr/local/bin sh; \
+    curl -LsSf https://astral.sh/ty/install.sh | TY_INSTALL_DIR=/usr/local/bin sh
 
 # Pixi package manager
 RUN set -eux; \
