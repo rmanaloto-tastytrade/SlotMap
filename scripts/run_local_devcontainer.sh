@@ -21,6 +21,9 @@ SSH_SUBDIR=".devcontainer/ssh"
 DEV_IMAGE=${DEVCONTAINER_IMAGE:-"devcontainer:local"}
 BASE_IMAGE=${DEVCONTAINER_BASE_IMAGE:-"dev-base:local"}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONTAINER_USER=${CONTAINER_USER:-$(id -un)}
+CONTAINER_UID=${CONTAINER_UID:-$(id -u)}
+CONTAINER_GID=${CONTAINER_GID:-$(id -g)}
 
 echo "[remote] Repo source       : $REPO_PATH"
 echo "[remote] Sandbox workspace : $SANDBOX_PATH"
@@ -90,10 +93,6 @@ else
   echo "[remote] Found $DEV_IMAGE locally; skipping bake."
 fi
 popd >/dev/null
-
-CONTAINER_USER=${CONTAINER_USER:-$(id -un)}
-CONTAINER_UID=${CONTAINER_UID:-$(id -u)}
-CONTAINER_GID=${CONTAINER_GID:-$(id -g)}
 
 export DEVCONTAINER_USER="${CONTAINER_USER}"
 export DEVCONTAINER_UID="${CONTAINER_UID}"
