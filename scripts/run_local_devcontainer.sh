@@ -58,7 +58,12 @@ pushd "$SANDBOX_PATH" >/dev/null
 # Validate bake file before building
 "$SCRIPT_DIR/check_docker_bake.sh" "$SANDBOX_PATH"
 if ! docker image inspect "$DEV_IMAGE" >/dev/null 2>&1; then
-  docker buildx bake -f "$SANDBOX_PATH/.devcontainer/docker-bake.hcl" devcontainer --set TAG="$DEV_IMAGE" --set BASE_TAG="$BASE_IMAGE"
+  docker buildx bake \
+    -f "$SANDBOX_PATH/.devcontainer/docker-bake.hcl" \
+    devcontainer \
+    --set base.tags="$BASE_IMAGE" \
+    --set devcontainer.tags="$DEV_IMAGE" \
+    --set '*.args.BASE_IMAGE'="$BASE_IMAGE"
 else
   echo "[remote] Found $DEV_IMAGE locally; skipping bake."
 fi
