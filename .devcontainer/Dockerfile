@@ -65,8 +65,6 @@ RUN set -eux; \
         doxygen \
         openssh-client \
         zsh \
-        cppcheck \
-        valgrind \
         flex \
         bison \
         texinfo \
@@ -114,6 +112,27 @@ RUN set -eux; \
     make -j"$(nproc)"; \
     make install; \
     rm -rf /tmp/make.tar.gz /tmp/make-${MAKE_VERSION}
+
+# LLVM/Clang toolchain (via official installer)
+RUN set -eux; \
+    curl -fsSL https://apt.llvm.org/llvm.sh -o /tmp/llvm.sh; \
+    chmod +x /tmp/llvm.sh; \
+    /tmp/llvm.sh ${LLVM_VERSION} all; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        libmlir-${LLVM_VERSION}-dev \
+        mlir-${LLVM_VERSION}-tools \
+        libbolt-${LLVM_VERSION}-dev \
+        bolt-${LLVM_VERSION} \
+        flang-${LLVM_VERSION} \
+        libclc-${LLVM_VERSION}-dev \
+        libunwind-${LLVM_VERSION}-dev \
+        libllvmlibc-${LLVM_VERSION}-dev; \
+    LC_ALL=C apt-cache search ${LLVM_VERSION} | sort > /opt/llvm-packages-${LLVM_VERSION}.txt; \
+    rm /tmp/llvm.sh; \
+    rm -rf /var/lib/apt/lists/*
+
+ENV CC=clang-21 CXX=clang++-21
 
 # binutils + gdb (latest release)
 RUN set -eux; \
