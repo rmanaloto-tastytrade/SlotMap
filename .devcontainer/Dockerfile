@@ -90,6 +90,14 @@ RUN set -eux; \
     apt-get install -y --no-install-recommends git; \
     rm -rf /var/lib/apt/lists/*
 
+# Kitware repository for latest CMake (needed for custom Clang builds)
+RUN set -eux; \
+    curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor -o /usr/share/keyrings/kitware-archive.gpg; \
+    echo "deb [signed-by=/usr/share/keyrings/kitware-archive.gpg] https://apt.kitware.com/ubuntu/ noble main" > /etc/apt/sources.list.d/kitware.list; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends cmake; \
+    rm -rf /var/lib/apt/lists/*
+
 # GNU Make (latest release)
 RUN set -eux; \
     curl -fsSL "https://ftp.gnu.org/gnu/make/make-${MAKE_VERSION}.tar.gz" -o /tmp/make.tar.gz; \
@@ -177,14 +185,6 @@ RUN set -eux; \
         g++-${GCC_VERSION}; \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_VERSION} 20; \
     update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${GCC_VERSION} 20; \
-    rm -rf /var/lib/apt/lists/*
-
-# Kitware repository for latest CMake
-RUN set -eux; \
-    curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor -o /usr/share/keyrings/kitware-archive.gpg; \
-    echo "deb [signed-by=/usr/share/keyrings/kitware-archive.gpg] https://apt.kitware.com/ubuntu/ noble main" > /etc/apt/sources.list.d/kitware.list; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends cmake; \
     rm -rf /var/lib/apt/lists/*
 
 # Mold linker
