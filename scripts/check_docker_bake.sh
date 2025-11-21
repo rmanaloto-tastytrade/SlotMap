@@ -14,6 +14,20 @@ fi
 
 echo "[check] Validating bake file (print): $BAKE_FILE"
 docker buildx bake -f "$BAKE_FILE" --print devcontainer > /dev/null
+
+if command -v hclfmt >/dev/null 2>&1; then
+  echo "[check] Checking HCL formatting with hclfmt..."
+  hclfmt -check "$BAKE_FILE"
+elif command -v terraform >/dev/null 2>&1; then
+  echo "[check] Checking HCL formatting with terraform fmt..."
+  TMP_FMT="$(mktemp /tmp/docker-bake-XXXXXX.tf)"
+  trap 'rm -f "$TMP_FMT"' EXIT
+  cp "$BAKE_FILE" "$TMP_FMT"
+  terraform fmt -check "$TMP_FMT"
+else
+  echo "[check] WARNING: hclfmt/terraform not installed; skipping HCL format check." >&2
+fi
+
 if docker buildx bake --help 2>/dev/null | grep -q -- '--dry-run'; then
   echo "[check] Dry-run bake (no build)..."
   docker buildx bake -f "$BAKE_FILE" --dry-run devcontainer > /dev/null

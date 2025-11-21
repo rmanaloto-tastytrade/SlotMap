@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "hadolint.hadolint",
+    "timonwong.shellcheck",
+    "ms-azuretools.vscode-docker",
+    "ms-vscode-remote.remote-containers",
+    "hashicorp.terraform",
+    "editorconfig.editorconfig",
+    "davidanson.vscode-markdownlint"
+  ]
+}
