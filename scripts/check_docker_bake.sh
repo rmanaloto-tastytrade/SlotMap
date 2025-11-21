@@ -12,6 +12,12 @@ if [[ ! -f "$BAKE_FILE" ]]; then
   exit 1
 fi
 
-echo "[check] Validating bake file: $BAKE_FILE"
+echo "[check] Validating bake file (print): $BAKE_FILE"
 docker buildx bake -f "$BAKE_FILE" --print devcontainer > /dev/null
-echo "[check] Bake file OK."
+if docker buildx bake --help 2>/dev/null | grep -q -- '--dry-run'; then
+  echo "[check] Dry-run bake (no build)..."
+  docker buildx bake -f "$BAKE_FILE" --dry-run devcontainer > /dev/null
+  echo "[check] Bake file OK and dry-run passed."
+else
+  echo "[check] Dry-run flag not supported by this buildx; print validation passed."
+fi
