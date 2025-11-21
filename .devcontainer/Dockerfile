@@ -27,7 +27,7 @@ ARG NODE_VERSION=25.2.1
 ARG NODE_DIST=node-v${NODE_VERSION}-linux-x64
 ARG BINUTILS_GDB_TAG=binutils-2_45_1
 ARG MAKE_VERSION=4.4.1
-ARG MAKE_SHA256=55d7d9bb89a3c776ddcdb4d4482cc280140e94d55bdac7dad4df23d8d09225af
+ARG MAKE_SHA256=dd16fb1d67bfab79a72f5e8390735c49e3e8e70b4945a15ab1f81ddb78658fb3
 ARG CLANG_P2996_BRANCH=p2996
 ARG CLANG_P2996_REPO=https://github.com/bloomberg/clang-p2996.git
 ARG CLANG_P2996_PREFIX=/opt/clang-p2996
@@ -146,10 +146,11 @@ RUN set -eux; \
 
 # GNU Make (latest release)
 RUN set -eux; \
-    MAKE_URLS="https://github.com/mirror/make/releases/download/${MAKE_VERSION}/make-${MAKE_VERSION}.tar.gz \
+    rm -f /tmp/make.tar.gz; \
+    MAKE_URLS="https://mirrors.kernel.org/gnu/make/make-${MAKE_VERSION}.tar.gz \
+               http://ftp.gnu.org/gnu/make/make-${MAKE_VERSION}.tar.gz \
                https://ftpmirror.gnu.org/gnu/make/make-${MAKE_VERSION}.tar.gz \
-               https://mirrors.kernel.org/gnu/make/make-${MAKE_VERSION}.tar.gz \
-               http://ftp.gnu.org/gnu/make/make-${MAKE_VERSION}.tar.gz"; \
+               https://github.com/mirror/make/releases/download/${MAKE_VERSION}/make-${MAKE_VERSION}.tar.gz"; \
     for url in ${MAKE_URLS}; do \
         if curl -fsSL --retry 3 --retry-delay 5 --connect-timeout 10 --max-time 90 "${url}" -o /tmp/make.tar.gz; then \
             break; \
