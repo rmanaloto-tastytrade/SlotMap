@@ -232,6 +232,29 @@ RUN set -eux; \
     install -m 0755 /tmp/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl/rg /usr/local/bin/rg; \
     rm -rf /tmp/rg.tar.gz /tmp/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl
 
+# cppcheck (latest)
+ARG CPPCHECK_VERSION=2.13.0
+RUN set -eux; \
+    curl -fsSL "https://github.com/danmar/cppcheck/archive/refs/tags/${CPPCHECK_VERSION}.tar.gz" -o /tmp/cppcheck.tar.gz; \
+    tar -xzf /tmp/cppcheck.tar.gz -C /tmp; \
+    cd /tmp/cppcheck-${CPPCHECK_VERSION}; \
+    mkdir build && cd build; \
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_POLICY_VERSION=3.29 -DCMAKE_POLICY_VERSION_MINIMUM=3.5; \
+    cmake --build . -j"$(nproc)"; \
+    cmake --install .; \
+    rm -rf /tmp/cppcheck.tar.gz /tmp/cppcheck-${CPPCHECK_VERSION}
+
+# Valgrind (latest)
+ARG VALGRIND_VERSION=3.23.0
+RUN set -eux; \
+    curl -fsSL "https://sourceware.org/pub/valgrind/valgrind-${VALGRIND_VERSION}.tar.bz2" -o /tmp/valgrind.tar.bz2; \
+    tar -xjf /tmp/valgrind.tar.bz2 -C /tmp; \
+    cd /tmp/valgrind-${VALGRIND_VERSION}; \
+    ./configure --prefix=/usr/local; \
+    make -j"$(nproc)"; \
+    make install; \
+    rm -rf /tmp/valgrind.tar.bz2 /tmp/valgrind-${VALGRIND_VERSION}
+
 # binutils + gdb (latest release)
 RUN set -eux; \
     curl -fsSL "https://github.com/bminor/binutils-gdb/archive/refs/tags/${BINUTILS_GDB_TAG}.tar.gz" -o /tmp/binutils-gdb.tar.gz; \
@@ -317,25 +340,3 @@ ENV CC=clang-21 \
     PATH="${VCPKG_ROOT}:${PATH}"
 
 CMD ["sleep", "infinity"]
-# cppcheck (latest)
-ARG CPPCHECK_VERSION=2.13.0
-RUN set -eux; \
-    curl -fsSL "https://github.com/danmar/cppcheck/archive/refs/tags/${CPPCHECK_VERSION}.tar.gz" -o /tmp/cppcheck.tar.gz; \
-    tar -xzf /tmp/cppcheck.tar.gz -C /tmp; \
-    cd /tmp/cppcheck-${CPPCHECK_VERSION}; \
-    mkdir build && cd build; \
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_POLICY_VERSION=3.29 -DCMAKE_POLICY_VERSION_MINIMUM=3.5; \
-    cmake --build . -j"$(nproc)"; \
-    cmake --install .; \
-    rm -rf /tmp/cppcheck.tar.gz /tmp/cppcheck-${CPPCHECK_VERSION}
-
-# Valgrind (latest)
-ARG VALGRIND_VERSION=3.23.0
-RUN set -eux; \
-    curl -fsSL "https://sourceware.org/pub/valgrind/valgrind-${VALGRIND_VERSION}.tar.bz2" -o /tmp/valgrind.tar.bz2; \
-    tar -xjf /tmp/valgrind.tar.bz2 -C /tmp; \
-    cd /tmp/valgrind-${VALGRIND_VERSION}; \
-    ./configure --prefix=/usr/local; \
-    make -j"$(nproc)"; \
-    make install; \
-    rm -rf /tmp/valgrind.tar.bz2 /tmp/valgrind-${VALGRIND_VERSION}
