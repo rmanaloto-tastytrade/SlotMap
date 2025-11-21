@@ -25,6 +25,7 @@ ARG RIPGREP_ARCHIVE=ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl.tar.gz
 ARG NODE_VERSION=25.2.1
 ARG NODE_DIST=node-v${NODE_VERSION}-linux-x64
 ARG BINUTILS_GDB_TAG=binutils-2_45_1
+ARG MAKE_VERSION=4.4.1
 
 ENV TZ=UTC \
     VCPKG_ROOT=${VCPKG_ROOT} \
@@ -104,45 +105,23 @@ RUN set -eux; \
     ln -sf /usr/local/nodejs/${NODE_DIST}/bin/npx /usr/local/bin/npx; \
     rm -rf /tmp/node.tar.xz
 
-# LLVM/Clang toolchain
+# LLVM/Clang toolchain (via official installer)
 RUN set -eux; \
-    curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /usr/share/keyrings/llvm.gpg; \
-    echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-${LLVM_VERSION} main" > /etc/apt/sources.list.d/llvm-toolchain.list; \
+    curl -fsSL https://apt.llvm.org/llvm.sh -o /tmp/llvm.sh; \
+    chmod +x /tmp/llvm.sh; \
+    /tmp/llvm.sh ${LLVM_VERSION} all; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-        libllvm-${LLVM_VERSION}-ocaml-dev \
-        libllvm${LLVM_VERSION} \
-        llvm-${LLVM_VERSION} \
-        llvm-${LLVM_VERSION}-dev \
-        llvm-${LLVM_VERSION}-doc \
-        llvm-${LLVM_VERSION}-examples \
-        llvm-${LLVM_VERSION}-runtime \
-        clang-${LLVM_VERSION} \
-        clang-tools-${LLVM_VERSION} \
-        clang-${LLVM_VERSION}-doc \
-        libclang-common-${LLVM_VERSION}-dev \
-        libclang-${LLVM_VERSION}-dev \
-        libclang1-${LLVM_VERSION} \
-        clang-format-${LLVM_VERSION} \
-        python3-clang-${LLVM_VERSION} \
-        clangd-${LLVM_VERSION} \
-        clang-tidy-${LLVM_VERSION} \
-        libclang-rt-${LLVM_VERSION}-dev \
-        libpolly-${LLVM_VERSION}-dev \
-        libfuzzer-${LLVM_VERSION}-dev \
-        lldb-${LLVM_VERSION} \
-        lld-${LLVM_VERSION} \
-        libc++-${LLVM_VERSION}-dev \
-        libc++abi-${LLVM_VERSION}-dev \
-        libomp-${LLVM_VERSION}-dev \
-        libclc-${LLVM_VERSION}-dev \
-        libunwind-${LLVM_VERSION}-dev \
         libmlir-${LLVM_VERSION}-dev \
         mlir-${LLVM_VERSION}-tools \
         libbolt-${LLVM_VERSION}-dev \
         bolt-${LLVM_VERSION} \
         flang-${LLVM_VERSION} \
+        libclc-${LLVM_VERSION}-dev \
+        libunwind-${LLVM_VERSION}-dev \
         libllvmlibc-${LLVM_VERSION}-dev; \
+    LC_ALL=C apt-cache search ${LLVM_VERSION} | sort > /opt/llvm-packages-${LLVM_VERSION}.txt; \
+    rm /tmp/llvm.sh; \
     rm -rf /var/lib/apt/lists/*
 
 # Ubuntu toolchain PPA for latest GCC
@@ -179,6 +158,16 @@ RUN set -eux; \
     tar -xzf /tmp/gh.tar.gz -C /tmp; \
     install -m 0755 /tmp/gh_${GH_CLI_VERSION}_linux_amd64/bin/gh /usr/local/bin/gh; \
     rm -rf /tmp/gh.tar.gz /tmp/gh_${GH_CLI_VERSION}_linux_amd64
+
+# GNU Make (latest release)
+RUN set -eux; \
+    curl -fsSL "https://ftp.gnu.org/gnu/make/make-${MAKE_VERSION}.tar.gz" -o /tmp/make.tar.gz; \
+    tar -xzf /tmp/make.tar.gz -C /tmp; \
+    cd /tmp/make-${MAKE_VERSION}; \
+    ./configure --prefix=/usr/local; \
+    make -j"$(nproc)"; \
+    make install; \
+    rm -rf /tmp/make.tar.gz /tmp/make-${MAKE_VERSION}
 
 # Linux perf tooling
 RUN set -eux; \
