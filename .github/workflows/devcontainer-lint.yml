@@ -1,10 +1,8 @@
 name: Devcontainer Lint
 
+# Manual only to avoid CI compute; run via workflow dispatch when needed
 on:
-  push:
-    branches: [main, modernization.20251118]
-  pull_request:
-    branches: [main, modernization.20251118]
+  workflow_dispatch:
 
 jobs:
   lint:
