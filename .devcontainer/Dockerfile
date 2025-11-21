@@ -67,8 +67,6 @@ RUN set -eux; \
         zsh \
         cppcheck \
         valgrind \
-        debuginfod \
-        debuginfod-client \
         flex \
         bison \
         texinfo \
