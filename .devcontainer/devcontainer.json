@@ -1,13 +1,6 @@
 {
   "name": "SlotMap Dev",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "args": {
-      "USERNAME": "${localEnv:DEVCONTAINER_USER:-slotmap}",
-      "USER_UID": "${localEnv:DEVCONTAINER_UID:-1000}",
-      "USER_GID": "${localEnv:DEVCONTAINER_GID:-1000}"
-    }
-  },
+  "image": "devcontainer:local",
   "workspaceFolder": "/workspaces/SlotMap",
   "runArgs": [
     "--cap-add=SYS_PTRACE",

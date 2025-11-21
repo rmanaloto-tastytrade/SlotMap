@@ -1,5 +1,6 @@
-FROM ubuntu:24.04
+# syntax=docker/dockerfile:1.7
 
+ARG UBUNTU_VERSION=24.04
 ARG DEBIAN_FRONTEND=noninteractive
 ARG USERNAME=slotmap
 ARG USER_UID=1000
@@ -29,10 +30,19 @@ ARG MAKE_VERSION=4.4.1
 ARG CLANG_P2996_BRANCH=p2996
 ARG CLANG_P2996_REPO=https://github.com/bloomberg/clang-p2996.git
 ARG CLANG_P2996_PREFIX=/opt/clang-p2996
+ARG BASE_IMAGE=dev-base:local
+
+FROM ubuntu:${UBUNTU_VERSION} AS base
+
+ARG DEBIAN_FRONTEND
+ARG GCC_VERSION
+ARG LLVM_VERSION
+ARG BINUTILS_GDB_TAG
+ARG MAKE_VERSION
+ARG NINJA_VERSION
+ARG CLANG_P2996_PREFIX
 
 ENV TZ=UTC \
-    VCPKG_ROOT=${VCPKG_ROOT} \
-    VCPKG_DOWNLOADS=${VCPKG_DOWNLOADS} \
     VCPKG_FORCE_SYSTEM_BINARIES=1 \
     LLVM_VERSION=${LLVM_VERSION} \
     CCACHE_DIR=/var/cache/ccache \
@@ -40,7 +50,9 @@ ENV TZ=UTC \
     PATH="${CLANG_P2996_PREFIX}/bin:/usr/lib/llvm-${LLVM_VERSION}/bin:${PATH}"
 
 # Core OS packages, tooling, and dependencies required for building and docs
-RUN set -eux; \
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt/lists \
+    set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
         ca-certificates \
@@ -81,8 +93,20 @@ RUN set -eux; \
         patchelf; \
     rm -rf /var/lib/apt/lists/*
 
+# Linux perf tooling (kept in base so downstream stages share it)
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt/lists \
+    set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends linux-tools-common linux-tools-generic; \
+    KERNEL="$(uname -r)"; \
+    apt-get install -y --no-install-recommends "linux-tools-${KERNEL}" || true; \
+    rm -rf /var/lib/apt/lists/*
+
 # Ubuntu toolchain PPA for latest GCC
-RUN set -eux; \
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt/lists \
+    set -eux; \
     add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
@@ -93,14 +117,18 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 
 # Latest Git via official PPA
-RUN set -eux; \
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt/lists \
+    set -eux; \
     add-apt-repository -y ppa:git-core/ppa; \
     apt-get update; \
     apt-get install -y --no-install-recommends git; \
     rm -rf /var/lib/apt/lists/*
 
 # Kitware repository for latest CMake (needed for custom Clang builds)
-RUN set -eux; \
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt/lists \
+    set -eux; \
     curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor -o /usr/share/keyrings/kitware-archive.gpg; \
     echo "deb [signed-by=/usr/share/keyrings/kitware-archive.gpg] https://apt.kitware.com/ubuntu/ noble main" > /etc/apt/sources.list.d/kitware.list; \
     apt-get update; \
@@ -125,7 +153,9 @@ RUN set -eux; \
     rm -rf /tmp/make.tar.gz /tmp/make-${MAKE_VERSION}
 
 # LLVM/Clang toolchain (via official installer)
-RUN set -eux; \
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt/lists \
+    set -eux; \
     curl -fsSL https://apt.llvm.org/llvm.sh -o /tmp/llvm.sh; \
     chmod +x /tmp/llvm.sh; \
     /tmp/llvm.sh ${LLVM_VERSION} all; \
@@ -157,15 +187,24 @@ RUN set -eux; \
     make install; \
     rm -rf /tmp/binutils-gdb.tar.gz /tmp/binutils-gdb
 
-# Bloomberg Clang P2996 compiler
-RUN set -eux; \
+# ---------- Parallel builders (FROM base) ----------
+
+FROM ${BASE_IMAGE} AS prebuilt_base
+
+FROM prebuilt_base AS clang_p2996
+ARG CLANG_P2996_BRANCH
+ARG CLANG_P2996_REPO
+ARG CLANG_P2996_PREFIX
+RUN --mount=type=cache,target=/tmp/clang-p2996/build \
+    set -eux; \
+    STAGE_PREFIX="/opt/stage${CLANG_P2996_PREFIX}"; \
     git clone --depth=1 -b ${CLANG_P2996_BRANCH} ${CLANG_P2996_REPO} /tmp/clang-p2996; \
     cmake -S /tmp/clang-p2996/llvm -B /tmp/clang-p2996/build -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
         -DLLVM_ENABLE_PROJECTS="clang" \
         -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
         -DLLVM_TARGETS_TO_BUILD="X86" \
-        -DCMAKE_INSTALL_PREFIX="${CLANG_P2996_PREFIX}" \
+        -DCMAKE_INSTALL_PREFIX="${STAGE_PREFIX}" \
         -DLLVM_INCLUDE_TESTS=OFF \
         -DLLVM_BUILD_TESTS=OFF \
         -DLLVM_ENABLE_ASSERTIONS=OFF \
@@ -173,137 +212,175 @@ RUN set -eux; \
         -DLIBCXX_ENABLE_EXPERIMENTAL_LIBRARY=ON; \
     cmake --build /tmp/clang-p2996/build -j"$(nproc)"; \
     cmake --install /tmp/clang-p2996/build; \
-    ln -sf ${CLANG_P2996_PREFIX}/bin/clang ${CLANG_P2996_PREFIX}/bin/clang-p2996; \
-    ln -sf ${CLANG_P2996_PREFIX}/bin/clang++ ${CLANG_P2996_PREFIX}/bin/clang++-p2996; \
+    ln -sf clang "${STAGE_PREFIX}/bin/clang-p2996"; \
+    ln -sf clang++ "${STAGE_PREFIX}/bin/clang++-p2996"; \
     rm -rf /tmp/clang-p2996
 
-# Node.js (official tarball install)
-RUN set -eux; \
+FROM prebuilt_base AS node_mermaid
+ARG NODE_VERSION
+ARG NODE_DIST
+RUN --mount=type=cache,target=/root/.npm \
+    set -eux; \
+    STAGE_ROOT="/opt/stage"; \
     curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/${NODE_DIST}.tar.xz" -o /tmp/node.tar.xz; \
-    mkdir -p /usr/local/nodejs; \
-    tar -xJf /tmp/node.tar.xz -C /usr/local/nodejs; \
-    ln -sf /usr/local/nodejs/${NODE_DIST}/bin/node /usr/local/bin/node; \
-    ln -sf /usr/local/nodejs/${NODE_DIST}/bin/npm /usr/local/bin/npm; \
-    ln -sf /usr/local/nodejs/${NODE_DIST}/bin/npx /usr/local/bin/npx; \
+    mkdir -p "${STAGE_ROOT}/usr/local/nodejs"; \
+    tar -xJf /tmp/node.tar.xz -C "${STAGE_ROOT}/usr/local/nodejs"; \
+    mkdir -p "${STAGE_ROOT}/usr/local/bin"; \
+    ln -sf "../nodejs/${NODE_DIST}/bin/node" "${STAGE_ROOT}/usr/local/bin/node"; \
+    ln -sf "../nodejs/${NODE_DIST}/bin/npm" "${STAGE_ROOT}/usr/local/bin/npm"; \
+    ln -sf "../nodejs/${NODE_DIST}/bin/npx" "${STAGE_ROOT}/usr/local/bin/npx"; \
+    PATH="${STAGE_ROOT}/usr/local/nodejs/${NODE_DIST}/bin:${PATH}" npm install -g @mermaid-js/mermaid-cli --prefix "${STAGE_ROOT}/usr/local"; \
     rm -rf /tmp/node.tar.xz
 
-# Mold linker
+FROM prebuilt_base AS mold
+ARG MOLD_VERSION
+ARG MOLD_ARCHIVE
 RUN set -eux; \
     curl -fsSL "https://github.com/rui314/mold/releases/download/v${MOLD_VERSION}/${MOLD_ARCHIVE}" -o /tmp/mold.tar.gz; \
-    tar -xzf /tmp/mold.tar.gz -C /opt; \
-    MOLD_DIR=/opt/mold-${MOLD_VERSION}-x86_64-linux; \
-    install -m 0755 ${MOLD_DIR}/bin/mold /usr/local/bin/mold; \
-    install -m 0755 ${MOLD_DIR}/bin/ld.mold /usr/local/bin/ld.mold; \
-    rm -rf /tmp/mold.tar.gz ${MOLD_DIR}
+    mkdir -p /opt/stage/usr/local/bin; \
+    tar -xzf /tmp/mold.tar.gz -C /tmp; \
+    MOLD_DIR=/tmp/mold-${MOLD_VERSION}-x86_64-linux; \
+    install -m 0755 ${MOLD_DIR}/bin/mold /opt/stage/usr/local/bin/mold; \
+    install -m 0755 ${MOLD_DIR}/bin/ld.mold /opt/stage/usr/local/bin/ld.mold; \
+    rm -rf /tmp/mold.tar.gz /tmp/mold-${MOLD_VERSION}-x86_64-linux
 
-# GitHub CLI
+FROM prebuilt_base AS gh_cli
+ARG GH_CLI_VERSION
 RUN set -eux; \
     curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_CLI_VERSION}/gh_${GH_CLI_VERSION}_linux_amd64.tar.gz" -o /tmp/gh.tar.gz; \
     tar -xzf /tmp/gh.tar.gz -C /tmp; \
-    install -m 0755 /tmp/gh_${GH_CLI_VERSION}_linux_amd64/bin/gh /usr/local/bin/gh; \
+    mkdir -p /opt/stage/usr/local/bin; \
+    install -m 0755 /tmp/gh_${GH_CLI_VERSION}_linux_amd64/bin/gh /opt/stage/usr/local/bin/gh; \
     rm -rf /tmp/gh.tar.gz /tmp/gh_${GH_CLI_VERSION}_linux_amd64
 
-# Linux perf tooling
-RUN set -eux; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends linux-tools-common linux-tools-generic; \
-    KERNEL="$(uname -r)"; \
-    apt-get install -y --no-install-recommends "linux-tools-${KERNEL}" || true; \
-    rm -rf /var/lib/apt/lists/*
-
-# ccache (prebuilt binary)
+FROM prebuilt_base AS ccache
+ARG CCACHE_VERSION
+ARG CCACHE_ARCHIVE
 RUN set -eux; \
     curl -fsSL "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/${CCACHE_ARCHIVE}" -o /tmp/ccache.tar.xz; \
     tar -xJf /tmp/ccache.tar.xz -C /tmp; \
-    install -m 0755 /tmp/ccache-${CCACHE_VERSION}-linux-x86_64/ccache /usr/local/bin/ccache; \
+    mkdir -p /opt/stage/usr/local/bin; \
+    install -m 0755 /tmp/ccache-${CCACHE_VERSION}-linux-x86_64/ccache /opt/stage/usr/local/bin/ccache; \
     rm -rf /tmp/ccache.tar.xz /tmp/ccache-${CCACHE_VERSION}-linux-x86_64
 
-# sccache
+FROM prebuilt_base AS sccache
+ARG SCCACHE_VERSION
+ARG SCCACHE_ARCHIVE
 RUN set -eux; \
     curl -fsSL "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/${SCCACHE_ARCHIVE}" -o /tmp/sccache.tar.gz; \
     tar -xzf /tmp/sccache.tar.gz -C /tmp; \
-    install -m 0755 /tmp/sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl/sccache /usr/local/bin/sccache; \
+    mkdir -p /opt/stage/usr/local/bin; \
+    install -m 0755 /tmp/sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl/sccache /opt/stage/usr/local/bin/sccache; \
     rm -rf /tmp/sccache.tar.gz /tmp/sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl
 
-# ripgrep
+FROM prebuilt_base AS ripgrep
+ARG RIPGREP_VERSION
+ARG RIPGREP_ARCHIVE
 RUN set -eux; \
     curl -fsSL "https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_VERSION}/${RIPGREP_ARCHIVE}" -o /tmp/rg.tar.gz; \
     tar -xzf /tmp/rg.tar.gz -C /tmp; \
-    install -m 0755 /tmp/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl/rg /usr/local/bin/rg; \
+    mkdir -p /opt/stage/usr/local/bin; \
+    install -m 0755 /tmp/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl/rg /opt/stage/usr/local/bin/rg; \
     rm -rf /tmp/rg.tar.gz /tmp/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl
 
-# cppcheck (latest)
+FROM prebuilt_base AS cppcheck
 ARG CPPCHECK_VERSION=2.13.0
-RUN set -eux; \
+RUN --mount=type=cache,target=/tmp/cppcheck-build \
+    set -eux; \
     curl -fsSL "https://github.com/danmar/cppcheck/archive/refs/tags/${CPPCHECK_VERSION}.tar.gz" -o /tmp/cppcheck.tar.gz; \
     tar -xzf /tmp/cppcheck.tar.gz -C /tmp; \
-    cd /tmp/cppcheck-${CPPCHECK_VERSION}; \
-    mkdir build && cd build; \
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_POLICY_VERSION=3.29 -DCMAKE_POLICY_VERSION_MINIMUM=3.5; \
-    cmake --build . -j"$(nproc)"; \
-    cmake --install .; \
+    mkdir -p /tmp/cppcheck-build; \
+    cmake -S /tmp/cppcheck-${CPPCHECK_VERSION} -B /tmp/cppcheck-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/stage/usr/local -DCMAKE_POLICY_VERSION=3.29 -DCMAKE_POLICY_VERSION_MINIMUM=3.5; \
+    cmake --build /tmp/cppcheck-build -j"$(nproc)"; \
+    cmake --install /tmp/cppcheck-build; \
     rm -rf /tmp/cppcheck.tar.gz /tmp/cppcheck-${CPPCHECK_VERSION}
 
-# Valgrind (latest)
+FROM prebuilt_base AS valgrind
 ARG VALGRIND_VERSION=3.23.0
-RUN set -eux; \
+RUN --mount=type=cache,target=/tmp/valgrind-build \
+    set -eux; \
     curl -fsSL "https://sourceware.org/pub/valgrind/valgrind-${VALGRIND_VERSION}.tar.bz2" -o /tmp/valgrind.tar.bz2; \
     tar -xjf /tmp/valgrind.tar.bz2 -C /tmp; \
     cd /tmp/valgrind-${VALGRIND_VERSION}; \
-    ./configure --prefix=/usr/local; \
-    make -j"$(nproc)"; \
+    ./configure --prefix=/opt/stage/usr/local; \
+    make -j"$(nproc)" || { cat config.log || true; exit 1; }; \
     make install; \
     rm -rf /tmp/valgrind.tar.bz2 /tmp/valgrind-${VALGRIND_VERSION}
 
-# binutils + gdb (latest release)
+FROM prebuilt_base AS python_tools
 RUN set -eux; \
-    curl -fsSL "https://github.com/bminor/binutils-gdb/archive/refs/tags/${BINUTILS_GDB_TAG}.tar.gz" -o /tmp/binutils-gdb.tar.gz; \
-    mkdir -p /tmp/binutils-gdb; \
-    tar -xzf /tmp/binutils-gdb.tar.gz -C /tmp/binutils-gdb --strip-components=1; \
-    mkdir -p /tmp/binutils-gdb/build; \
-    cd /tmp/binutils-gdb/build; \
-    ../configure --disable-multilib --enable-gold --enable-plugins --with-system-zlib; \
-    make -j"$(nproc)"; \
-    make install; \
-    rm -rf /tmp/binutils-gdb.tar.gz /tmp/binutils-gdb
+    mkdir -p /opt/stage/usr/local/bin; \
+    curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR=/opt/stage/usr/local/bin sh; \
+    curl -LsSf https://astral.sh/ruff/install.sh | RUFF_INSTALL_DIR=/opt/stage/usr/local/bin sh; \
+    curl -LsSf https://astral.sh/ty/install.sh | TY_INSTALL_DIR=/opt/stage/usr/local/bin sh
 
-# Python developer utilities (uv, ruff, ty)
-RUN set -eux; \
-    curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR=/usr/local/bin sh; \
-    curl -LsSf https://astral.sh/ruff/install.sh | RUFF_INSTALL_DIR=/usr/local/bin sh; \
-    curl -LsSf https://astral.sh/ty/install.sh | TY_INSTALL_DIR=/usr/local/bin sh
-
-# Pixi package manager
+FROM prebuilt_base AS pixi
 RUN set -eux; \
     curl -fsSL https://pixi.sh/install.sh | bash -s -- -y; \
-    mv /root/.pixi/bin/pixi /usr/local/bin/pixi; \
+    mkdir -p /opt/stage/usr/local/bin; \
+    mv /root/.pixi/bin/pixi /opt/stage/usr/local/bin/pixi; \
     rm -rf /root/.pixi
 
-# Include-What-You-Use (built from source to match LLVM ${LLVM_VERSION})
+FROM prebuilt_base AS iwyu
+ARG IWYU_COMMIT
+ARG LLVM_VERSION
 RUN set -eux; \
     git clone https://github.com/include-what-you-use/include-what-you-use.git /tmp/iwyu; \
     cd /tmp/iwyu; \
     git checkout ${IWYU_COMMIT}; \
-    cmake -S . -B build -G Ninja -DIWYU_LLVM_ROOT_PATH=/usr/lib/llvm-${LLVM_VERSION}; \
+    cmake -S . -B build -G Ninja -DIWYU_LLVM_ROOT_PATH=/usr/lib/llvm-${LLVM_VERSION} -DCMAKE_INSTALL_PREFIX=/opt/stage/usr/local; \
     cmake --build build; \
-    install -m 0755 build/bin/include-what-you-use /usr/local/bin/include-what-you-use; \
+    cmake --install build; \
     rm -rf /tmp/iwyu
 
-# MRDocs release binary
-RUN curl -fsSL "https://github.com/cppalliance/mrdocs/releases/download/${MRDOCS_VERSION}/${MRDOCS_ARCHIVE}" -o /tmp/mrdocs.tar.xz && \
-    tar -xJf /tmp/mrdocs.tar.xz -C /opt && \
-    mv /opt/${MRDOCS_DIR} /opt/mrdocs && \
-    ln -s /opt/mrdocs/bin/mrdocs /usr/local/bin/mrdocs && \
+FROM prebuilt_base AS mrdocs
+ARG MRDOCS_VERSION
+ARG MRDOCS_ARCHIVE
+ARG MRDOCS_DIR
+RUN set -eux; \
+    curl -fsSL "https://github.com/cppalliance/mrdocs/releases/download/${MRDOCS_VERSION}/${MRDOCS_ARCHIVE}" -o /tmp/mrdocs.tar.xz; \
+    mkdir -p /opt/stage/opt /opt/stage/usr/local/bin; \
+    tar -xJf /tmp/mrdocs.tar.xz -C /opt/stage/opt; \
+    mv /opt/stage/opt/${MRDOCS_DIR} /opt/stage/opt/mrdocs; \
+    ln -s ../../opt/mrdocs/bin/mrdocs /opt/stage/usr/local/bin/mrdocs; \
     rm /tmp/mrdocs.tar.xz
 
-# Mermaid CLI for architecture diagrams
-RUN npm install -g @mermaid-js/mermaid-cli
+# ---------- Merge tools ----------
 
-# Bootstrap vcpkg and keep ownership consistent for dev user
+FROM prebuilt_base AS tools_merge
+ARG VCPKG_ROOT
+ARG VCPKG_DOWNLOADS
+COPY --from=clang_p2996 /opt/stage/ /
+COPY --from=node_mermaid /opt/stage/ /
+COPY --from=mold /opt/stage/ /
+COPY --from=gh_cli /opt/stage/ /
+COPY --from=ccache /opt/stage/ /
+COPY --from=sccache /opt/stage/ /
+COPY --from=ripgrep /opt/stage/ /
+COPY --from=cppcheck /opt/stage/ /
+COPY --from=valgrind /opt/stage/ /
+COPY --from=python_tools /opt/stage/ /
+COPY --from=pixi /opt/stage/ /
+COPY --from=iwyu /opt/stage/ /
+COPY --from=mrdocs /opt/stage/ /
 RUN git clone https://github.com/microsoft/vcpkg.git ${VCPKG_ROOT} && \
     mkdir -p ${VCPKG_DOWNLOADS} && \
     ${VCPKG_ROOT}/bootstrap-vcpkg.sh -disableMetrics && \
     ln -s ${VCPKG_ROOT}/vcpkg /usr/local/bin/vcpkg
+
+# ---------- final devcontainer ----------
+
+FROM tools_merge AS devcontainer
+ARG USERNAME
+ARG USER_UID
+ARG USER_GID
+ARG VCPKG_ROOT
+ARG VCPKG_DOWNLOADS
+
+ENV CC=clang-21 \
+    CXX=clang++-21 \
+    CMAKE_GENERATOR=Ninja \
+    PATH="${VCPKG_ROOT}:${PATH}"
 
 # Create non-root user for IDE/devcontainer usage
 RUN if ! getent group ${USERNAME} >/dev/null; then \
@@ -324,7 +401,7 @@ RUN if ! getent group ${USERNAME} >/dev/null; then \
     install -d -m 700 -o ${USERNAME} -g ${USERNAME} /home/${USERNAME}/.ssh
 
 # Prepare shared directories for vcpkg, cmake, and caches
-RUN mkdir -p /workspaces /var/cache/ccache /var/cache/sccache && \
+RUN mkdir -p /workspaces /var/cache/ccache /var/cache/sccache ${VCPKG_ROOT} ${VCPKG_DOWNLOADS} && \
     chown -R ${USERNAME}:${USERNAME} /workspaces /var/cache/ccache /var/cache/sccache ${VCPKG_ROOT} ${VCPKG_DOWNLOADS}
 
 # Enable vcpkg shell integration for the dev user (bash/zsh)
@@ -333,10 +410,3 @@ RUN su - ${USERNAME} -c "${VCPKG_ROOT}/vcpkg integrate bash" && \
 
 USER ${USERNAME}
 WORKDIR /workspaces/SlotMap
-
-ENV CC=clang-21 \
-    CXX=clang++-21 \
-    CMAKE_GENERATOR=Ninja \
-    PATH="${VCPKG_ROOT}:${PATH}"
-
-CMD ["sleep", "infinity"]
