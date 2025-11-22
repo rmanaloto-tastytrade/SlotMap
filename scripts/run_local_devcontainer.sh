@@ -166,6 +166,10 @@ if [[ -n "$CONTAINER_ID" ]]; then
 docker exec "$CONTAINER_ID" sh -c 'echo "--- /tmp ---"; ls -al /tmp | head'
 docker exec "$CONTAINER_ID" sh -c 'echo "--- workspace (top level) ---"; ls -al "$HOME/workspace" | head'
 docker exec "$CONTAINER_ID" sh -c 'echo "--- LLVM packages list ---"; if [ -f /opt/llvm-packages-21.txt ]; then head /opt/llvm-packages-21.txt; else echo "No /opt/llvm-packages-21.txt"; fi'
+  echo "[remote] docker ps (filtered for this devcontainer):"
+  docker ps --filter "label=devcontainer.local_folder=${SANDBOX_PATH}" --format 'table {{.ID}}\t{{.Status}}\t{{.Ports}}'
+  echo "[remote] sshd inside container:"
+  docker exec "$CONTAINER_ID" sh -c 'ps -ef | grep "[s]shd" || true'
   # SSH connectivity check if a private key is available
   SSH_TEST_KEY="${KEY_CACHE}/id_ed25519"
   if [[ -f "$SSH_TEST_KEY" ]]; then
