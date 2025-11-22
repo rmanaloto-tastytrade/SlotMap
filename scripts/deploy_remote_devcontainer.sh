@@ -39,6 +39,7 @@ REMOTE_SSH_SYNC_DIR="${REMOTE_SSH_SYNC_DIR:-""}"
 SSH_SYNC_SOURCE="${SSH_SYNC_SOURCE:-"$HOME/.ssh/"}"
 SYNC_MAC_SSH="${SYNC_MAC_SSH:-1}"
 DOCKER_CONTEXT="${DOCKER_CONTEXT:-}"
+RSYNC_SSH="${RSYNC_SSH:-ssh -o StrictHostKeyChecking=accept-new}"
 # Derive local identity defaults (sanitized for Linux user naming)
 LOCAL_USER="$(id -un)"
 LOCAL_UID="$(id -u)"
@@ -113,7 +114,7 @@ ensure_docker_context() {
 
 if [[ "${SYNC_MAC_SSH}" == "1" ]]; then
   echo "Syncing local SSH directory to remote: ${SSH_SYNC_SOURCE} -> ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_SSH_SYNC_DIR}"
-  rsync -av --chmod=F600,D700 --rsync-path="mkdir -p ${REMOTE_SSH_SYNC_DIR} && rsync" \
+  rsync -e "${RSYNC_SSH}" -av --chmod=F600,D700 --rsync-path="mkdir -p ${REMOTE_SSH_SYNC_DIR} && rsync" \
     "${SSH_SYNC_SOURCE}" "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_SSH_SYNC_DIR}/"
 else
   echo "Skipping SSH sync (SYNC_MAC_SSH=${SYNC_MAC_SSH})."
