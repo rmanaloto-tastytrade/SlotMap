@@ -80,10 +80,13 @@ echo "[remote] Removing previous sandbox..."
 rm -rf "$SANDBOX_PATH"
 mkdir -p "$SANDBOX_PATH"
 mkdir -p "$WORKSPACE_PATH"
-mkdir -p "$WORKSPACE_PATH"
 
 echo "[remote] Copying repo into sandbox..."
 rsync -a --delete "$REPO_PATH"/ "$SANDBOX_PATH"/
+if [[ "$WORKSPACE_PATH" != "$SANDBOX_PATH" ]]; then
+  echo "[remote] Copying repo into workspace source..."
+  rsync -a --delete "$REPO_PATH"/ "$WORKSPACE_PATH"/
+fi
 
 SSH_TARGET="$SANDBOX_PATH/$SSH_SUBDIR"
 mkdir -p "$SSH_TARGET"
@@ -99,6 +102,12 @@ else
   echo "[remote] ERROR: No *.pub files found in $KEY_CACHE."
   echo "         Copy your public key to $KEY_CACHE before rerunning."
   exit 1
+fi
+
+if [[ "$WORKSPACE_PATH" != "$SANDBOX_PATH" ]]; then
+  WORKSPACE_SSH_TARGET="$WORKSPACE_PATH/$SSH_SUBDIR"
+  mkdir -p "$WORKSPACE_SSH_TARGET"
+  rsync -a --delete "$SSH_TARGET"/ "$WORKSPACE_SSH_TARGET"/
 fi
 
 echo "[remote] Ensuring baked images (base: $BASE_IMAGE, dev: $DEV_IMAGE)..."
