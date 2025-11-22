@@ -51,7 +51,7 @@ The container user is supplied via the scripts. Set `CONTAINER_USER`, `CONTAINER
 - Volumes: vcpkg downloads cached via a named volume on the remote (`slotmap-vcpkg`). You can add ccache/sccache volumes similarly.
 - Multiple hosts/containers: create distinct contexts (`c24s1`, `c24s2`, …) and per-host workspaces to avoid collisions.
 - User identity: set `user.name`/`user.email` inside the container to your desired Git identity.
-- Inbound SSH to the container uses staged public keys from `~/devcontainers/ssh_keys`; outbound SSH/Git uses the mounted keys.
+- Inbound SSH to the container uses staged public keys from `~/devcontainers/ssh_keys`; outbound SSH/Git uses the mounted keys. Post-deploy, the remote script attempts an SSH login to port 2222 using `id_ed25519` from the synced key cache; if that fails, treat the deploy as suspect and investigate keys/port mapping.
 
 ## If you must keep workspace on Mac (not recommended)
 - You can mount a local path over SSHFS/bind into the remote container, but expect higher latency and possible load on your Mac. Prefer remote-host checkout unless required.
