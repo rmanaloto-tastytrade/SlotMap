@@ -140,6 +140,7 @@ export DEVCONTAINER_USER="${CONTAINER_USER}"
 export DEVCONTAINER_UID="${CONTAINER_UID}"
 export DEVCONTAINER_GID="${CONTAINER_GID}"
 export DEVCONTAINER_WORKSPACE_PATH="${WORKSPACE_PATH}"
+export REMOTE_WORKSPACE_PATH="${WORKSPACE_PATH}"
 
 echo "[remote] Building container user ${CONTAINER_USER} (uid=${CONTAINER_UID}, gid=${CONTAINER_GID})"
 
@@ -147,8 +148,7 @@ echo "[remote] Running devcontainer up..."
 devcontainer up \
   --workspace-folder "$SANDBOX_PATH" \
   --remove-existing-container \
-  --build-no-cache \
-  --mount "type=bind,source=${WORKSPACE_PATH},target=/home/${CONTAINER_USER}/workspace,consistency=cached"
+  --build-no-cache
 
 CONTAINER_ID=$(docker ps --filter "label=devcontainer.local_folder=${SANDBOX_PATH}" -q | head -n1)
 if [[ -n "$CONTAINER_ID" ]]; then
