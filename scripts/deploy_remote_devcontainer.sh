@@ -21,6 +21,7 @@ Options:
   --ssh-sync-source <path>   Local ssh dir to sync (default: ~/.ssh/)
   --remote-ssh-sync-dir <path> Remote dir to receive synced ssh keys (default: ~/devcontainers/ssh_keys)
   --sync-mac-ssh <0|1>       Enable/disable syncing local ssh dir (default: 1)
+  --remote-workspace <path>  Remote host path to bind as workspace in the container (default: /home/<CONTAINER_USER>/dev/devcontainers/workspace)
   -h, --help                 Show this help
 USAGE
 }
@@ -48,6 +49,7 @@ LOCAL_USER_SAFE="${LOCAL_USER//@/_}"
 CONTAINER_USER="${CONTAINER_USER:-$LOCAL_USER_SAFE}"
 CONTAINER_UID="${CONTAINER_UID:-$LOCAL_UID}"
 CONTAINER_GID="${CONTAINER_GID:-$LOCAL_GID}"
+REMOTE_WORKSPACE_PATH="${REMOTE_WORKSPACE_PATH:-""}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -65,6 +67,8 @@ while [[ $# -gt 0 ]]; do
       REMOTE_USER="$2"; shift 2 ;;
     --docker-context)
       DOCKER_CONTEXT="$2"; shift 2 ;;
+    --remote-workspace)
+      REMOTE_WORKSPACE_PATH="$2"; shift 2 ;;
     -h|--help)
       usage; exit 0 ;;
     --)
@@ -95,6 +99,9 @@ REMOTE_KEY_CACHE=${REMOTE_KEY_CACHE:-"${REMOTE_HOME}/devcontainers/ssh_keys"}
 REMOTE_REPO_PATH=${REMOTE_REPO_PATH:-"${REMOTE_HOME}/dev/github/SlotMap"}
 REMOTE_SANDBOX_PATH=${REMOTE_SANDBOX_PATH:-"${REMOTE_HOME}/dev/devcontainers/SlotMap"}
 REMOTE_SSH_SYNC_DIR=${REMOTE_SSH_SYNC_DIR:-"${REMOTE_HOME}/devcontainers/ssh_keys"}
+if [[ -z "$REMOTE_WORKSPACE_PATH" ]]; then
+  REMOTE_WORKSPACE_PATH="/home/${CONTAINER_USER}/dev/devcontainers/workspace"
+fi
 
 ensure_docker_context() {
   if [[ -z "$DOCKER_CONTEXT" ]]; then
@@ -151,6 +158,7 @@ ssh "${REMOTE_USER}@${REMOTE_HOST}" \
   CONTAINER_USER="$CONTAINER_USER" \
   CONTAINER_UID="$CONTAINER_UID" \
   CONTAINER_GID="$CONTAINER_GID" \
+  WORKSPACE_PATH="$REMOTE_WORKSPACE_PATH" \
   bash <<'EOF'
 set -euo pipefail
 cd "$REPO_PATH"
