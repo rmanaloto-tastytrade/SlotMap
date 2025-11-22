@@ -47,7 +47,7 @@ The container user is supplied via the scripts. Set `CONTAINER_USER`, `CONTAINER
 5) Connect: `ssh -i ~/.ssh/id_ed25519 -p 9222 <container-user>@c24s1.ch2` (username = container user, port published by the devcontainer).
 
 ## Notes & Options
-- Workspace location: recommended to use a remote checkout to avoid slow SSHFS. Default `workspaceFolder` is `/home/${USER}/workspace` (generic, not SlotMap-specific); the repo mounted there should match the devcontainer user/uid/gid.
+- Workspace location: recommended to use a remote checkout to avoid slow SSHFS. Default `workspaceFolder` is `/home/${USER}/workspace` (generic). `workspaceMount` binds the repo into that path; ensure the target matches the devcontainer user/uid/gid.
 - Volumes: vcpkg downloads cached via a named volume on the remote (`slotmap-vcpkg`). You can add ccache/sccache volumes similarly.
 - Multiple hosts/containers: create distinct contexts (`c24s1`, `c24s2`, …) and per-host workspaces to avoid collisions.
 - User identity: set `user.name`/`user.email` inside the container to your desired Git identity.
