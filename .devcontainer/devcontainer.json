@@ -2,7 +2,7 @@
   "name": "SlotMap Dev",
   "image": "devcontainer:local",
   "workspaceFolder": "/home/${env:USER}/workspace",
-  "workspaceMount": "source=${localWorkspaceFolder},target=/home/${env:USER}/workspace,type=bind,consistency=cached",
+  "workspaceMount": "source=${env:HOME}/dev/devcontainers/SlotMap,target=/home/${env:USER}/workspace,type=bind,consistency=cached",
   "runArgs": [
     "--cap-add=SYS_PTRACE",
     "--security-opt=seccomp=unconfined",
