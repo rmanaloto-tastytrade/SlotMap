@@ -17,6 +17,10 @@ Options:
   --remote-key-cache <path>  Remote key cache dir (default: ~/macbook_ssh_keys)
   --remote-repo <path>       Remote repo path (default: ~/dev/github/SlotMap)
   --remote-sandbox <path>    Remote sandbox path (default: ~/dev/devcontainers/SlotMap)
+  --docker-context <name>    Docker SSH context to use/create (optional)
+  --ssh-sync-source <path>   Local ssh dir to sync (default: ~/.ssh/)
+  --remote-ssh-sync-dir <path> Remote dir to receive synced ssh keys (default: ~/devcontainers/ssh_keys)
+  --sync-mac-ssh <0|1>       Enable/disable syncing local ssh dir (default: 1)
   -h, --help                 Show this help
 USAGE
 }
@@ -31,7 +35,7 @@ SSH_KEY_PATH="$HOME/.ssh/id_ed25519.pub"
 REMOTE_KEY_CACHE=""
 REMOTE_REPO_PATH=""
 REMOTE_SANDBOX_PATH=""
-REMOTE_SSH_SYNC_DIR="${REMOTE_SSH_SYNC_DIR:-"$HOME/devcontainers/ssh_keys"}"
+REMOTE_SSH_SYNC_DIR="${REMOTE_SSH_SYNC_DIR:-""}"
 SSH_SYNC_SOURCE="${SSH_SYNC_SOURCE:-"$HOME/.ssh/"}"
 SYNC_MAC_SSH="${SYNC_MAC_SSH:-1}"
 DOCKER_CONTEXT="${DOCKER_CONTEXT:-}"
@@ -81,6 +85,7 @@ REMOTE_HOME=${REMOTE_HOME:-"/home/${REMOTE_USER}"}
 REMOTE_KEY_CACHE=${REMOTE_KEY_CACHE:-"${REMOTE_HOME}/devcontainers/ssh_keys"}
 REMOTE_REPO_PATH=${REMOTE_REPO_PATH:-"${REMOTE_HOME}/dev/github/SlotMap"}
 REMOTE_SANDBOX_PATH=${REMOTE_SANDBOX_PATH:-"${REMOTE_HOME}/dev/devcontainers/SlotMap"}
+REMOTE_SSH_SYNC_DIR=${REMOTE_SSH_SYNC_DIR:-"${REMOTE_HOME}/devcontainers/ssh_keys"}
 
 ensure_docker_context() {
   if [[ -z "$DOCKER_CONTEXT" ]]; then
