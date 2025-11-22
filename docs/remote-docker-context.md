@@ -61,3 +61,4 @@ The container user is supplied via the scripts. By default, `deploy_remote_devco
 - `scripts/run_local_devcontainer.sh` — remote-side rebuild and `devcontainer up`.
 - `.devcontainer/devcontainer.json` — image, mounts (including `.ssh`), features.
 - `.devcontainer/docker-bake.hcl` — bake targets/versions; use with the remote context.
+- `docs/devcontainer-ssh-docker-context.md` — SSH-specific setup when using Docker SSH contexts.
