@@ -14,7 +14,9 @@
     "CXX": "clang++-21",
     "VCPKG_ROOT": "/opt/vcpkg",
     "VCPKG_OVERLAY_PORTS": "${containerWorkspaceFolder}/vcpkg-overlays/cib/ports:${containerWorkspaceFolder}/vcpkg-overlays/stdx/ports:${containerWorkspaceFolder}/vcpkg-overlays/qlibs/ports:${containerWorkspaceFolder}/vcpkg-overlays/boost-ext/ports",
-    "DEVCONTAINER_USER": "${localEnv:DEVCONTAINER_USER:-slotmap}"
+    "DEVCONTAINER_USER": "${localEnv:DEVCONTAINER_USER:-slotmap}",
+    "PATH": "${containerEnv:PATH}:/opt/mrdocs/bin",
+    "MRDOCS_EXECUTABLE": "/opt/mrdocs/bin/mrdocs"
   },
   "mounts": [
     "source=slotmap-vcpkg,target=/opt/vcpkg/downloads,type=volume",
