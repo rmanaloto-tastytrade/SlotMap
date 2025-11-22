@@ -421,7 +421,8 @@ ARG VCPKG_DOWNLOADS
 ENV CC=clang-21 \
     CXX=clang++-21 \
     CMAKE_GENERATOR=Ninja \
-    PATH="${VCPKG_ROOT}:${PATH}"
+    PATH="${VCPKG_ROOT}:${PATH}" \
+    WORKSPACE_DIR="/home/${USERNAME}/workspace"
 
 # Create non-root user for IDE/devcontainer usage
 RUN if ! getent group ${USERNAME} >/dev/null; then \
@@ -442,12 +443,12 @@ RUN if ! getent group ${USERNAME} >/dev/null; then \
     install -d -m 700 -o ${USERNAME} -g ${USERNAME} /home/${USERNAME}/.ssh
 
 # Prepare shared directories for vcpkg, cmake, and caches
-RUN mkdir -p /workspaces /var/cache/ccache /var/cache/sccache ${VCPKG_ROOT} ${VCPKG_DOWNLOADS} && \
-    chown -R ${USERNAME}:${USERNAME} /workspaces /var/cache/ccache /var/cache/sccache ${VCPKG_ROOT} ${VCPKG_DOWNLOADS}
+RUN mkdir -p /workspaces /var/cache/ccache /var/cache/sccache ${VCPKG_ROOT} ${VCPKG_DOWNLOADS} "${WORKSPACE_DIR}" && \
+    chown -R ${USERNAME}:${USERNAME} /workspaces /var/cache/ccache /var/cache/sccache ${VCPKG_ROOT} ${VCPKG_DOWNLOADS} "${WORKSPACE_DIR}"
 
 # Enable vcpkg shell integration for the dev user (bash/zsh)
 RUN su - ${USERNAME} -c "${VCPKG_ROOT}/vcpkg integrate bash" && \
     su - ${USERNAME} -c "${VCPKG_ROOT}/vcpkg integrate zsh" || true
 
 USER ${USERNAME}
-WORKDIR /workspaces/SlotMap
+WORKDIR /home/${USERNAME}/workspace

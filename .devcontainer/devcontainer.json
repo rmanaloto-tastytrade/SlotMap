@@ -1,7 +1,7 @@
 {
   "name": "SlotMap Dev",
   "image": "devcontainer:local",
-  "workspaceFolder": "/workspaces/SlotMap",
+  "workspaceFolder": "/home/${env:USER}/workspace",
   "runArgs": [
     "--cap-add=SYS_PTRACE",
     "--security-opt=seccomp=unconfined",
