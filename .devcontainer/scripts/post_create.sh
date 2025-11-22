@@ -5,9 +5,11 @@ CURRENT_USER="${DEVCONTAINER_USER:-$(id -un)}"
 CURRENT_GROUP="$(id -gn "$CURRENT_USER" 2>/dev/null || id -gn)"
 WORKSPACE_DIR="${WORKSPACE_FOLDER:-/home/${CURRENT_USER}/workspace}"
 
-sudo -n chown -R "${CURRENT_USER}:${CURRENT_GROUP}" /opt/vcpkg || true
-sudo -n chown -R "${CURRENT_USER}:${CURRENT_GROUP}" /opt/vcpkg/downloads || true
-sudo -n chown -R "${CURRENT_USER}:${CURRENT_GROUP}" "${WORKSPACE_DIR}" || true
+if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
+  sudo chown -R "${CURRENT_USER}:${CURRENT_GROUP}" /opt/vcpkg /opt/vcpkg/downloads "${WORKSPACE_DIR}" || true
+else
+  echo "[post_create] Skipping chown (sudo password required or unavailable)."
+fi
 
 if ! command -v clang++-21 >/dev/null 2>&1; then
   echo "[post_create] ERROR: clang++-21 not found in PATH" >&2
@@ -27,4 +29,15 @@ else
   echo "[post_create] WARNING: No public keys found under $SSH_SOURCE"
 fi
 
+BUILD_DIR="${WORKSPACE_DIR}/build/clang-debug"
+CACHE_FILE="${BUILD_DIR}/CMakeCache.txt"
+
+if [[ -f "$CACHE_FILE" ]]; then
+  if ! grep -q "CMAKE_HOME_DIRECTORY:INTERNAL=${WORKSPACE_DIR}" "$CACHE_FILE"; then
+    echo "[post_create] Removing stale CMake cache at $BUILD_DIR (workspace path changed)."
+    rm -rf "$BUILD_DIR"
+  fi
+fi
+
+cd "$WORKSPACE_DIR"
 cmake --preset clang-debug

@@ -24,7 +24,7 @@ docker context create c0802s4 --docker "host=ssh://<remote-user>@c0802s4.ny5"
 Use the context when running scripts or set `DOCKER_CONTEXT=<context-name>`. The deploy script accepts `--docker-context` and will create the context if missing.
 
 ## User/UID/GID
-The container user is supplied via the scripts. Set `CONTAINER_USER`, `CONTAINER_UID`, `CONTAINER_GID` (e.g., to your macOS user/uid/gid) when invoking `run_local_devcontainer.sh` or via environment exports in `deploy_remote_devcontainer.sh`. Defaults currently follow the remote host user; override to match your Mac identity if required.
+The container user is supplied via the scripts. By default, `deploy_remote_devcontainer.sh` derives a Linux-safe username/uid/gid from your local (Mac) identity; override via `CONTAINER_USER`, `CONTAINER_UID`, `CONTAINER_GID` if needed. When running `run_local_devcontainer.sh` directly on a host, defaults follow the current host user. Keep container uid/gid aligned with your Git identity so file ownership stays consistent across hosts.
 
 ## SSH Keys for Git
 - Do **not** overwrite the remote `~/.ssh`. Keep your Mac keys under a dedicated remote path, e.g., `~/devcontainers/ssh_keys`.
@@ -47,7 +47,7 @@ The container user is supplied via the scripts. Set `CONTAINER_USER`, `CONTAINER
 5) Connect: `ssh -i ~/.ssh/id_ed25519 -p 9222 <container-user>@c24s1.ch2` (username = container user, port published by the devcontainer).
 
 ## Notes & Options
-- Workspace location: recommended to use a remote checkout to avoid slow SSHFS. Default `workspaceFolder` is `/home/${USER}/workspace` (generic). `workspaceMount` binds the repo into that path; ensure the target matches the devcontainer user/uid/gid.
+- Workspace location: recommended to use a remote checkout to avoid slow SSHFS. Default `workspaceFolder` is `/home/${USER}/workspace` (generic). `workspaceMount` binds the repo into that path; `deploy_remote_devcontainer.sh` defaults the host path to `~/dev/devcontainers/workspace` (override with `--remote-workspace`).
 - Volumes: vcpkg downloads cached via a named volume on the remote (`slotmap-vcpkg`). You can add ccache/sccache volumes similarly.
 - Multiple hosts/containers: create distinct contexts (`c24s1`, `c24s2`, …) and per-host workspaces to avoid collisions.
 - User identity: set `user.name`/`user.email` inside the container to your desired Git identity.

@@ -13,7 +13,7 @@
     "CC": "clang-21",
     "CXX": "clang++-21",
     "VCPKG_ROOT": "/opt/vcpkg",
-    "VCPKG_OVERLAY_PORTS": "/workspaces/SlotMap/vcpkg-overlays/cib/ports:/workspaces/SlotMap/vcpkg-overlays/stdx/ports:/workspaces/SlotMap/vcpkg-overlays/qlibs/ports:/workspaces/SlotMap/vcpkg-overlays/boost-ext/ports",
+    "VCPKG_OVERLAY_PORTS": "${containerWorkspaceFolder}/vcpkg-overlays/cib/ports:${containerWorkspaceFolder}/vcpkg-overlays/stdx/ports:${containerWorkspaceFolder}/vcpkg-overlays/qlibs/ports:${containerWorkspaceFolder}/vcpkg-overlays/boost-ext/ports",
     "DEVCONTAINER_USER": "${localEnv:DEVCONTAINER_USER:-slotmap}"
   },
   "mounts": [
