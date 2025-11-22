@@ -28,7 +28,7 @@ The container user is supplied via the scripts. Set `CONTAINER_USER`, `CONTAINER
 
 ## SSH Keys for Git
 - Do **not** overwrite the remote `~/.ssh`. Keep your Mac keys under a dedicated remote path, e.g., `~/devcontainers/ssh_keys`.
-- `scripts/deploy_remote_devcontainer.sh` can sync your local `~/.ssh` to the remote sync dir (defaults to `~/devcontainers/ssh_keys`, toggle via `SYNC_MAC_SSH=0/1`, `SSH_SYNC_SOURCE`, `REMOTE_SSH_SYNC_DIR`). It uses `rsync` with `--rsync-path="mkdir -p <remote_dir> && rsync"` and `--chmod=F600,D700` so the directory is created and permissions are sane each run. TODO: tighten later (sync only needed keys/config or switch to a remote agent).
+- `scripts/deploy_remote_devcontainer.sh` can sync your local `~/.ssh` to the remote sync dir (defaults to `~/devcontainers/ssh_keys`, toggle via `SYNC_MAC_SSH=0/1`, `SSH_SYNC_SOURCE`, `REMOTE_SSH_SYNC_DIR`). It uses `rsync` with `--rsync-path="mkdir -p <remote_dir> && rsync"` and `--chmod=F600,D700`; it accepts `RSYNC_SSH` (default `ssh -o StrictHostKeyChecking=accept-new`) to both create the directory and sync in one command. TODO: tighten later (sync only needed keys/config or switch to a remote agent).
 - `.devcontainer/devcontainer.json` bind-mounts that sync dir into the container `~/.ssh`, so outbound Git/SSH works without touching the remote’s primary `~/.ssh`.
 - If you prefer an agent, run an agent on the remote and mount its socket; forwarding your Mac agent directly to the remote Docker daemon is not supported by default contexts.
 
