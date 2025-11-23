@@ -1,12 +1,12 @@
 # Project Plan
 
-## Phase 0: Infrastructure Configuration (CURRENT PRIORITY)
+## Phase 0: Infrastructure Configuration (COMPLETING)
 
-### Task 0.1: Configure Remote Host for c0802s4.ny5 ✅ URGENT
-**Status:** 🔄 In Progress
+### Task 0.1: Configure Remote Host for c0802s4.ny5
+**Status:** ✅ COMPLETED
 **Priority:** Critical
 **Owner:** DevOps
-**Timeline:** Immediate (before any other work)
+**Timeline:** Completed 2025-01-23
 
 **Objective:** Update all scripts and configuration to use c0802s4.ny5 instead of c0802s4.ny5 to avoid interrupting ongoing work.
 
@@ -70,16 +70,72 @@ grep -r "c0802s4\.ny5" docs/ README.md CLAUDE.md TEST_BRANCH_README.md
 ---
 
 ### Task 0.2: Security Fixes - Phase 1 🔐
-**Status:** ✅ Completed (security-fixes-phase1 branch)
+**Status:** 🧪 Ready for Testing (security-fixes-phase1 branch)
 **Priority:** Critical
-**Timeline:** Ready for testing
+**Timeline:** Implementation Complete, Testing Required
 
 **Implemented Changes:**
 1. ✅ Milestone 1.1: Stop syncing private keys (rsync filters)
-2. ✅ Milestone 1.2: SSH agent forwarding support
-3. 📋 Milestone 1.3: Remove SSH keys bind mount (pending)
+2. ✅ Milestone 1.2: SSH agent forwarding support (SYNC_MAC_SSH=0 by default)
+3. ✅ Milestone 1.3: SSH key safety measures (backups and protection)
+4. ✅ Dynamic username resolution (no hardcoded users)
+5. ✅ SSH key safety audit and documentation
 
 **Reference:** See `docs/REFACTORING_ROADMAP.md` for details
+
+---
+
+### Task 0.3: Test and Validate Security Deployment 🧪
+**Status:** 📋 TODO
+**Priority:** Critical
+**Timeline:** Immediate (blocks Phase 1)
+
+**Testing Checklist:**
+
+1. **Deploy to c0802s4.ny5:**
+   ```bash
+   ./scripts/deploy_remote_devcontainer.sh --remote-host c0802s4.ny5
+   ```
+
+2. **Verify SSH Connectivity:**
+   ```bash
+   ./scripts/test_devcontainer_ssh.sh --host c0802s4.ny5 --port 9222
+   ```
+
+3. **Test SSH Agent Forwarding:**
+   ```bash
+   # On Mac
+   eval "$(ssh-agent -s)"
+   ssh-add ~/.ssh/id_ed25519
+
+   # Connect with forwarding
+   ssh -A <username>@c0802s4.ny5
+
+   # Access container
+   ssh -A -p 9222 <username>@c0802s4.ny5
+
+   # Test GitHub access from container
+   ssh -T git@github.com
+   ```
+
+4. **Verify No Mac Keys Synced:**
+   ```bash
+   # Should be empty or only have public keys
+   ssh <username>@c0802s4.ny5 'ls -la ~/devcontainers/ssh_keys/'
+   ```
+
+5. **Check Dynamic Username Resolution:**
+   ```bash
+   # Should use current user or git config
+   git config --get slotmap.remoteUser
+   ```
+
+**Success Criteria:**
+- ✅ Container deploys successfully
+- ✅ SSH access works without Mac key sync
+- ✅ GitHub access via agent forwarding
+- ✅ No private keys in cache directory
+- ✅ Dynamic username resolution works
 
 ---
 
@@ -140,9 +196,9 @@ grep -r "c0802s4\.ny5" docs/ README.md CLAUDE.md TEST_BRANCH_README.md
 
 ## Quick Reference
 
-**Current Priority:** Phase 0, Task 0.1 - Configure c0802s4.ny5 hostname
-**Next Up:** Phase 0, Task 0.2 - Complete security fixes testing
-**Blocking:** All Phase 1+ work until Phase 0 complete
+**Current Priority:** Phase 0, Task 0.2 - Test security fixes on c0802s4.ny5
+**Next Up:** Phase 1 - Remote Docker context and environment tooling
+**Completed:** Hostname configuration, SSH security fixes, dynamic usernames
 
 **Key Files:**
 - This plan: `PROJECT_PLAN.md`
