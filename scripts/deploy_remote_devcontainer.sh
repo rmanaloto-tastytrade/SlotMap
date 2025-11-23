@@ -117,8 +117,11 @@ ensure_docker_context() {
 }
 
 if [[ "${SYNC_MAC_SSH}" == "1" ]]; then
-  echo "Syncing local SSH directory to remote: ${SSH_SYNC_SOURCE} -> ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_SSH_SYNC_DIR}"
-  rsync -e "${RSYNC_SSH}" -av --chmod=F600,D700 --rsync-path="mkdir -p ${REMOTE_SSH_SYNC_DIR} && rsync" \
+  echo "Syncing SSH public keys and config to remote: ${SSH_SYNC_SOURCE} -> ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_SSH_SYNC_DIR}"
+  echo "Security: Only syncing *.pub, config, and known_hosts (private keys excluded)"
+  rsync -e "${RSYNC_SSH}" -av --chmod=F600,D700 \
+    --include='*.pub' --include='config' --include='known_hosts' --exclude='*' \
+    --rsync-path="mkdir -p ${REMOTE_SSH_SYNC_DIR} && rsync" \
     "${SSH_SYNC_SOURCE}" "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_SSH_SYNC_DIR}/"
 else
   echo "Skipping SSH sync (SYNC_MAC_SSH=${SYNC_MAC_SSH})."

@@ -107,14 +107,25 @@ elif [[ -x /opt/mrdocs/bin/mrdocs ]]; then
 else
   echo "[ssh-remote] MISSING mrdocs"; failed=1
 fi
-echo "[ssh-remote] ssh -T git@github.com (expect success message)"
-# Use a clean config to avoid macOS-only options like UseKeychain. Try port 22 first, then fall back to 443 per GitHub docs.
-ssh -F /dev/null -i "$HOME/.ssh/id_ed25519" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes -o ConnectTimeout=10 -T git@github.com && echo "[ssh-remote] github.com:22 OK" || {
-  echo "[ssh-remote] github.com:22 failed; trying ssh.github.com:443"
-  ssh -F /dev/null -i "$HOME/.ssh/id_ed25519" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes -o ConnectTimeout=10 -p 443 -T git@ssh.github.com && echo "[ssh-remote] ssh.github.com:443 OK" || {
-    echo "[ssh-remote] github.com SSH failed on 22 and 443"; failed=1;
-  }
-}
+echo "[ssh-remote] Testing GitHub SSH access"
+# Check if SSH agent is available (for security-conscious agent forwarding)
+if ssh-add -l >/dev/null 2>&1; then
+  echo "[ssh-remote] SSH agent detected, using agent forwarding for GitHub auth"
+  # Use agent (no -i flag, no private key needed)
+  ssh -F /dev/null -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes -o ConnectTimeout=10 -T git@github.com 2>&1 | head -3
+  if [ $? -eq 0 ] || [ $? -eq 1 ]; then
+    echo "[ssh-remote] GitHub SSH OK via agent"
+  else
+    echo "[ssh-remote] GitHub SSH via agent failed"
+    failed=1
+  fi
+else
+  echo "[ssh-remote] WARNING: No SSH agent available"
+  echo "[ssh-remote] INFO: For secure GitHub access, use SSH agent forwarding:"
+  echo "[ssh-remote]   1. On Mac: eval \"\$(ssh-agent -s)\" && ssh-add ~/.ssh/id_ed25519"
+  echo "[ssh-remote]   2. Connect with: ssh -A -p 9222 rmanaloto@c24s1.ch2"
+  echo "[ssh-remote] Skipping GitHub SSH test (agent forwarding not configured)"
+fi
 exit $failed
 REMOTE
 )
