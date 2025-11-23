@@ -10,7 +10,7 @@ This document describes the **complete** current workflow for deploying and conn
 
 **Key Components:**
 - **Local Machine:** Developer's Mac (laptop)
-- **Remote Host:** `c24s1.ch2` (Ubuntu 24.04 server)
+- **Remote Host:** `c0802s4.ny5` (Ubuntu 24.04 server)
 - **Container:** Docker devcontainer running on remote host
 - **Protocols:** SSH, Docker Remote API (via SSH tunnel), rsync
 
@@ -42,7 +42,7 @@ This document describes the **complete** current workflow for deploying and conn
                             │ + rsync over SSH
                             │
 ┌───────────────────────────▼───────────────────────────────────────────┐
-│                    Remote Host: c24s1.ch2                             │
+│                    Remote Host: c0802s4.ny5                             │
 │  ┌────────────────────────────────────────────────────────────┐     │
 │  │ Remote Files:                                              │     │
 │  │  - ~/dev/github/SlotMap (canonical repo)                   │     │
@@ -85,7 +85,7 @@ This document describes the **complete** current workflow for deploying and conn
 │                    Developer's Mac (SSH Client)                       │
 │  ┌────────────────────────────────────────────────────────────┐     │
 │  │ SSH Connection:                                            │     │
-│  │  ssh -i ~/.ssh/id_ed25519 -p 9222 rmanaloto@c24s1.ch2     │     │
+│  │  ssh -i ~/.ssh/id_ed25519 -p 9222 rmanaloto@c0802s4.ny5     │     │
 │  │                                                            │     │
 │  │ IDE Integration:                                          │     │
 │  │  - CLion Remote Development                                │     │
@@ -126,7 +126,7 @@ rsync -e "ssh -o StrictHostKeyChecking=accept-new" \
       -av --chmod=F600,D700 \
       --rsync-path="mkdir -p ~/devcontainers/ssh_keys && rsync" \
       ~/.ssh/ \
-      rmanaloto@c24s1.ch2:~/devcontainers/ssh_keys/
+      rmanaloto@c0802s4.ny5:~/devcontainers/ssh_keys/
 ```
 
 **What Gets Synced:**
@@ -144,13 +144,13 @@ rsync -e "ssh -o StrictHostKeyChecking=accept-new" \
 
 #### Step 1.4: Copy Public Key to Remote Cache
 ```bash
-scp ~/.ssh/id_ed25519.pub rmanaloto@c24s1.ch2:~/devcontainers/ssh_keys/id_ed25519.pub
+scp ~/.ssh/id_ed25519.pub rmanaloto@c0802s4.ny5:~/devcontainers/ssh_keys/id_ed25519.pub
 ```
 **Purpose:** Separate location for authorized_keys injection
 
 #### Step 1.5: Trigger Remote Build
 ```bash
-ssh rmanaloto@c24s1.ch2 \
+ssh rmanaloto@c0802s4.ny5 \
   REPO_PATH="~/dev/github/SlotMap" \
   SANDBOX_PATH="~/dev/devcontainers/SlotMap" \
   KEY_CACHE="~/devcontainers/ssh_keys" \
@@ -167,10 +167,10 @@ EOF
 
 ---
 
-### Phase 2: Remote Build & Deploy (c24s1.ch2)
+### Phase 2: Remote Build & Deploy (c0802s4.ny5)
 
 **Script:** `scripts/run_local_devcontainer.sh`
-**Execution Context:** Remote host (c24s1.ch2)
+**Execution Context:** Remote host (c0802s4.ny5)
 
 #### Step 2.1: Recreate Sandbox
 ```bash
@@ -323,7 +323,7 @@ git config --global user.email "..."
 
 #### Step 3.1: Clear Known Host Entry
 ```bash
-ssh-keygen -R "[c24s1.ch2]:9222" -f ~/.ssh/known_hosts
+ssh-keygen -R "[c0802s4.ny5]:9222" -f ~/.ssh/known_hosts
 ```
 **Purpose:** Avoid host key mismatch (container recreated)
 
@@ -334,13 +334,13 @@ ssh -vvv \
   -o IdentitiesOnly=yes \
   -o StrictHostKeyChecking=no \
   -p 9222 \
-  rmanaloto@c24s1.ch2 \
+  rmanaloto@c0802s4.ny5 \
   "echo SSH_OK"
 ```
 
 **Authentication Flow:**
 ```
-Mac → c24s1.ch2:9222 → Container:2222 (sshd)
+Mac → c0802s4.ny5:9222 → Container:2222 (sshd)
   1. TCP connection established
   2. sshd presents host key (container's key)
   3. Mac sends public key fingerprint
@@ -353,7 +353,7 @@ Mac → c24s1.ch2:9222 → Container:2222 (sshd)
 
 #### Step 3.3: Validate Container Environment
 ```bash
-ssh -i ~/.ssh/id_ed25519 -p 9222 rmanaloto@c24s1.ch2 <<'EOF'
+ssh -i ~/.ssh/id_ed25519 -p 9222 rmanaloto@c0802s4.ny5 <<'EOF'
 # Check user
 whoami  # Expected: rmanaloto
 id      # Expected: uid/gid matching remote host
@@ -392,7 +392,7 @@ Authentication: Public key (id_ed25519)
 Data Transfer: Git protocol over SSH
 
 Flow:
-  Mac SSH Client → c24s1.ch2 SSH Server
+  Mac SSH Client → c0802s4.ny5 SSH Server
     ├─ Authenticate with ~/.ssh/id_ed25519
     ├─ Execute: git-receive-pack
     └─ Transfer: Git objects
@@ -408,7 +408,7 @@ Authentication: Public key (id_ed25519)
 Data Transfer: rsync protocol in SSH tunnel
 
 Flow:
-  Mac rsync → Mac SSH Client → c24s1.ch2 SSH Server → c24s1.ch2 rsync
+  Mac rsync → Mac SSH Client → c0802s4.ny5 SSH Server → c0802s4.ny5 rsync
     ├─ Authenticate with ~/.ssh/id_ed25519
     ├─ Execute: mkdir -p ... && rsync (remote command)
     ├─ Transfer: File data (delta algorithm)
@@ -430,7 +430,7 @@ Authentication: Public key (id_ed25519)
 Data Transfer: stdin → remote bash
 
 Flow:
-  Mac SSH Client → c24s1.ch2 SSH Server
+  Mac SSH Client → c0802s4.ny5 SSH Server
     ├─ Authenticate with ~/.ssh/id_ed25519
     ├─ Execute: bash (with stdin from heredoc)
     └─ Environment variables passed via SSH
@@ -450,11 +450,11 @@ Script Actions:
 Protocol: SSH (OpenSSH)
 Port: 9222 (host) → 2222 (container)
 Authentication: Public key (id_ed25519)
-Tunnel: Mac → c24s1.ch2:22 → c24s1.ch2:9222 → container:2222
+Tunnel: Mac → c0802s4.ny5:22 → c0802s4.ny5:9222 → container:2222
 
 Flow:
-  Mac SSH Client → c24s1.ch2:9222 (Docker port mapping) → Container:2222 (sshd)
-    ├─ TCP: Mac connects to c24s1.ch2:9222
+  Mac SSH Client → c0802s4.ny5:9222 (Docker port mapping) → Container:2222 (sshd)
+    ├─ TCP: Mac connects to c0802s4.ny5:9222
     ├─ Docker: Forwards to container port 2222
     ├─ sshd: Receives connection in container
     ├─ Auth: Container checks ~/.ssh/authorized_keys
@@ -462,7 +462,7 @@ Flow:
     └─ Shell: Login shell for user rmanaloto
 
 Used By:
-  - Manual SSH: ssh -p 9222 rmanaloto@c24s1.ch2
+  - Manual SSH: ssh -p 9222 rmanaloto@c0802s4.ny5
   - CLion Remote Development
   - VS Code Remote SSH
 ```
@@ -521,7 +521,7 @@ Parallelism:
 
 **Mapping:**
 ```
-External: c24s1.ch2:9222 (exposed to network)
+External: c0802s4.ny5:9222 (exposed to network)
     ↓
 Docker Bridge: docker0 (172.17.0.1)
     ↓
@@ -532,7 +532,7 @@ Process: sshd (listening on 0.0.0.0:2222)
 
 **Routing:**
 ```
-Mac (any port) → Internet → c24s1.ch2:9222
+Mac (any port) → Internet → c0802s4.ny5:9222
                                 ↓
                         iptables DNAT rule
                                 ↓
@@ -542,7 +542,7 @@ Mac (any port) → Internet → c24s1.ch2:9222
 **Security:**
 - Port 9222 is exposed to **all network interfaces** (0.0.0.0)
 - No firewall rules in current config
-- Anyone who can reach c24s1.ch2:9222 can attempt SSH connection
+- Anyone who can reach c0802s4.ny5:9222 can attempt SSH connection
 - Protected only by SSH authentication (public key)
 
 ### File System Protocols
@@ -608,7 +608,7 @@ Size: ~2-5 GB (grows over time)
      │ Authentication: Public Key
      ▼
 ┌─────────┐
-│ c24s1   │
+│ c0802s4 │
 │         │
 │ Public  │ Verifies signature
 │  Key    │ (~/.ssh/authorized_keys)
@@ -627,7 +627,7 @@ Risk: Private key compromise = full remote access
 │  Key    │
 └────┬────┘
      │ SSH connection (port 9222 → 2222)
-     │ Tunneled through: c24s1.ch2
+     │ Tunneled through: c0802s4.ny5
      ▼
 ┌─────────┐
 │Container│
@@ -672,7 +672,7 @@ Risk: Private key exposed on remote filesystem
 
 **Problem:**
 ```bash
-rsync ... ~/.ssh/ rmanaloto@c24s1.ch2:~/devcontainers/ssh_keys/
+rsync ... ~/.ssh/ rmanaloto@c0802s4.ny5:~/devcontainers/ssh_keys/
 ```
 
 **Impact:**
@@ -727,7 +727,7 @@ rsync ... ~/.ssh/ rmanaloto@c24s1.ch2:~/devcontainers/ssh_keys/
 ```
 Then use SSH tunnel from Mac:
 ```bash
-ssh -L 9222:localhost:9222 rmanaloto@c24s1.ch2
+ssh -L 9222:localhost:9222 rmanaloto@c0802s4.ny5
 ssh -p 9222 rmanaloto@localhost  # Connects to container
 ```
 
@@ -757,7 +757,7 @@ gh auth status
 
 ## Performance Characteristics
 
-### Build Times (Remote Host: c24s1.ch2)
+### Build Times (Remote Host: c0802s4.ny5)
 
 **First Build (Cold Cache):**
 ```
@@ -832,7 +832,7 @@ ERROR: failed to solve: process "/bin/sh -c ..." did not complete successfully
 
 **Symptoms:**
 ```
-ssh: connect to host c24s1.ch2 port 9222: Connection refused
+ssh: connect to host c0802s4.ny5 port 9222: Connection refused
 ```
 
 **Diagnosis:**
@@ -912,7 +912,7 @@ git pull
 ./scripts/deploy_remote_devcontainer.sh
 
 # 3. Connect via SSH
-ssh -i ~/.ssh/id_ed25519 -p 9222 rmanaloto@c24s1.ch2
+ssh -i ~/.ssh/id_ed25519 -p 9222 rmanaloto@c0802s4.ny5
 
 # 4. Or connect via IDE
 # CLion: Tools → Deployment → Browse Remote Host
@@ -955,7 +955,7 @@ vim .devcontainer/docker-bake.hcl
 ./scripts/deploy_remote_devcontainer.sh
 
 # 3. Verify:
-ssh -p 9222 rmanaloto@c24s1.ch2 'clang++-21 --version'
+ssh -p 9222 rmanaloto@c0802s4.ny5 'clang++-21 --version'
 ```
 
 **Clean Up Old Images:**
@@ -974,7 +974,7 @@ ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_new
 ./scripts/deploy_remote_devcontainer.sh --ssh-key ~/.ssh/id_ed25519_new.pub
 
 # 3. Test connection:
-ssh -i ~/.ssh/id_ed25519_new -p 9222 rmanaloto@c24s1.ch2
+ssh -i ~/.ssh/id_ed25519_new -p 9222 rmanaloto@c0802s4.ny5
 
 # 4. Remove old key from GitHub, remote host
 ```

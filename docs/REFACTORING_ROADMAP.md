@@ -89,15 +89,15 @@ Refs: docs/CRITICAL_FINDINGS.md Section 5.1"
 ./scripts/deploy_remote_devcontainer.sh
 
 # 6. Verify no private keys on remote
-ssh rmanaloto@c24s1.ch2 'ls -la ~/devcontainers/ssh_keys/'
+ssh rmanaloto@c0802s4.ny5 'ls -la ~/devcontainers/ssh_keys/'
 # Expected: Only .pub files, config, known_hosts
 # NOT present: id_ed25519, id_rsa
 
 # 7. Verify container still works
-ssh -i ~/.ssh/id_ed25519 -p 9222 rmanaloto@c24s1.ch2 'echo SUCCESS'
+ssh -i ~/.ssh/id_ed25519 -p 9222 rmanaloto@c0802s4.ny5 'echo SUCCESS'
 
 # 8. Verify GitHub access (currently uses bind-mounted key - Phase 2 will fix)
-ssh -p 9222 rmanaloto@c24s1.ch2 'ssh -T git@github.com'
+ssh -p 9222 rmanaloto@c0802s4.ny5 'ssh -T git@github.com'
 # Expected: Still works (uses Mac's private key via SSH agent forwarding in next milestone)
 ```
 
@@ -141,7 +141,7 @@ else
     echo "[ssh-remote] WARNING: No SSH agent available"
     echo "[ssh-remote] INFO: You can enable agent forwarding with:"
     echo "[ssh-remote]   1. On Mac: eval \"\$(ssh-agent -s)\" && ssh-add ~/.ssh/id_ed25519"
-    echo "[ssh-remote]   2. Connect with: ssh -A -p 9222 rmanaloto@c24s1.ch2"
+    echo "[ssh-remote]   2. Connect with: ssh -A -p 9222 rmanaloto@c0802s4.ny5"
 fi
 ```
 
@@ -174,7 +174,7 @@ eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_ed25519
 
 # 6. Connect with agent forwarding
-ssh -A -p 9222 rmanaloto@c24s1.ch2 << 'EOF'
+ssh -A -p 9222 rmanaloto@c0802s4.ny5 << 'EOF'
 echo "[test] Checking agent availability"
 if ssh-add -l; then
     echo "[test] SUCCESS: Agent is forwarded"
@@ -215,7 +215,7 @@ ssh-add -l
 ### Configure SSH (optional):
 Add to `~/.ssh/config`:
 \`\`\`
-Host c24s1.ch2
+Host c0802s4.ny5
     ForwardAgent yes
     IdentityFile ~/.ssh/id_ed25519
 \`\`\`
@@ -223,10 +223,10 @@ Host c24s1.ch2
 ### Connect with Forwarding:
 \`\`\`bash
 # Method 1: Explicit flag
-ssh -A -p 9222 rmanaloto@c24s1.ch2
+ssh -A -p 9222 rmanaloto@c0802s4.ny5
 
 # Method 2: If configured in ~/.ssh/config
-ssh -p 9222 rmanaloto@c24s1.ch2
+ssh -p 9222 rmanaloto@c0802s4.ny5
 \`\`\`
 
 ### Verify in Container:
@@ -328,19 +328,19 @@ Refs: docs/CRITICAL_FINDINGS.md Section 5.1.3"
 ./scripts/deploy_remote_devcontainer.sh
 
 # 5. Verify mount is gone
-ssh -p 9222 rmanaloto@c24s1.ch2 'ls -la ~/.ssh/'
+ssh -p 9222 rmanaloto@c0802s4.ny5 'ls -la ~/.ssh/'
 # Expected: Directory exists (created by sshd feature) but is empty or only has authorized_keys
 
 # 6. Verify agent forwarding required
-ssh -p 9222 rmanaloto@c24s1.ch2 'ssh -T git@github.com'
+ssh -p 9222 rmanaloto@c0802s4.ny5 'ssh -T git@github.com'
 # Expected: Fails if agent not forwarded
 
 # 7. Test with agent forwarding
-ssh -A -p 9222 rmanaloto@c24s1.ch2 'ssh -T git@github.com'
+ssh -A -p 9222 rmanaloto@c0802s4.ny5 'ssh -T git@github.com'
 # Expected: Success
 
 # 8. Test git operations
-ssh -A -p 9222 rmanaloto@c24s1.ch2 << 'EOF'
+ssh -A -p 9222 rmanaloto@c0802s4.ny5 << 'EOF'
 cd ~/workspace
 git status
 # Should work (reads from workspace)
@@ -377,7 +377,7 @@ HOW TO UPDATE YOUR WORKFLOW:
    ssh-add ~/.ssh/id_ed25519
 
 2. Connect with agent forwarding enabled:
-   ssh -A -p 9222 rmanaloto@c24s1.ch2
+   ssh -A -p 9222 rmanaloto@c0802s4.ny5
 
 3. Verify it works:
    ssh -T git@github.com
@@ -488,7 +488,7 @@ git revert <commit>
 
 ```bash
 # Step 1: Create SSH tunnel from Mac
-ssh -L 9222:localhost:9222 rmanaloto@c24s1.ch2 -N -f
+ssh -L 9222:localhost:9222 rmanaloto@c0802s4.ny5 -N -f
 
 # Step 2: Connect to container via localhost
 ssh -p 9222 rmanaloto@localhost
@@ -553,7 +553,7 @@ git revert HEAD
 ./scripts/deploy_remote_devcontainer.sh
 
 # 3. Verify tools work
-ssh -p 9222 rmanaloto@c24s1.ch2 'gh --version && aws --version'
+ssh -p 9222 rmanaloto@c0802s4.ny5 'gh --version && aws --version'
 
 # 4. If successful, remove manual installs from Dockerfile
 # 5. Rebuild and verify again
@@ -682,8 +682,8 @@ workflow_impact:
     status: "NO CHANGE (good)"
 
   - metric: "User steps to connect"
-    before: "1 command: ssh -p 9222 rmanaloto@c24s1.ch2"
-    after: "2 commands: eval $(ssh-agent -s) && ssh-add && ssh -A -p 9222 rmanaloto@c24s1.ch2"
+    before: "1 command: ssh -p 9222 rmanaloto@c0802s4.ny5"
+    after: "2 commands: eval $(ssh-agent -s) && ssh-add && ssh -A -p 9222 rmanaloto@c0802s4.ny5"
     status: "1 extra step (acceptable for security)"
 
   - metric: "Documentation quality"

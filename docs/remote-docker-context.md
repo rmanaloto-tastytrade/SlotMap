@@ -3,7 +3,7 @@
 This document defines the **authoritative** way to build and run the SlotMap devcontainer using a remote Docker engine. All AI agent interactions must follow this document for configuration, build, and run.
 
 ## Goals
-- Build and run the devcontainer on remote x86_64 hosts (e.g., c24s1) via Docker SSH contexts.
+- Build and run the devcontainer on remote x86_64 hosts (e.g., c0802s4) via Docker SSH contexts.
 - Keep the devcontainer user aligned with the developer’s identity (uid/gid) for correct file ownership.
 - Make SSH/Git work inside the container without touching the remote host’s primary `~/.ssh`.
 - Avoid manual SSH sessions; use contexts and scripts to drive remote builds/runs.
@@ -15,9 +15,9 @@ This document defines the **authoritative** way to build and run the SlotMap dev
 - Your SSH keys available on the remote (prefer a dedicated path such as `~/devcontainers/ssh_keys` to avoid overwriting the remote `~/.ssh`).
 
 ## Setup: Docker SSH Context
-Create a context per host (examples: c24s1, c0903s4.ny5, c0802s4.ny5):
+Create a context per host (examples: c0802s4, c0903s4.ny5):
 ```bash
-docker context create c24s1 --docker "host=ssh://<remote-user>@c24s1.ch2"
+docker context create c0802s4 --docker "host=ssh://<remote-user>@c0802s4.ny5"
 docker context create c0903s4 --docker "host=ssh://<remote-user>@c0903s4.ny5"
 docker context create c0802s4 --docker "host=ssh://<remote-user>@c0802s4.ny5"
 ```
@@ -33,23 +33,23 @@ The container user is supplied via the scripts. By default, `deploy_remote_devco
 - If you prefer an agent, run an agent on the remote and mount its socket; forwarding your Mac agent directly to the remote Docker daemon is not supported by default contexts.
 
 ## Workflow (use this)
-1) Ensure remote context exists: `docker context use c24s1` (or set `DOCKER_CONTEXT=c24s1`).
+1) Ensure remote context exists: `docker context use c0802s4` (or set `DOCKER_CONTEXT=c0802s4`).
 2) Run local validations: `./scripts/pre_commit.sh` (fix issues).
 3) Commit and push.
 4) Deploy/rebuild on the remote using the context:
    ```bash
-   ./scripts/deploy_remote_devcontainer.sh --remote-host c24s1.ch2
+   ./scripts/deploy_remote_devcontainer.sh --remote-host c0802s4.ny5
    ```
    This:
    - Pushes current branch.
    - Syncs your local `.ssh` to `~/devcontainers/ssh_keys` on the remote (configurable).
    - Uses the remote Docker engine (via context) to validate/bake/build images and run `devcontainer up`.
-5) Connect: `ssh -i ~/.ssh/id_ed25519 -p 9222 <container-user>@c24s1.ch2` (username = container user, port published by the devcontainer).
+5) Connect: `ssh -i ~/.ssh/id_ed25519 -p 9222 <container-user>@c0802s4.ny5` (username = container user, port published by the devcontainer).
 
 ## Notes & Options
 - Workspace location: recommended to use a remote checkout to avoid slow SSHFS. Default `workspaceFolder` is `/home/${USER}/workspace` (generic). `workspaceMount` binds the repo into that path; `deploy_remote_devcontainer.sh` defaults the host path to `~/dev/devcontainers/workspace` (override with `--remote-workspace`).
 - Volumes: vcpkg downloads cached via a named volume on the remote (`slotmap-vcpkg`). You can add ccache/sccache volumes similarly.
-- Multiple hosts/containers: create distinct contexts (`c24s1`, `c24s2`, …) and per-host workspaces to avoid collisions.
+- Multiple hosts/containers: create distinct contexts (`c0802s4`, `c0903s4`, …) and per-host workspaces to avoid collisions.
 - User identity: set `user.name`/`user.email` inside the container to your desired Git identity.
 - Inbound SSH to the container uses staged public keys from `~/devcontainers/ssh_keys`; outbound SSH/Git uses the mounted keys. Post-deploy, the remote script attempts an SSH login to port 2222 using `id_ed25519` from the synced key cache; if that fails, treat the deploy as suspect and investigate keys/port mapping.
 

@@ -8,21 +8,21 @@
 **Owner:** DevOps
 **Timeline:** Immediate (before any other work)
 
-**Objective:** Update all scripts and configuration to use c0802s4.ny5 instead of c24s1.ch2 to avoid interrupting ongoing work.
+**Objective:** Update all scripts and configuration to use c0802s4.ny5 instead of c0802s4.ny5 to avoid interrupting ongoing work.
 
 **Files Requiring Updates:**
 
 **Critical (Scripts - Default Values):**
 1. `scripts/deploy_remote_devcontainer.sh:33`
-   - Current: `DEFAULT_REMOTE_HOST="${DEFAULT_REMOTE_HOST:-c24s1.ch2}"`
+   - Current: `DEFAULT_REMOTE_HOST="${DEFAULT_REMOTE_HOST:-c0802s4.ny5}"`
    - Update to: `DEFAULT_REMOTE_HOST="${DEFAULT_REMOTE_HOST:-c0802s4.ny5}"`
 
 2. `scripts/test_devcontainer_ssh.sh:22`
-   - Current: `HOST="c24s1.ch2"`
+   - Current: `HOST="c0802s4.ny5"`
    - Update to: `HOST="c0802s4.ny5"`
 
 3. `scripts/test_devcontainer_ssh.sh:126` (help text)
-   - Update example from c24s1.ch2 to c0802s4.ny5
+   - Update example from c0802s4.ny5 to c0802s4.ny5
 
 **Documentation (For Consistency):**
 4. `README.md` - Update examples
@@ -55,14 +55,14 @@ grep "^HOST=" scripts/test_devcontainer_ssh.sh
 ./scripts/test_devcontainer_ssh.sh --host c0802s4.ny5
 
 # 3. Verify documentation consistency
-grep -r "c24s1\.ch2" docs/ README.md CLAUDE.md TEST_BRANCH_README.md
+grep -r "c0802s4\.ny5" docs/ README.md CLAUDE.md TEST_BRANCH_README.md
 ```
 
 **Success Criteria:**
 - ✅ All script defaults point to c0802s4.ny5
 - ✅ Documentation consistently uses c0802s4.ny5 as example
 - ✅ Scripts maintain backward compatibility via flags
-- ✅ No hardcoded references to c24s1.ch2 remain
+- ✅ No hardcoded references to c0802s4.ny5 remain
 
 **Dependencies:** None (blocks all other work)
 **Risk Level:** Low (non-breaking change, flag-based override maintained)

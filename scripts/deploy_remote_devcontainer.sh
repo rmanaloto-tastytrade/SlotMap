@@ -11,7 +11,7 @@ usage() {
 Usage: scripts/deploy_remote_devcontainer.sh [options]
 
 Options:
-  --remote-host <host>       Remote SSH host (default: c24s1.ch2)
+  --remote-host <host>       Remote SSH host (default: c0802s4.ny5)
   --remote-user <user>       Remote SSH user (default: current user)
   --ssh-key <path>           Local public key to copy (default: ~/.ssh/id_ed25519.pub)
   --remote-key-cache <path>  Remote key cache dir (default: ~/macbook_ssh_keys)
@@ -29,7 +29,7 @@ USAGE
 die(){ echo "Error: $*" >&2; exit 1; }
 
 LOCAL_USER="$(id -un)"
-DEFAULT_REMOTE_HOST="${DEFAULT_REMOTE_HOST:-c24s1.ch2}"
+DEFAULT_REMOTE_HOST="${DEFAULT_REMOTE_HOST:-c0802s4.ny5}"
 REMOTE_HOST="$DEFAULT_REMOTE_HOST"
 REMOTE_USER="rmanaloto"
 SSH_KEY_PATH="$HOME/.ssh/id_ed25519.pub"

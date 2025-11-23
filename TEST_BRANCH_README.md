@@ -52,7 +52,7 @@ rsync -avn \
 ### Option 2: Full Deployment Test (Remote Host Required)
 
 **Prerequisites:**
-- Access to remote host (c24s1.ch2)
+- Access to remote host (c0802s4.ny5)
 - SSH key for remote host
 - git push access to test branch
 
@@ -64,7 +64,7 @@ cd /Users/ray.manaloto@tastytrade.com/dev/github/SergeyMakeev/SlotMap-security-t
 git push origin security-fixes-phase1
 
 # 2. On remote host, update repo
-ssh rmanaloto@c24s1.ch2 << 'EOF'
+ssh rmanaloto@c0802s4.ny5 << 'EOF'
 cd ~/dev/github/SlotMap
 git fetch origin
 git checkout security-fixes-phase1
@@ -75,18 +75,18 @@ EOF
 ./scripts/deploy_remote_devcontainer.sh
 
 # 4. Verify private keys NOT synced
-ssh rmanaloto@c24s1.ch2 'ls -la ~/devcontainers/ssh_keys/'
+ssh rmanaloto@c0802s4.ny5 'ls -la ~/devcontainers/ssh_keys/'
 # Expected: ONLY .pub files, config, known_hosts
 # If you see id_ed25519 (no .pub) - FIX DID NOT WORK
 
 # 5. Verify container still works
-ssh -i ~/.ssh/id_ed25519 -p 9222 rmanaloto@c24s1.ch2 'echo SUCCESS'
+ssh -i ~/.ssh/id_ed25519 -p 9222 rmanaloto@c0802s4.ny5 'echo SUCCESS'
 
 # 6. Test SSH agent forwarding
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_ed25519
 
-ssh -A -p 9222 rmanaloto@c24s1.ch2 << 'EOF'
+ssh -A -p 9222 rmanaloto@c0802s4.ny5 << 'EOF'
 echo "[test] Checking agent availability"
 if ssh-add -l; then
     echo "[test] SUCCESS: Agent is forwarded"

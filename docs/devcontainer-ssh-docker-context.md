@@ -3,13 +3,13 @@
 This note explains how to make SSH into the devcontainer work when the container runs on a remote Docker engine via SSH context. All agents (Codex, Gemini, Cursor, Copilot, Grok, etc.) must follow this when configuring/building/running the devcontainer.
 
 ## Goals
-- Container runs on a remote host (e.g., `c24s1.ch2`) via Docker SSH context.
+- Container runs on a remote host (e.g., `c0802s4.ny5`) via Docker SSH context.
 - Container user = remote host user (`rmanaloto` by default), so file ownership matches the host filesystem.
 - SSH access into the container on published port 9222 using the developer’s keys without touching the host’s primary `~/.ssh`.
 
 ## Required steps
 1) **Docker context**  
-   - Ensure a Docker SSH context exists for the host: `docker context create c24s1 --docker "host=ssh://<remote-user>@c24s1.ch2"` (per-host contexts).
+   - Ensure a Docker SSH context exists for the host: `docker context create c0802s4 --docker "host=ssh://<remote-user>@c0802s4.ny5"` (per-host contexts).
    - Use/export `DOCKER_CONTEXT=<context>` when invoking the scripts.
 
 2) **Workspace and SSH mount paths (remote host)**  
@@ -25,11 +25,11 @@ This note explains how to make SSH into the devcontainer work when the container
 
 5) **Ports**  
    - devcontainer publishes container port 2222 as host port 9222 (see `.devcontainer/devcontainer.json` feature `sshd`).
-   - Inbound SSH from your machine: `ssh -i ~/.ssh/id_ed25519 -p 9222 <container-user>@c24s1.ch2`.
+   - Inbound SSH from your machine: `ssh -i ~/.ssh/id_ed25519 -p 9222 <container-user>@c0802s4.ny5`.
    - Scripts’ self-test now targets port 9222.
 
 6) **Host key changes**  
-   - Because the container is rebuilt, its SSH host key changes. If you see “REMOTE HOST IDENTIFICATION HAS CHANGED” on your Mac, remove the old entry: `ssh-keygen -R [c24s1.ch2]:9222`.
+   - Because the container is rebuilt, its SSH host key changes. If you see “REMOTE HOST IDENTIFICATION HAS CHANGED” on your Mac, remove the old entry: `ssh-keygen -R [c0802s4.ny5]:9222`.
 
 7) **Client config gotcha (UseKeychain)**  
    - The mounted `~/.ssh/config` from macOS may include `UseKeychain` directives, which OpenSSH inside Linux does not understand. If outbound SSH **from inside the container** is needed, guard macOS-only options (e.g., wrap in `Match exec "uname | grep -q Darwin"`) or provide a Linux-safe config.
@@ -45,6 +45,6 @@ This note explains how to make SSH into the devcontainer work when the container
 - `.devcontainer/scripts/post_create.sh` — installs authorized_keys from `${workspace}/.devcontainer/ssh` and runs CMake preset.
 
 ## Quick verification
-1) From your Mac: `ssh -i ~/.ssh/id_ed25519 -p 9222 rmanaloto@c24s1.ch2` (remove stale host key if prompted).
+1) From your Mac: `ssh -i ~/.ssh/id_ed25519 -p 9222 rmanaloto@c0802s4.ny5` (remove stale host key if prompted).
 2) On the remote host: `ssh -i /home/<user>/devcontainers/ssh_keys/id_ed25519 -p 9222 <user>@localhost`.
 3) Inside the container (if needed): ensure `~/.ssh/authorized_keys` contains your pubkey and that `sshd` is running (`ps -ef | grep sshd`).

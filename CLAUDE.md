@@ -135,7 +135,7 @@ This design avoids dynamic memory allocation and provides O(1) insertion and rem
 ./scripts/deploy_remote_devcontainer.sh
 
 # Connect to remote devcontainer
-ssh -i ~/.ssh/id_ed25519 -p 9222 <remote-username>@c24s1.ch2
+ssh -i ~/.ssh/id_ed25519 -p 9222 <remote-username>@c0802s4.ny5
 ```
 
 See `docs/remote-devcontainer.md` for troubleshooting and cleanup commands.

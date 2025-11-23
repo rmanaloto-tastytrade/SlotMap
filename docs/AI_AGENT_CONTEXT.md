@@ -18,7 +18,7 @@ local_machine:
   public_key: "~/.ssh/id_ed25519.pub"
 
 remote_host:
-  hostname: "c24s1.ch2"
+  hostname: "c0802s4.ny5"
   os: "Ubuntu 24.04"
   user: "rmanaloto"
   canonical_repo: "~/dev/github/SlotMap"
@@ -276,7 +276,7 @@ change_3_bind_port_to_localhost:
   requires_tunnel: true
   old: "\"runArgs\": [\"-p\", \"9222:2222\"]"
   new: "\"runArgs\": [\"-p\", \"127.0.0.1:9222:2222\"]"
-  additional_step: "ssh -L 9222:localhost:9222 rmanaloto@c24s1.ch2 -N -f"
+  additional_step: "ssh -L 9222:localhost:9222 rmanaloto@c0802s4.ny5 -N -f"
   rollback: "revert commit, re-run deploy"
 ```
 
@@ -418,7 +418,7 @@ ls -la ~/.ssh/id_ed25519 ~/.ssh/id_ed25519.pub
 # Expected: Both files exist with -rw------- and -rw-r--r-- permissions
 
 # 3. Test remote host connectivity
-ssh rmanaloto@c24s1.ch2 'echo REMOTE_OK'
+ssh rmanaloto@c0802s4.ny5 'echo REMOTE_OK'
 # Expected output: REMOTE_OK
 # If connection fails: STOP - check SSH config/keys
 ```
@@ -427,23 +427,23 @@ ssh rmanaloto@c24s1.ch2 'echo REMOTE_OK'
 
 ```bash
 # 1. Container is running
-ssh rmanaloto@c24s1.ch2 'docker ps --filter label=devcontainer.local_folder --format "{{.Status}}"'
+ssh rmanaloto@c0802s4.ny5 'docker ps --filter label=devcontainer.local_folder --format "{{.Status}}"'
 # Expected: Up X minutes/hours
 
 # 2. SSH to container works
-ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 9222 rmanaloto@c24s1.ch2 'echo CONTAINER_OK'
+ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 9222 rmanaloto@c0802s4.ny5 'echo CONTAINER_OK'
 # Expected output: CONTAINER_OK
 
 # 3. Tools are available
-ssh -p 9222 rmanaloto@c24s1.ch2 'clang++-21 --version && cmake --version && ninja --version'
+ssh -p 9222 rmanaloto@c0802s4.ny5 'clang++-21 --version && cmake --version && ninja --version'
 # Expected: Version output for all three tools
 
 # 4. Workspace is writable
-ssh -p 9222 rmanaloto@c24s1.ch2 'test -w ~/workspace && echo WORKSPACE_OK'
+ssh -p 9222 rmanaloto@c0802s4.ny5 'test -w ~/workspace && echo WORKSPACE_OK'
 # Expected output: WORKSPACE_OK
 
 # 5. GitHub SSH works (if agent configured)
-ssh -p 9222 rmanaloto@c24s1.ch2 'ssh -T git@github.com 2>&1 | head -1'
+ssh -p 9222 rmanaloto@c0802s4.ny5 'ssh -T git@github.com 2>&1 | head -1'
 # Expected: Hi <username>! You've successfully authenticated...
 ```
 
@@ -457,7 +457,7 @@ ssh -p 9222 rmanaloto@c24s1.ch2 'ssh -T git@github.com 2>&1 | head -1'
 error_message: "Host key verification failed"
 cause: "Container recreated, host key changed"
 solution:
-  command: "ssh-keygen -R \"[c24s1.ch2]:9222\" -f ~/.ssh/known_hosts"
+  command: "ssh-keygen -R \"[c0802s4.ny5]:9222\" -f ~/.ssh/known_hosts"
   explanation: "Removes old container host key"
   alternative: "Use -o StrictHostKeyChecking=no (less secure)"
 ```
@@ -468,8 +468,8 @@ solution:
 error_message: "Permission denied (publickey)"
 cause: "Public key not in container's authorized_keys"
 check_steps:
-  - "ssh rmanaloto@c24s1.ch2 'cat ~/devcontainers/ssh_keys/*.pub'"
-  - "ssh -p 9222 rmanaloto@c24s1.ch2 'cat ~/.ssh/authorized_keys'"
+  - "ssh rmanaloto@c0802s4.ny5 'cat ~/devcontainers/ssh_keys/*.pub'"
+  - "ssh -p 9222 rmanaloto@c0802s4.ny5 'cat ~/.ssh/authorized_keys'"
 solution:
   command: "./scripts/deploy_remote_devcontainer.sh"
   explanation: "Re-runs deployment, re-injects keys"
@@ -480,7 +480,7 @@ solution:
 ```yaml
 error_message: "bind: address already in use"
 cause: "Port 9222 already bound by another container/process"
-check_command: "ssh rmanaloto@c24s1.ch2 'docker ps' && netstat -an | grep 9222"
+check_command: "ssh rmanaloto@c0802s4.ny5 'docker ps' && netstat -an | grep 9222"
 solution:
   - "Stop old container: docker stop <container_id>"
   - "Or: Change port in devcontainer.json and deploy script"
@@ -555,10 +555,10 @@ definition_of_done:
   - rsync_excludes: ["*"]
   - dry_run_test: "rsync -avn --include='*.pub' --exclude='*' ~/.ssh/ /tmp/test/"
   - actual_deploy: "./scripts/deploy_remote_devcontainer.sh"
-  - validation: "ssh rmanaloto@c24s1.ch2 'ls -la ~/devcontainers/ssh_keys/'"
+  - validation: "ssh rmanaloto@c0802s4.ny5 'ls -la ~/devcontainers/ssh_keys/'"
   - expected_files: ["id_ed25519.pub", "config", "known_hosts"]
   - prohibited_files: ["id_ed25519", "id_rsa", "id_ecdsa"]
-  - connection_still_works: "ssh -p 9222 rmanaloto@c24s1.ch2 'echo OK'"
+  - connection_still_works: "ssh -p 9222 rmanaloto@c0802s4.ny5 'echo OK'"
 ```
 
 ### Task: Add SSH Agent Forwarding Support
@@ -572,7 +572,7 @@ definition_of_done:
   - test_with_agent:
       - "eval \"$(ssh-agent -s)\""
       - "ssh-add ~/.ssh/id_ed25519"
-      - "ssh -A -p 9222 rmanaloto@c24s1.ch2 'ssh -T git@github.com'"
+      - "ssh -A -p 9222 rmanaloto@c0802s4.ny5 'ssh -T git@github.com'"
   - test_without_agent:
       - "Prints warning message"
       - "Skips GitHub test gracefully"

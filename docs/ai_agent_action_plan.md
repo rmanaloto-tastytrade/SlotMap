@@ -126,6 +126,6 @@ For any changes made:
 
 ## Shared Knowledge
 
-* **Remote Host:** `c24s1.ch2` (example).
+* **Remote Host:** `c0802s4.ny5` (example).
 * **Remote User:** `rmanaloto` (or current user).
 * **SSH Port:** 9222 (Container), 22 (Host).

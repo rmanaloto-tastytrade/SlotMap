@@ -35,7 +35,7 @@ C4Context
         System(ssh, "SSH Client", "OpenSSH")
     }
 
-    System_Boundary(remote, "Remote Host (c24s1.ch2)") {
+    System_Boundary(remote, "Remote Host (c0802s4.ny5)") {
         System(docker, "Docker Daemon", "Container runtime")
         System(repo, "Git Repository", "Canonical source")
 
@@ -72,7 +72,7 @@ graph TB
         V[vcpkg Registry]
     end
 
-    subgraph "Remote Host: c24s1.ch2"
+    subgraph "Remote Host: c0802s4.ny5"
         D[SSH Server :22]
         E[Docker Daemon]
         F[~/dev/github/SlotMap 📁]
@@ -112,7 +112,7 @@ sequenceDiagram
     actor Dev as Developer (Mac)
     participant Local as Local Git
     participant Deploy as deploy_remote_devcontainer.sh
-    participant Remote as Remote Host (c24s1)
+    participant Remote as Remote Host (c0802s4)
     participant RemoteGit as Remote Git Repo
     participant RunScript as run_local_devcontainer.sh
     participant Docker as Docker/BuildKit
@@ -339,7 +339,7 @@ gantt
 sequenceDiagram
     participant Mac as Mac SSH Client
     participant PrivKey as ~/.ssh/id_ed25519
-    participant Host as c24s1.ch2 SSH Server
+    participant Host as c0802s4.ny5 SSH Server
     participant AuthKeys as ~/.ssh/authorized_keys
 
     Note over Mac,Host: Connection Phase
@@ -384,14 +384,14 @@ sequenceDiagram
 sequenceDiagram
     participant Mac as Mac SSH Client<br/>(port 12345)
     participant PrivKey as ~/.ssh/id_ed25519
-    participant HostNet as c24s1.ch2:9222
+    participant HostNet as c0802s4.ny5:9222
     participant DockerProxy as Docker Proxy
     participant Container as Container:2222
     participant ContainerSSHD as Container sshd
     participant ContainerAuth as Container<br/>~/.ssh/authorized_keys
 
     Note over Mac,Container: Network Routing
-    Mac->>HostNet: TCP SYN to c24s1.ch2:9222
+    Mac->>HostNet: TCP SYN to c0802s4.ny5:9222
     HostNet->>DockerProxy: iptables DNAT rule<br/>→ 172.17.0.x:2222
     DockerProxy->>Container: Forward to container:2222
     Container->>ContainerSSHD: sshd receives connection
@@ -475,7 +475,7 @@ sequenceDiagram
     participant GitHub as GitHub SSH Server
 
     Note over Mac,Container: Setup: SSH Connection with Agent Forwarding
-    Mac->>SSHTunnel: ssh -A -p 9222 rmanaloto@c24s1.ch2
+    Mac->>SSHTunnel: ssh -A -p 9222 rmanaloto@c0802s4.ny5
     SSHTunnel->>Container: Establish connection
     SSHTunnel->>Container: Forward SSH_AUTH_SOCK<br/>→ /tmp/ssh-agent.socket
     Container->>Container: export SSH_AUTH_SOCK=/tmp/ssh-agent.socket
@@ -512,7 +512,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant RemoteHost as Remote Host<br/>(c24s1.ch2)
+    participant RemoteHost as Remote Host<br/>(c0802s4.ny5)
     participant HostAgent as ssh-agent (Host)<br/>/run/user/1000/ssh-agent.sock
     participant HostKey as Host Private Key<br/>~/. ssh/id_ed25519_deploy
     participant BindMount as Bind Mount<br/>(host sock → container)
@@ -573,7 +573,7 @@ graph LR
         A[Mac<br/>192.168.1.100:12345]
     end
 
-    subgraph "Remote Host: c24s1.ch2"
+    subgraph "Remote Host: c0802s4.ny5"
         B[eth0<br/>192.168.1.50]
         C[iptables<br/>DNAT Rule]
         D[docker0 Bridge<br/>172.17.0.1]
@@ -634,7 +634,7 @@ graph TB
 
 ```mermaid
 graph TD
-    A[Internet] -->|"Firewall:<br/>Allow SSH (22, 9222)"| B[c24s1.ch2 eth0]
+    A[Internet] -->|"Firewall:<br/>Allow SSH (22, 9222)"| B[c0802s4.ny5 eth0]
 
     B --> C{iptables<br/>Rules}
 

@@ -36,7 +36,7 @@ flowchart TD
    - `shellcheck --severity=warning scripts/*.sh` to lint helper scripts.
 2. Only commit/push after these pass. If any fail, fix locally first.
 3. Push and watch GitHub Actions (linters/validators) until they go green. Do not trigger the remote rebuild until CI is clean.
-4. After CI is green, run `./scripts/deploy_remote_devcontainer.sh --remote-host c24s1.ch2` (and `--remote-user` if needed) to rebuild the devcontainer on the remote host.
+4. After CI is green, run `./scripts/deploy_remote_devcontainer.sh --remote-host c0802s4.ny5` (and `--remote-user` if needed) to rebuild the devcontainer on the remote host.
 
 ### Detailed Steps
 1. **Local machine (Mac)**  
@@ -58,7 +58,7 @@ flowchart TD
    - The deploy script logs output under `logs/deploy_remote_devcontainer_<timestamp>.log` for later review.
 
 4. **Connecting from the laptop**  
-   - After the script reports success, connect with `ssh -i ~/.ssh/id_ed25519 -p 9222 <remote-username>@c24s1.ch2`. The username equals the Linux account on the host because build args set the devcontainer user accordingly.  
+   - After the script reports success, connect with `ssh -i ~/.ssh/id_ed25519 -p 9222 <remote-username>@c0802s4.ny5`. The username equals the Linux account on the host because build args set the devcontainer user accordingly.  
    - CLion or VS Code can reuse the same host/port if they prefer direct SSH.
    - GitHub SSH from inside the container uses port 443 (Host github.com -> ssh.github.com:443) to avoid egress blocks on port 22.
 

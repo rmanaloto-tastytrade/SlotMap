@@ -72,14 +72,14 @@ SSH_SYNC_SOURCE="${SSH_SYNC_SOURCE:-"$HOME/.ssh/"}"
 2. Configure SSH forwarding:
    ```bash
    # ~/.ssh/config
-   Host c24s1.ch2
+   Host c0802s4.ny5
        ForwardAgent yes
        IdentityFile ~/.ssh/id_ed25519
    ```
 
 3. Connect with forwarding:
    ```bash
-   ssh -A -p 9222 rmanaloto@c24s1.ch2
+   ssh -A -p 9222 rmanaloto@c0802s4.ny5
    ```
 
 4. Verify in container:
@@ -115,7 +115,7 @@ SSH_SYNC_SOURCE="${SSH_SYNC_SOURCE:-"$HOME/.ssh/"}"
 **Why It Breaks:**
 ```
 Mac's SSH_AUTH_SOCK: /var/folders/abc/ssh-agent.123 (local Mac path)
-Docker Host: c24s1.ch2 (doesn't have /var/folders/abc/)
+Docker Host: c0802s4.ny5 (doesn't have /var/folders/abc/)
 Result: Mount fails, SSH_AUTH_SOCK points to non-existent socket
 ```
 
@@ -197,7 +197,7 @@ ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_github -C "GitHub operations"
 
 # Configure SSH
 # ~/.ssh/config
-Host c24s1.ch2
+Host c0802s4.ny5
     IdentityFile ~/.ssh/id_ed25519_remote
 
 Host github.com
@@ -250,7 +250,7 @@ Exposes port on all interfaces (0.0.0.0)
 
 Then use SSH tunnel from Mac:
 ```bash
-ssh -L 9222:localhost:9222 rmanaloto@c24s1.ch2 -N -f
+ssh -L 9222:localhost:9222 rmanaloto@c0802s4.ny5 -N -f
 ssh -p 9222 rmanaloto@localhost  # Connects to container
 ```
 
@@ -344,7 +344,7 @@ Remote Host:
 **Running CLI locally breaks this:**
 ```bash
 # From Mac:
-devcontainer up --workspace-folder . --docker-host ssh://rmanaloto@c24s1.ch2
+devcontainer up --workspace-folder . --docker-host ssh://rmanaloto@c0802s4.ny5
 
 # Problem 1: Uploads local workspace over SSH
 # Problem 2: No sandbox - container uses canonical repo directly
@@ -578,7 +578,7 @@ eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_ed25519
 
 # Connect with forwarding
-ssh -A -p 9222 rmanaloto@c24s1.ch2
+ssh -A -p 9222 rmanaloto@c0802s4.ny5
 
 # In container, verify
 echo $SSH_AUTH_SOCK  # Should show socket path
@@ -597,7 +597,7 @@ ssh -T git@github.com  # Should authenticate
 
 #### Step 2.1: Setup ssh-agent on Remote Host
 
-**File:** Create `~/.config/systemd/user/ssh-agent.service` on c24s1.ch2
+**File:** Create `~/.config/systemd/user/ssh-agent.service` on c0802s4.ny5
 
 ```ini
 [Unit]
@@ -688,7 +688,7 @@ ssh -T git@github.com  # Should authenticate
 
 **Requires:** SSH tunnel from Mac:
 ```bash
-ssh -L 9222:localhost:9222 rmanaloto@c24s1.ch2 -N -f
+ssh -L 9222:localhost:9222 rmanaloto@c0802s4.ny5 -N -f
 ```
 
 #### Improvement 2: Replace gh CLI with Feature
@@ -740,25 +740,25 @@ ssh -L 9222:localhost:9222 rmanaloto@c24s1.ch2 -N -f
 
 2. **SSH Test:**
    ```bash
-   ssh -i ~/.ssh/id_ed25519 -p 9222 rmanaloto@c24s1.ch2 'echo SSH_OK'
+   ssh -i ~/.ssh/id_ed25519 -p 9222 rmanaloto@c0802s4.ny5 'echo SSH_OK'
    # Should print: SSH_OK
    ```
 
 3. **Tools Test:**
    ```bash
-   ssh -p 9222 rmanaloto@c24s1.ch2 'clang++-21 --version && cmake --version'
+   ssh -p 9222 rmanaloto@c0802s4.ny5 'clang++-21 --version && cmake --version'
    # Should print version numbers
    ```
 
 4. **GitHub Test:**
    ```bash
-   ssh -p 9222 rmanaloto@c24s1.ch2 'ssh -T git@github.com'
+   ssh -p 9222 rmanaloto@c0802s4.ny5 'ssh -T git@github.com'
    # Should print: Hi <username>! You've successfully authenticated
    ```
 
 5. **Build Test:**
    ```bash
-   ssh -p 9222 rmanaloto@c24s1.ch2 'cd ~/workspace && cmake --preset clang-debug'
+   ssh -p 9222 rmanaloto@c0802s4.ny5 'cd ~/workspace && cmake --preset clang-debug'
    # Should configure successfully
    ```
 
@@ -767,7 +767,7 @@ ssh -L 9222:localhost:9222 rmanaloto@c24s1.ch2 -N -f
 **If anything breaks:**
 ```bash
 # 1. Stop broken container
-ssh rmanaloto@c24s1.ch2 'docker stop $(docker ps -q --filter label=devcontainer.local_folder)'
+ssh rmanaloto@c0802s4.ny5 'docker stop $(docker ps -q --filter label=devcontainer.local_folder)'
 
 # 2. Revert git changes
 git revert HEAD  # Or: git reset --hard backup-branch
@@ -835,7 +835,7 @@ git merge security-fixes-test
 
 ```bash
 # If system is completely broken:
-ssh rmanaloto@c24s1.ch2 << 'EOF'
+ssh rmanaloto@c0802s4.ny5 << 'EOF'
 # Stop all containers
 docker stop $(docker ps -aq)
 docker rm $(docker ps -aq)

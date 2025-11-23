@@ -2,14 +2,14 @@
 set -euo pipefail
 
 # Verbose SSH connectivity test to the devcontainer exposed on a remote host.
-# Defaults match our current flow (c24s1.ch2:9222, user rmanaloto, key ~/.ssh/id_ed25519).
+# Defaults match our current flow (c0802s4.ny5:9222, user rmanaloto, key ~/.ssh/id_ed25519).
 
 usage() {
   cat <<'USAGE'
 Usage: scripts/test_devcontainer_ssh.sh [options]
 
 Options:
-  --host <hostname>        Remote host (default: c24s1.ch2)
+  --host <hostname>        Remote host (default: c0802s4.ny5)
   --port <port>            Remote SSH port (default: 9222)
   --user <username>        SSH username (default: rmanaloto)
   --key <path>             Private key path (default: ~/.ssh/id_ed25519)
@@ -19,7 +19,7 @@ Options:
 USAGE
 }
 
-HOST="c24s1.ch2"
+HOST="c0802s4.ny5"
 PORT="9222"
 USER_NAME="rmanaloto"
 KEY_PATH="$HOME/.ssh/id_ed25519"
@@ -123,7 +123,7 @@ else
   echo "[ssh-remote] WARNING: No SSH agent available"
   echo "[ssh-remote] INFO: For secure GitHub access, use SSH agent forwarding:"
   echo "[ssh-remote]   1. On Mac: eval \"\$(ssh-agent -s)\" && ssh-add ~/.ssh/id_ed25519"
-  echo "[ssh-remote]   2. Connect with: ssh -A -p 9222 rmanaloto@c24s1.ch2"
+  echo "[ssh-remote]   2. Connect with: ssh -A -p 9222 rmanaloto@c0802s4.ny5"
   echo "[ssh-remote] Skipping GitHub SSH test (agent forwarding not configured)"
 fi
 exit $failed

@@ -32,7 +32,7 @@ This repository hosts the policy-driven rewrite of Sergey Makeev's SlotMap conta
 See `docs/remote-devcontainer.md` for the end-to-end diagram and detailed instructions. In short:
 - Run `./scripts/deploy_remote_devcontainer.sh` from your laptop. It pushes the current branch, copies your `.pub` key to the remote cache, and triggers `run_local_devcontainer.sh` on the host.
 - The remote script rebuilds the sandbox (`~/dev/devcontainers/SlotMap`), stages your keys under `.devcontainer/ssh/`, and runs `devcontainer up --remove-existing-container`.
-- Container port `2222` is published as host `9222`, so you can connect directly with `ssh -i ~/.ssh/id_ed25519 -p 9222 <remote-username>@c24s1.ch2` (the devcontainer user equals the remote host account) once the deploy finishes.
+- Container port `2222` is published as host `9222`, so you can connect directly with `ssh -i ~/.ssh/id_ed25519 -p 9222 <remote-username>@c0802s4.ny5` (the devcontainer user equals the remote host account) once the deploy finishes.
 
 Troubleshooting tips, cleanup commands, and logging locations are captured in the doc so multiple developers can share the same remote workflow safely.
 
