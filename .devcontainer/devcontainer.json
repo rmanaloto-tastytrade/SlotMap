@@ -16,7 +16,8 @@
     "VCPKG_OVERLAY_PORTS": "${containerWorkspaceFolder}/vcpkg-overlays/cib/ports:${containerWorkspaceFolder}/vcpkg-overlays/stdx/ports:${containerWorkspaceFolder}/vcpkg-overlays/qlibs/ports:${containerWorkspaceFolder}/vcpkg-overlays/boost-ext/ports",
     "DEVCONTAINER_USER": "${localEnv:DEVCONTAINER_USER:-slotmap}",
     "MRDOCS_EXECUTABLE": "/opt/mrdocs/bin/mrdocs",
-    "CMAKE_PROGRAM_PATH": "/opt/mrdocs/bin"
+    "CMAKE_PROGRAM_PATH": "/opt/mrdocs/bin",
+    "PATH": "${containerEnv:PATH}:/opt/mrdocs/bin"
   },
   "mounts": [
     "source=slotmap-vcpkg,target=/opt/vcpkg/downloads,type=volume",
