@@ -63,11 +63,33 @@ ensure_devcontainer_cli() {
     exit 1
   fi
 
-  # Try npm install, but warn if it fails (likely permission issue)
-  if ! npm install -g "@devcontainers/cli@${DEVCONTAINER_CLI_VERSION}" 2>/dev/null; then
-    echo "[remote] WARNING: Failed to upgrade devcontainer CLI (likely permission issue)"
-    echo "[remote] To fix: Run 'sudo npm install -g @devcontainers/cli@${DEVCONTAINER_CLI_VERSION}' on the remote host"
-    echo "[remote] Or set SKIP_DEVCONTAINER_UPGRADE=1 to skip this check"
+  # Check npm configuration and permissions
+  local npm_prefix
+  npm_prefix="$(npm config get prefix)"
+  echo "[remote] npm global prefix: $npm_prefix"
+  echo "[remote] npm user: $(whoami)"
+
+  # Check if we can write to npm's global directory
+  if [[ ! -w "$npm_prefix/lib/node_modules" ]]; then
+    echo "[remote] WARNING: Cannot write to $npm_prefix/lib/node_modules"
+    echo "[remote] Setting up user-level npm prefix..."
+    npm config set prefix "$HOME/.npm-global"
+    mkdir -p "$HOME/.npm-global/bin"
+    export PATH="$HOME/.npm-global/bin:$PATH"
+    echo "[remote] npm prefix changed to: $(npm config get prefix)"
+  fi
+
+  echo "[remote] Attempting to install @devcontainers/cli@${DEVCONTAINER_CLI_VERSION}..."
+
+  # Try npm install with verbose output
+  if ! npm install -g "@devcontainers/cli@${DEVCONTAINER_CLI_VERSION}"; then
+    echo "[remote] WARNING: Failed to upgrade devcontainer CLI"
+    echo "[remote] The npm install command tried to write to: $(npm config get prefix)/lib/node_modules"
+    echo "[remote] Current user $(whoami) may not have write permissions there"
+    echo "[remote] Options to fix:"
+    echo "[remote]   1. Configure npm to use user directory: npm config set prefix '~/.npm-global'"
+    echo "[remote]   2. Use npx instead: npx @devcontainers/cli@${DEVCONTAINER_CLI_VERSION}"
+    echo "[remote]   3. Set SKIP_DEVCONTAINER_UPGRADE=1 to skip this check"
     echo "[remote] Continuing with existing version..."
     return 0
   fi
