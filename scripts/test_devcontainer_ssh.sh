@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Verbose SSH connectivity test to the devcontainer exposed on a remote host.
-# Defaults match our current flow (c0802s4.ny5:9222, user rmanaloto, key ~/.ssh/id_ed25519).
+# Defaults match our current flow (c0802s4.ny5:9222, dynamic user detection, key ~/.ssh/id_ed25519).
 
 usage() {
   cat <<'USAGE'
@@ -11,7 +11,7 @@ Usage: scripts/test_devcontainer_ssh.sh [options]
 Options:
   --host <hostname>        Remote host (default: c0802s4.ny5)
   --port <port>            Remote SSH port (default: 9222)
-  --user <username>        SSH username (default: rmanaloto)
+  --user <username>        SSH username (default: git config or current user)
   --key <path>             Private key path (default: ~/.ssh/id_ed25519)
   --known-hosts <path>     Known hosts file (default: ~/.ssh/known_hosts)
   --clear-known-host       Remove existing host key entry for [host]:[port] before testing
@@ -21,7 +21,7 @@ USAGE
 
 HOST="c0802s4.ny5"
 PORT="9222"
-USER_NAME="rmanaloto"
+USER_NAME=""  # Will be dynamically determined or can be overridden with --user
 KEY_PATH="$HOME/.ssh/id_ed25519"
 KNOWN_HOSTS_FILE="$HOME/.ssh/known_hosts"
 CLEAR_KNOWN_HOST=0
@@ -38,6 +38,20 @@ while [[ $# -gt 0 ]]; do
     *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
   esac
 done
+
+# Dynamically determine username if not provided
+if [[ -z "$USER_NAME" ]]; then
+  # Try git config first
+  CONFIG_REMOTE_USER="$(git config --get slotmap.remoteUser 2>/dev/null || true)"
+  if [[ -n "$CONFIG_REMOTE_USER" ]]; then
+    USER_NAME="$CONFIG_REMOTE_USER"
+  else
+    # Fall back to current user
+    USER_NAME="$(id -un)"
+    # Strip domain if present (e.g., user@domain -> user)
+    USER_NAME="${USER_NAME%%@*}"
+  fi
+fi
 
 [[ -f "$KEY_PATH" ]] || { echo "[ssh-test] ERROR: key not found: $KEY_PATH" >&2; exit 1; }
 
@@ -123,7 +137,7 @@ else
   echo "[ssh-remote] WARNING: No SSH agent available"
   echo "[ssh-remote] INFO: For secure GitHub access, use SSH agent forwarding:"
   echo "[ssh-remote]   1. On Mac: eval \"\$(ssh-agent -s)\" && ssh-add ~/.ssh/id_ed25519"
-  echo "[ssh-remote]   2. Connect with: ssh -A -p 9222 rmanaloto@c0802s4.ny5"
+  echo "[ssh-remote]   2. Connect with: ssh -A -p $PORT $USER_NAME@$HOST"
   echo "[ssh-remote] Skipping GitHub SSH test (agent forwarding not configured)"
 fi
 exit $failed

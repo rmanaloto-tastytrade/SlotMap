@@ -31,7 +31,7 @@ die(){ echo "Error: $*" >&2; exit 1; }
 LOCAL_USER="$(id -un)"
 DEFAULT_REMOTE_HOST="${DEFAULT_REMOTE_HOST:-c0802s4.ny5}"
 REMOTE_HOST="$DEFAULT_REMOTE_HOST"
-REMOTE_USER="rmanaloto"
+REMOTE_USER=""  # Will be dynamically determined from git config or current user
 SSH_KEY_PATH="$HOME/.ssh/id_ed25519.pub"
 REMOTE_PORT="${REMOTE_PORT:-9222}"
 REMOTE_KEY_CACHE=""
