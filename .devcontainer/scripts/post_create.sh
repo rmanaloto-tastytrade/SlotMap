@@ -48,6 +48,8 @@ fi
   echo "  Port 443"
   echo "  User git"
   echo "  CanonicalizeHostname no  # avoid company DNS suffixes (e.g., github.com.tastyworks.com)"
+  echo "  StrictHostKeyChecking accept-new  # allow first connect to add host key without interactivity"
+  echo "  UserKnownHostsFile ~/.ssh/known_hosts"
 } >> "$SSH_CONFIG_FILE"
 chmod 600 "$SSH_CONFIG_FILE"
 

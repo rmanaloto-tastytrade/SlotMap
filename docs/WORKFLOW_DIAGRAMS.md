@@ -1,8 +1,10 @@
 # Workflow Diagrams: Remote Devcontainer System
 
-**Last Updated:** 2025-01-22
+**Last Updated:** 2025-01-23
 **Purpose:** Visual documentation of all workflows, protocols, and data flows
 **Format:** Mermaid diagrams (renderable in GitHub, IDEs, and documentation systems)
+
+> Update (2025-01-23): Mac private keys are no longer copied to the remote host or container. The devcontainer uses the remote host user (`rmanaloto`), stages only host `~/.ssh/*.pub` for `authorized_keys`, and relies on the host SSH agent (with port 443 fallback to ssh.github.com) for outbound GitHub SSH. Diagrams that show `~/devcontainers/ssh_keys` reflect the legacy flow.
 
 ---
 

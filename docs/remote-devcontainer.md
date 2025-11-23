@@ -5,7 +5,8 @@ This document describes how the SlotMap devcontainer is deployed on a shared Lin
 ### Goals
 - Keep `/home/<user>/dev/github/SlotMap` as a clean clone that mirrors Git history.
 - Build and run the devcontainer in a sandbox (`~/dev/devcontainers/SlotMap`) that is recreated on every deployment.
-- Stage Mac public keys on the remote host (`~/macbook_ssh_keys`) so SSH access to the container can be automated without committing keys to the repo.
+- Use the remote host user (`rmanaloto`) as the devcontainer user (UID/GID aligned with host).
+- Rely on the remote host’s SSH agent/keys; only public keys are staged for container `authorized_keys` (no Mac private keys are copied).
 - Provide a single local command (`./scripts/deploy_remote_devcontainer.sh`) that pushes code, copies keys, and rebuilds the remote container end-to-end.
 - Default GitHub SSH inside the container to port 443 (`ssh.github.com`) because many data-center networks block port 22; see GitHub docs “Using SSH over the HTTPS port”.
 
@@ -13,8 +14,8 @@ This document describes how the SlotMap devcontainer is deployed on a shared Lin
 | Path | Description |
 | --- | --- |
 | `~/dev/github/SlotMap` | Clean git clone on the remote host. No untracked files; only `git pull` and script execution happen here. |
-| `~/macbook_ssh_keys` | Remote cache for `.pub` files copied from laptops. Managed per-user; never committed. |
-| `~/dev/devcontainers/SlotMap` | Sandbox used by `run_local_devcontainer.sh`. Recreated from the clean repo and includes `.devcontainer/ssh/*.pub` copied from the cache. |
+| `~/.ssh` | Host SSH directory; public keys staged into sandbox `.devcontainer/ssh` for container `authorized_keys`. Private keys stay on the host/agent. |
+| `~/dev/devcontainers/SlotMap` | Sandbox used by `run_local_devcontainer.sh`. Recreated from the clean repo and includes `.devcontainer/ssh/*.pub` copied from host `~/.ssh`. |
 | `/workspaces/SlotMap` | Path inside the container where the sandbox is mounted. `post_create.sh` copies staged keys into `/home/<dev-user>/.ssh/authorized_keys`. |
 
 ### Workflow Diagram
@@ -42,13 +43,12 @@ flowchart TD
 1. **Local machine (Mac)**  
    Run `./scripts/deploy_remote_devcontainer.sh`. The script:
    - Verifies the working tree is clean and pushes the current branch to `origin`.
-   - Copies `~/.ssh/id_ed25519.pub` (configurable) to `${REMOTE_USER}@${REMOTE_HOST}:~/macbook_ssh_keys/`.
-   - SSHes into the remote host and invokes `scripts/run_local_devcontainer.sh`.
+   - SSHes into the remote host and invokes `scripts/run_local_devcontainer.sh` (SSH keys come from the remote host user; Mac keys are not copied).
 
 2. **Remote host (`run_local_devcontainer.sh`)**  
    - Removes `~/dev/devcontainers/SlotMap` and re-creates it.  
    - `rsync`s the clean repo into the sandbox.  
-   - Copies every `*.pub` from `~/macbook_ssh_keys` into `sandbox/.devcontainer/ssh`.  
+   - Copies every `*.pub` from `~/.ssh` into `sandbox/.devcontainer/ssh` (host public keys only) for container `authorized_keys`.  
    - Calls `devcontainer up --workspace-folder ~/dev/devcontainers/SlotMap --remove-existing-container --build-no-cache`.
 
 3. **Devcontainer lifecycle**  
@@ -79,9 +79,11 @@ If SSH fails with `Connection reset by peer`, verify that `/home/<remote-usernam
 
 ### Notes
 - The sandbox copy is refreshed on every deployment, so local edits must be committed/pushed before running the helper.
-- Multiple developers can share the same remote host: each user copies their `.pub` files into their own `~/macbook_ssh_keys`, and the scripts remain parameterized (`--remote-user`, `--ssh-key`, etc.).
+- Multiple developers can share the same remote host: each user’s host `~/.ssh/*.pub` is staged into their sandbox; scripts remain parameterized (`--remote-user`, `--ssh-key`, etc.).
 - `logs/` contains timestamped execution transcripts for traceability. Include them in bug reports or when auditing remote builds.
 - GitHub SSH fallback to port 443 is configured per GitHub guidance (“Using SSH over the HTTPS port”) and we prefer agent forwarding when possible (“Using SSH agent forwarding”).
 - We disable SSH hostname canonicalization for `github.com` inside the container to avoid DNS suffix rewrites (e.g., `github.com.tastyworks.com`), which break GitHub SSH; see OpenSSH `ssh_config(5)` for `CanonicalizeHostname`.
+- We set `StrictHostKeyChecking accept-new` for `github.com` in-container so the first connect on port 443 can add the host key without an interactive prompt; see OpenSSH `ssh_config(5)` for the option semantics.
+- The container binds the host SSH agent socket (`SSH_AUTH_SOCK`) for outbound GitHub SSH; ensure the agent is running and keys are loaded on the remote host before deploying.
 
 For details on the helper scripts themselves see `scripts/deploy_remote_devcontainer.sh` (local) and `scripts/run_local_devcontainer.sh` (remote). Both scripts print verbose status messages so you can follow the entire workflow from your terminal or CI logs.

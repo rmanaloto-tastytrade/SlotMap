@@ -18,9 +18,9 @@ Options:
   --remote-repo <path>       Remote repo path (default: ~/dev/github/SlotMap)
   --remote-sandbox <path>    Remote sandbox path (default: ~/dev/devcontainers/SlotMap)
   --docker-context <name>    Docker SSH context to use/create (optional)
-  --ssh-sync-source <path>   Local ssh dir to sync (default: ~/.ssh/)
-  --remote-ssh-sync-dir <path> Remote dir to receive synced ssh keys (default: ~/devcontainers/ssh_keys)
-  --sync-mac-ssh <0|1>       Enable/disable syncing local ssh dir (default: 1)
+  --ssh-sync-source <path>   Local ssh dir to sync (default: ~/.ssh/) [deprecated; default sync disabled]
+  --remote-ssh-sync-dir <path> Remote dir to receive synced ssh keys (default: ~/devcontainers/ssh_keys) [deprecated]
+  --sync-mac-ssh <0|1>       Enable/disable syncing local ssh dir (default: 0)
   --remote-workspace <path>  Remote host path to bind as workspace in the container (default: /home/<CONTAINER_USER>/dev/devcontainers/workspace)
   -h, --help                 Show this help
 USAGE
@@ -39,7 +39,7 @@ REMOTE_REPO_PATH=""
 REMOTE_SANDBOX_PATH=""
 REMOTE_SSH_SYNC_DIR="${REMOTE_SSH_SYNC_DIR:-""}"
 SSH_SYNC_SOURCE="${SSH_SYNC_SOURCE:-"$HOME/.ssh/"}"
-SYNC_MAC_SSH="${SYNC_MAC_SSH:-1}"
+SYNC_MAC_SSH="${SYNC_MAC_SSH:-0}"
 DOCKER_CONTEXT="${DOCKER_CONTEXT:-}"
 RSYNC_SSH="${RSYNC_SSH:-ssh -o StrictHostKeyChecking=accept-new}"
 # Container identity defaults: use the remote host user/uid/gid unless overridden

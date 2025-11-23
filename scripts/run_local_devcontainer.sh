@@ -9,14 +9,14 @@ set -euo pipefail
 # Directory layout (defaults can be overridden via environment variables):
 #   REPO_PATH    : $HOME/dev/github/SlotMap            (clean git clone)
 #   SANDBOX_PATH : $HOME/dev/devcontainers/SlotMap     (recreated each run)
-#   KEY_CACHE    : $HOME/macbook_ssh_keys              (rsynced from your Mac)
+#   KEY_CACHE    : $HOME/.ssh                          (host public keys used for authorized_keys)
 #
 # Requirements: devcontainer CLI installed on the remote host, Docker running,
-# and your public key(s) copied into $KEY_CACHE (e.g., ~/.ssh/id_ed25519.pub).
+# and public key(s) present in $KEY_CACHE (e.g., ~/.ssh/id_ed25519.pub).
 
 REPO_PATH=${REPO_PATH:-"$HOME/dev/github/SlotMap"}
 SANDBOX_PATH=${SANDBOX_PATH:-"$HOME/dev/devcontainers/SlotMap"}
-KEY_CACHE=${KEY_CACHE:-"$HOME/macbook_ssh_keys"}
+KEY_CACHE=${KEY_CACHE:-"$HOME/.ssh"}
 SSH_SUBDIR=".devcontainer/ssh"
 DEV_IMAGE=${DEVCONTAINER_IMAGE:-"devcontainer:local"}
 BASE_IMAGE=${DEVCONTAINER_BASE_IMAGE:-"dev-base:local"}
@@ -30,7 +30,7 @@ WORKSPACE_PATH=${WORKSPACE_PATH:-"/home/${CONTAINER_USER}/dev/devcontainers/work
 
 echo "[remote] Repo source       : $REPO_PATH"
 echo "[remote] Sandbox workspace : $SANDBOX_PATH"
-echo "[remote] Mac key cache     : $KEY_CACHE"
+echo "[remote] Host key cache    : $KEY_CACHE"
 echo "[remote] Workspace mount   : $WORKSPACE_PATH"
 echo
 
@@ -74,7 +74,12 @@ ensure_devcontainer_cli() {
 }
 
 [[ -d "$REPO_PATH" ]] || { echo "[remote] ERROR: Repo path not found."; exit 1; }
-[[ -d "$KEY_CACHE" ]] || { echo "[remote] WARNING: Key cache $KEY_CACHE missing; create and rsync your .pub keys there."; mkdir -p "$KEY_CACHE"; }
+if [[ -z "${SSH_AUTH_SOCK:-}" || ! -S "${SSH_AUTH_SOCK:-}" ]]; then
+  echo "[remote] ERROR: SSH_AUTH_SOCK is not set or not a socket. Start ssh-agent on the host and add your keys before running this script." >&2
+  exit 1
+fi
+
+[[ -d "$KEY_CACHE" ]] || { echo "[remote] WARNING: Key cache $KEY_CACHE missing; creating it."; mkdir -p "$KEY_CACHE"; }
 
 echo "[remote] Removing previous sandbox..."
 rm -rf "$SANDBOX_PATH"
@@ -92,16 +97,14 @@ SSH_TARGET="$SANDBOX_PATH/$SSH_SUBDIR"
 mkdir -p "$SSH_TARGET"
 
 if compgen -G "$KEY_CACHE/*.pub" > /dev/null; then
-  echo "[remote] Staging SSH keys:"
+  echo "[remote] Staging SSH public keys for container authorized_keys:"
   for pub in "$KEY_CACHE"/*.pub; do
     base=$(basename "$pub")
     echo "  -> $pub"
     cp "$pub" "$SSH_TARGET/$base"
   done
 else
-  echo "[remote] ERROR: No *.pub files found in $KEY_CACHE."
-  echo "         Copy your public key to $KEY_CACHE before rerunning."
-  exit 1
+  echo "[remote] WARNING: No *.pub files found in $KEY_CACHE; container SSH access may fail. Add public keys to $KEY_CACHE if needed."
 fi
 
 if [[ "$WORKSPACE_PATH" != "$SANDBOX_PATH" ]]; then

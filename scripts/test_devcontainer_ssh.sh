@@ -108,10 +108,10 @@ else
   echo "[ssh-remote] MISSING mrdocs"; failed=1
 fi
 echo "[ssh-remote] ssh -T git@github.com (expect success message)"
-# Use a clean config to avoid macOS-only options like UseKeychain. Try port 22 first, then fall back to 443 per GitHub docs.
-ssh -F /dev/null -i "$HOME/.ssh/id_ed25519" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes -o ConnectTimeout=10 -T git@github.com && echo "[ssh-remote] github.com:22 OK" || {
+# Use a clean config to avoid macOS-only options like UseKeychain. Try port 22 first, then fall back to 443 per GitHub docs. Rely on the agent (`SSH_AUTH_SOCK`) rather than a bind-mounted private key.
+ssh -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes -o ConnectTimeout=10 -T git@github.com && echo "[ssh-remote] github.com:22 OK" || {
   echo "[ssh-remote] github.com:22 failed; trying ssh.github.com:443"
-  ssh -F /dev/null -i "$HOME/.ssh/id_ed25519" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes -o ConnectTimeout=10 -p 443 -T git@ssh.github.com && echo "[ssh-remote] ssh.github.com:443 OK" || {
+  ssh -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes -o ConnectTimeout=10 -p 443 -T git@ssh.github.com && echo "[ssh-remote] ssh.github.com:443 OK" || {
     echo "[ssh-remote] github.com SSH failed on 22 and 443"; failed=1;
   }
 }

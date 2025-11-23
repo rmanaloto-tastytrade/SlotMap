@@ -1,8 +1,14 @@
 # Current Workflow: Remote Devcontainer Architecture
 
-**Last Updated:** 2025-01-22
+**Last Updated:** 2025-01-23
 **Status:** Production (with known security issues)
 **Audience:** Human operators and AI agents
+
+## Update (2025-01-23)
+- Devcontainer user is the remote host user (`rmanaloto`), not the Mac user.
+- Mac private keys are no longer synced; only host `~/.ssh/*.pub` are staged for container `authorized_keys`.
+- Outbound GitHub SSH from the container uses the host SSH agent socket bind and port 443 fallback (`ssh.github.com:443`), not bind-mounted private keys.
+- Sections below that mention `~/devcontainers/ssh_keys` or syncing Mac `~/.ssh` describe the old flow and should be treated as legacy.
 
 ## Executive Summary
 
