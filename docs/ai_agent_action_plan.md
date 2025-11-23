@@ -28,6 +28,19 @@ This repository contains a C++ project (`SlotMap`) with a custom devcontainer se
 4. **Update Test Script:** Modify `scripts/test_devcontainer_ssh.sh` to stop using `-i $HOME/.ssh/id_ed25519` for the internal GitHub check. It should rely on the forwarded agent or `gh` CLI.
 5. **Verify:** Run a dry-run rsync command to ensure only public keys are selected.
 
+### Task 1.1: Configure Remote-Resident Agent (Optional)
+
+If the "Remote-Resident" workflow is selected (per user request):
+
+1. **Modify:** Update `devcontainer.json` to bind-mount the SSH agent socket.
+
+    ```json
+    "mounts": ["source=${localEnv:SSH_AUTH_SOCK},target=/tmp/ssh-agent.socket,type=bind"],
+    "containerEnv": { "SSH_AUTH_SOCK": "/tmp/ssh-agent.socket" }
+    ```
+
+2. **Prerequisite:** Ensure the remote host has `SSH_AUTH_SOCK` set in the environment where `devcontainer` CLI runs.
+
 ---
 
 ## Task 2: Devcontainer Configuration Refactor

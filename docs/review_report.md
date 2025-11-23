@@ -95,6 +95,47 @@ sequenceDiagram
     GitHub->>Container: Authenticated!
 ```
 
+**3. Remote-Resident SSH Agent (Advanced/Persistent)**
+For workflows where the container needs SSH access even when your Mac is disconnected (e.g., long-running background jobs), you can use an SSH agent running on the *Remote Host*.
+
+* **Requirement:** An `ssh-agent` process must be running on the remote host (e.g., via systemd user service or `.bash_profile`).
+* **Mechanism:** Bind-mount the remote host's `SSH_AUTH_SOCK` into the container.
+* **Citations:**
+  * [Docker Bind Mounts](https://docs.docker.com/storage/bind-mounts/) - Mechanism for exposing the socket.
+  * [OpenSSH Manual: ssh-agent](https://man.openbsd.org/ssh-agent) - Details on the socket-based authentication protocol.
+
+```mermaid
+sequenceDiagram
+    participant GitHub
+    participant Container as Devcontainer
+    participant HostAgent as Remote Host Agent
+    
+    Note over HostAgent: Keys loaded via ssh-add on Host
+    Container->>GitHub: git push
+    GitHub->>Container: Challenge
+    Container->>HostAgent: Forward Challenge (via Bind Mount)
+    HostAgent->>HostAgent: Sign with Host-Resident Key
+    HostAgent->>Container: Return Signature
+    Container->>GitHub: Send Signature
+```
+
+**Configuration for Remote-Resident Agent:**
+To implement this, you must bind-mount the socket. Since the socket path can change, it is best to map a stable symlink or use an environment variable.
+
+```json
+// devcontainer.json
+"mounts": [
+    // Mount the host's agent socket to a known path in the container
+    "source=${localEnv:SSH_AUTH_SOCK},target=/tmp/ssh-agent.socket,type=bind"
+],
+"containerEnv": {
+    // Tell the container to use that socket
+    "SSH_AUTH_SOCK": "/tmp/ssh-agent.socket"
+}
+```
+
+*Note: `${localEnv:SSH_AUTH_SOCK}` resolves to the environment variable on the machine running the Docker CLI (the Remote Host).*
+
 ---
 
 ## 2. Over-Engineering: Custom Orchestration Scripts
