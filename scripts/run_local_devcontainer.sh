@@ -47,7 +47,13 @@ ensure_devcontainer_cli() {
       echo "[remote] Found devcontainer CLI $current."
       return 0
     fi
-    echo "[remote] devcontainer CLI version $current != $DEVCONTAINER_CLI_VERSION; upgrading..."
+    if [[ "${SKIP_DEVCONTAINER_UPGRADE:-0}" == "1" ]]; then
+      echo "[remote] WARNING: devcontainer CLI version $current != $DEVCONTAINER_CLI_VERSION, but skipping upgrade (SKIP_DEVCONTAINER_UPGRADE=1)"
+      echo "[remote] Using existing version: $current"
+      return 0
+    else
+      echo "[remote] devcontainer CLI version $current != $DEVCONTAINER_CLI_VERSION; upgrading..."
+    fi
   else
     echo "[remote] devcontainer CLI not found; installing $DEVCONTAINER_CLI_VERSION..."
   fi
@@ -57,7 +63,14 @@ ensure_devcontainer_cli() {
     exit 1
   fi
 
-  npm install -g "@devcontainers/cli@${DEVCONTAINER_CLI_VERSION}"
+  # Try npm install, but warn if it fails (likely permission issue)
+  if ! npm install -g "@devcontainers/cli@${DEVCONTAINER_CLI_VERSION}" 2>/dev/null; then
+    echo "[remote] WARNING: Failed to upgrade devcontainer CLI (likely permission issue)"
+    echo "[remote] To fix: Run 'sudo npm install -g @devcontainers/cli@${DEVCONTAINER_CLI_VERSION}' on the remote host"
+    echo "[remote] Or set SKIP_DEVCONTAINER_UPGRADE=1 to skip this check"
+    echo "[remote] Continuing with existing version..."
+    return 0
+  fi
   if devcontainer --version >/dev/null 2>&1; then
     local post_install
     post_install="$(devcontainer --version 2>/dev/null || true)"
