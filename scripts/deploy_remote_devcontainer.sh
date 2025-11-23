@@ -39,7 +39,7 @@ REMOTE_REPO_PATH=""
 REMOTE_SANDBOX_PATH=""
 REMOTE_SSH_SYNC_DIR="${REMOTE_SSH_SYNC_DIR:-""}"
 SSH_SYNC_SOURCE="${SSH_SYNC_SOURCE:-"$HOME/.ssh/"}"
-SYNC_MAC_SSH="${SYNC_MAC_SSH:-1}"
+SYNC_MAC_SSH="${SYNC_MAC_SSH:-0}"  # Default: Don't sync Mac SSH (remote user should have their own keys)
 DOCKER_CONTEXT="${DOCKER_CONTEXT:-}"
 RSYNC_SSH="${RSYNC_SSH:-ssh -o StrictHostKeyChecking=accept-new}"
 # Container identity defaults: use the remote host user/uid/gid unless overridden
@@ -116,9 +116,13 @@ ensure_docker_context() {
   fi
 }
 
+# NOTE: Mac SSH sync is typically NOT needed. The remote user should have their own SSH keys.
+# Only enable SYNC_MAC_SSH=1 if you specifically need Mac user's keys in the container.
+# Recommended: Use SSH agent forwarding (ssh -A) or remote user's own keys.
 if [[ "${SYNC_MAC_SSH}" == "1" ]]; then
   echo "Syncing SSH public keys and config to remote: ${SSH_SYNC_SOURCE} -> ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_SSH_SYNC_DIR}"
   echo "Security: Only syncing *.pub, config, and known_hosts (private keys excluded)"
+  echo "NOTE: Consider using SSH agent forwarding instead (ssh -A)"
   rsync -e "${RSYNC_SSH}" -av --chmod=F600,D700 \
     --include='*.pub' --include='config' --include='known_hosts' --exclude='*' \
     --rsync-path="mkdir -p ${REMOTE_SSH_SYNC_DIR} && rsync" \
