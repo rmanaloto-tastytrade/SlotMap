@@ -360,6 +360,7 @@ RUN set -eux; \
     mkdir -p /opt/stage/opt /opt/stage/usr/local/bin; \
     tar -xJf /tmp/mrdocs.tar.xz -C /opt/stage/opt; \
     mv /opt/stage/opt/${MRDOCS_DIR} /opt/stage/opt/mrdocs; \
+    # keep mrdocs isolated under /opt/mrdocs (like vcpkg) and expose a convenience shim into /usr/local/bin\n\
     ln -s ../../opt/mrdocs/bin/mrdocs /opt/stage/usr/local/bin/mrdocs; \
     rm /tmp/mrdocs.tar.xz
 
