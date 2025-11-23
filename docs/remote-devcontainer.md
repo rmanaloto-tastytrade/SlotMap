@@ -68,6 +68,7 @@ flowchart TD
 | Confirm container is running and exposing the port | `ssh ${REMOTE_USER}@${REMOTE_HOST} "docker ps --filter label=devcontainer.local_folder=/home/${REMOTE_USER}/dev/devcontainers/SlotMap --format 'table {{.ID}}\t{{.Ports}}\t{{.Names}}'"` |
 | Inspect staged keys inside the container | `docker exec -u <remote-username> <container> ls -l /home/<remote-username>/.ssh/authorized_keys` |
 | View SSHD logs | `docker exec -u root <container> tail -n 100 /var/log/auth.log` |
+| Test GitHub SSH (22 then 443) | `ssh -T -o BatchMode=yes git@github.com || ssh -T -p 443 -o Hostname=ssh.github.com -o BatchMode=yes git@github.com` |
 | Clean up stuck containers/images | `docker rm -fv $(docker ps -aq --filter label=devcontainer.local_folder=/home/${REMOTE_USER}/dev/devcontainers/SlotMap)` and `docker system prune -af --volumes` |
 | Validate toolchain bits (cmake/ninja/IWYU/etc.) | `docker exec -u <remote-username> <container> include-what-you-use --version` |
 | Validate GCC from toolchain PPA | `docker exec -u <remote-username> <container> gcc-14 --version` |
@@ -80,5 +81,6 @@ If SSH fails with `Connection reset by peer`, verify that `/home/<remote-usernam
 - The sandbox copy is refreshed on every deployment, so local edits must be committed/pushed before running the helper.
 - Multiple developers can share the same remote host: each user copies their `.pub` files into their own `~/macbook_ssh_keys`, and the scripts remain parameterized (`--remote-user`, `--ssh-key`, etc.).
 - `logs/` contains timestamped execution transcripts for traceability. Include them in bug reports or when auditing remote builds.
+- GitHub SSH fallback to port 443 is configured per GitHub guidance (“Using SSH over the HTTPS port”) and we prefer agent forwarding when possible (“Using SSH agent forwarding”).
 
 For details on the helper scripts themselves see `scripts/deploy_remote_devcontainer.sh` (local) and `scripts/run_local_devcontainer.sh` (remote). Both scripts print verbose status messages so you can follow the entire workflow from your terminal or CI logs.
