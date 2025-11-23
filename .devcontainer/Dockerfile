@@ -421,7 +421,7 @@ ARG VCPKG_DOWNLOADS
 ENV CC=clang-21 \
     CXX=clang++-21 \
     CMAKE_GENERATOR=Ninja \
-    PATH="${VCPKG_ROOT}:${PATH}" \
+    PATH="${VCPKG_ROOT}:/opt/mrdocs/bin:${PATH}" \
     WORKSPACE_DIR="/home/${USERNAME}/workspace"
 
 # Create non-root user for IDE/devcontainer usage
