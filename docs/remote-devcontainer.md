@@ -7,6 +7,7 @@ This document describes how the SlotMap devcontainer is deployed on a shared Lin
 - Build and run the devcontainer in a sandbox (`~/dev/devcontainers/SlotMap`) that is recreated on every deployment.
 - Stage Mac public keys on the remote host (`~/macbook_ssh_keys`) so SSH access to the container can be automated without committing keys to the repo.
 - Provide a single local command (`./scripts/deploy_remote_devcontainer.sh`) that pushes code, copies keys, and rebuilds the remote container end-to-end.
+- Default GitHub SSH inside the container to port 443 (`ssh.github.com`) because many data-center networks block port 22; see GitHub docs “Using SSH over the HTTPS port”.
 
 ### Directory Layout
 | Path | Description |
@@ -59,6 +60,7 @@ flowchart TD
 4. **Connecting from the laptop**  
    - After the script reports success, connect with `ssh -i ~/.ssh/id_ed25519 -p 9222 <remote-username>@c24s1.ch2`. The username equals the Linux account on the host because build args set the devcontainer user accordingly.  
    - CLion or VS Code can reuse the same host/port if they prefer direct SSH.
+   - GitHub SSH from inside the container uses port 443 (Host github.com -> ssh.github.com:443) to avoid egress blocks on port 22.
 
 ### Troubleshooting & Validation Checklist
 | Check | Command |

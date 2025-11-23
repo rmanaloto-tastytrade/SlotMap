@@ -38,6 +38,18 @@ if [[ -f "$SSH_CONFIG_FILE" ]] && grep -q "UseKeychain" "$SSH_CONFIG_FILE"; then
   echo "[post_create] Filtered UseKeychain from ~/.ssh/config (backup at ~/.ssh/config.macbak)."
 fi
 
+# Force GitHub SSH over 443 inside the container (port 22 is often blocked on remote hosts).
+# See: https://docs.github.com/en/authentication/troubleshooting-ssh/using-ssh-over-the-https-port
+{
+  echo ""
+  echo "# Added by post_create.sh for devcontainer: use GitHub SSH over 443"
+  echo "Host github.com"
+  echo "  Hostname ssh.github.com"
+  echo "  Port 443"
+  echo "  User git"
+} >> "$SSH_CONFIG_FILE"
+chmod 600 "$SSH_CONFIG_FILE"
+
 BUILD_DIR="${WORKSPACE_DIR}/build/clang-debug"
 CACHE_FILE="${BUILD_DIR}/CMakeCache.txt"
 
