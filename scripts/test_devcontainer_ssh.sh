@@ -109,12 +109,18 @@ else
 fi
 echo "[ssh-remote] ssh -T git@github.com (expect success message)"
 # Use the agent (`SSH_AUTH_SOCK`) rather than a bind-mounted private key. Try port 22 first, then fall back to 443 per GitHub docs.
-ssh -o BatchMode=yes -o ConnectTimeout=10 -T git@github.com && echo "[ssh-remote] github.com:22 OK" || {
-  echo "[ssh-remote] github.com:22 failed; trying ssh.github.com:443"
-  ssh -o BatchMode=yes -o ConnectTimeout=10 -p 443 -o Hostname=ssh.github.com -T git@github.com && echo "[ssh-remote] ssh.github.com:443 OK" || {
-    echo "[ssh-remote] github.com SSH failed on 22 and 443"; failed=1;
-  }
-}
+if ssh -o BatchMode=yes -o ConnectTimeout=10 -T git@github.com; then
+  echo "[ssh-remote] github.com:22 OK"
+else
+  status=$?
+  echo "[ssh-remote] github.com:22 failed (exit $status); trying ssh.github.com:443"
+  if ssh -o BatchMode=yes -o ConnectTimeout=10 -p 443 -o Hostname=ssh.github.com -T git@github.com; then
+    echo "[ssh-remote] ssh.github.com:443 OK"
+  else
+    status2=$?
+    echo "[ssh-remote] github.com SSH failed on 22 and 443 (exit $status2)"; failed=1
+  fi
+fi
 exit $failed
 REMOTE
 )
