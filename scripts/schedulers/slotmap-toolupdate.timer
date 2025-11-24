@@ -1,0 +1,18 @@
+[Unit]
+Description=SlotMap Tool Update Timer
+Documentation=https://github.com/rmanaloto-tastytrade/SlotMap
+Requires=slotmap-toolupdate.service
+
+[Timer]
+# Run daily at 9:00 AM
+OnCalendar=daily
+OnCalendar=09:00:00
+# Also run 5 minutes after boot
+OnBootSec=5min
+# If missed (system was off), run immediately when possible
+Persistent=true
+# Randomize start time by up to 30 minutes to avoid load spikes
+RandomizedDelaySec=30min
+
+[Install]
+WantedBy=timers.target

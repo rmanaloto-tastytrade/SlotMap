@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.slotmap.toolupdate</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>cd ~/dev/github/SergeyMakeev/SlotMap-security-test && ./scripts/auto_update_tools.sh</string>
+    </array>
+
+    <!-- Run daily at 9:00 AM -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>9</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <!-- Also run at system startup -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Log output -->
+    <key>StandardOutPath</key>
+    <string>/tmp/slotmap-toolupdate.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/slotmap-toolupdate.error.log</string>
+
+    <!-- Environment variables -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>HOME</key>
+        <string>/Users/ray.manaloto@tastytrade.com</string>
+    </dict>
+
+    <!-- Nice value for low priority -->
+    <key>Nice</key>
+    <integer>10</integer>
+
+    <!-- Don't keep alive, just run once per schedule -->
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>

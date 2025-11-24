@@ -171,11 +171,54 @@ grep -r "c0802s4\.ny5" docs/ README.md CLAUDE.md TEST_BRANCH_README.md
 
 ---
 
+## Phase 0.5: Tool Auto-Update Infrastructure 🆕 PRIORITY
+
+**Status:** In Progress
+**Priority:** HIGH - Blocks efficient development
+**Timeline:** Immediate
+
+### Task 0.5.1: Implement Auto-Update System
+**Status:** ✅ COMPLETED (2025-11-23)
+**Components Created:**
+- ✅ `scripts/update_tools_mac.sh` - macOS updater using Homebrew
+- ✅ `scripts/update_tools_remote.sh` - Linux updater for remote hosts
+- ✅ `scripts/auto_update_tools.sh` - Platform-agnostic wrapper
+- ✅ Modified `run_local_devcontainer.sh` to query latest versions
+- ✅ User-level npm configuration (no sudo required)
+
+### Task 0.5.2: Modern Scheduling Implementation
+**Status:** ✅ COMPLETED (2025-11-23)
+**Components Created:**
+- ✅ `scripts/schedulers/com.slotmap.toolupdate.plist` - launchd config for macOS
+- ✅ `scripts/schedulers/slotmap-toolupdate.service` - systemd service for Linux
+- ✅ `scripts/schedulers/slotmap-toolupdate.timer` - systemd timer for Linux
+- ✅ `scripts/schedulers/install_scheduler.sh` - One-command installer
+- ✅ Updated documentation with modern best practices
+
+**Benefits:**
+- Always latest `gh` CLI and `devcontainer` CLI versions
+- No sudo required - everything user-level
+- Modern schedulers (launchd/systemd) instead of crontab
+- Automatic updates without manual intervention
+
+**Next Steps:**
+- Deploy to MacBook: `./scripts/schedulers/install_scheduler.sh`
+- Deploy to c0802s4.ny5: Copy scripts and run installer
+- Monitor for any issues in first week
+
+---
+
 ## Phase 1: Environment & Tooling
 
-**Status:** Current Phase
-**Dependencies:** Phase 0 must be complete
+**Status:** Current Phase (After Phase 0.5)
+**Dependencies:** Phase 0 and 0.5 must be complete
 
+### Immediate Priority Tasks:
+1. **Fix npm permissions on remote** - Apply user-level npm config
+2. **Deploy auto-update system** - Install schedulers on both systems
+3. **Complete devcontainer deployment** - With updated scripts
+
+### Original Tasks:
 - **Use remote Docker context to build/run the devcontainer** – follow `docs/remote-docker-context.md` for configuration, build, and run. All AI agent interactions must refer to that document.
 - Harden devcontainer (clang-21, mold, cmake/ninja, MRDocs, Graphviz, Doxygen, Mermaid, vcpkg overlays).
 - Define build presets, documentation scripts, and vcpkg manifests. ✅
@@ -228,8 +271,14 @@ grep -r "c0802s4\.ny5" docs/ README.md CLAUDE.md TEST_BRANCH_README.md
 
 ## Quick Reference
 
-**Current Priority:** Phase 1 - Remote Docker context and environment tooling
-**Completed:** Phase 0 - All security fixes tested and validated on c0802s4.ny5
+**Current Priority:** Phase 1 - Environment & Tooling (with auto-update infrastructure)
+**Just Completed:** Phase 0.5 - Tool Auto-Update Infrastructure
+**Previously Completed:** Phase 0 - All security fixes tested and validated on c0802s4.ny5
+
+**Immediate Actions Required:**
+1. Run `./scripts/schedulers/install_scheduler.sh` on MacBook
+2. Deploy and run update scripts on c0802s4.ny5
+3. Test devcontainer deployment with updated scripts
 **Completed:** Hostname configuration, SSH security fixes, dynamic usernames
 
 **Key Files:**
