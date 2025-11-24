@@ -9,7 +9,7 @@
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>cd ~/dev/github/SergeyMakeev/SlotMap-security-test && ./scripts/auto_update_tools.sh</string>
+        <string>cd ~/dev/github/SergeyMakeev/SlotMap-security-test && ./scripts/update_tools_with_remotes.sh</string>
     </array>
 
     <!-- Run daily at 9:00 AM -->
@@ -21,9 +21,9 @@
         <integer>0</integer>
     </dict>
 
-    <!-- Also run at system startup -->
+    <!-- Don't run at system startup by default (prevents flooding) -->
     <key>RunAtLoad</key>
-    <true/>
+    <false/>
 
     <!-- Log output -->
     <key>StandardOutPath</key>

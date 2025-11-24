@@ -4,57 +4,74 @@ This setup ensures both your MacBook and remote hosts always have the latest ver
 - GitHub CLI (`gh`)
 - DevContainer CLI (`@devcontainers/cli`)
 
-## Quick Setup (Modern Best Practices)
+## Architecture: macOS-Centric Approach
 
-### One-Command Installation
+**Primary Strategy**: Use macOS launchd as the single scheduler, with SSH remote execution for Linux servers.
+- ✅ Single scheduler to manage (macOS only)
+- ✅ No changes required on remote Linux servers
+- ✅ Configuration stored in GitHub repository
+- ✅ Automatic remote updates via SSH
+
+## Quick Setup (macOS-Centric)
+
+### Step 1: Sync launchd Configuration from Repository
 
 ```bash
-# Install and enable automatic updates (works on both macOS and Linux)
-./scripts/schedulers/install_scheduler.sh
+# Sync launchd configuration from repo to system
+./scripts/schedulers/sync_launchd.sh
+
+# Optional: Enable RunAtLoad (disabled by default to prevent flooding)
+./scripts/schedulers/sync_launchd.sh --enable-startup
 ```
 
-This automatically:
-- ✅ Detects your OS (macOS or Linux)
-- ✅ Installs the appropriate scheduler (launchd or systemd)
-- ✅ Enables daily updates at 9:00 AM
-- ✅ Runs update on system startup
-- ✅ No sudo required
+### Step 2: Configure Remote Hosts (Optional)
 
-### Manual Setup
+```bash
+# Create remote hosts configuration
+mkdir -p ~/.slotmap
+echo "c0802s4.ny5" > ~/.slotmap/remote-hosts.conf
+# Add more hosts, one per line
+```
 
-#### On MacBook (using launchd - Apple's recommended scheduler)
+### Step 3: Load and Start
+
+```bash
+# Load the launchd agent
+launchctl load ~/Library/LaunchAgents/com.slotmap.toolupdate.plist
+
+# Run immediately (or wait for 9:00 AM daily schedule)
+launchctl start com.slotmap.toolupdate
+
+# Monitor logs
+tail -f /tmp/slotmap-toolupdate.log
+```
+
+## Manual Setup Options
+
+### MacBook Only (No Remote Updates)
 
 ```bash
 # 1. Initial tool setup (one-time)
 ./scripts/update_tools_mac.sh
 source ~/.zshrc
 
-# 2. Enable automatic updates with launchd
-cp scripts/schedulers/com.slotmap.toolupdate.plist ~/Library/LaunchAgents/
+# 2. Sync and load launchd configuration
+./scripts/schedulers/sync_launchd.sh
 launchctl load ~/Library/LaunchAgents/com.slotmap.toolupdate.plist
 
 # 3. Verify it's running
 launchctl list | grep slotmap
 ```
 
-#### On Remote Host (using systemd - modern Linux standard)
+### Remote Host (DEFERRED - May Not Be Needed)
 
+**Note**: systemd setup on remote hosts is currently deferred. The macOS launchd handles remote updates via SSH.
+
+If you need local scheduling on Linux servers later:
 ```bash
-# 1. Initial tool setup (one-time)
-ssh c0802s4.ny5
-cd ~/dev/github/SlotMap
-git pull origin security-fixes-phase1
-./scripts/update_tools_remote.sh
-source ~/.bashrc
-
-# 2. Enable automatic updates with systemd
-mkdir -p ~/.config/systemd/user/
-cp scripts/schedulers/slotmap-toolupdate.* ~/.config/systemd/user/
-systemctl --user daemon-reload
-systemctl --user enable --now slotmap-toolupdate.timer
-
-# 3. Verify it's running
-systemctl --user status slotmap-toolupdate.timer
+# This is DEFERRED and may not be implemented
+# The macOS-centric approach handles remote updates via SSH
+# See scripts/schedulers/ for systemd files if needed in the future
 ```
 
 ## How It Works

@@ -2,43 +2,53 @@
 
 ## Overview
 
-This document details the technical implementation of modern schedulers for the SlotMap project's automatic tool update system, replacing traditional crontab with platform-native solutions.
+This document details the technical implementation of the **macOS-centric scheduler approach** for the SlotMap project's automatic tool update system, using launchd with SSH remote execution.
 
-## Architecture Design
+## Architecture Design (macOS-Centric)
 
 ### Component Diagram
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    User System                          │
+│                  macOS (Control Center)                  │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
-│  ┌──────────────────┐        ┌──────────────────┐     │
-│  │     macOS        │        │      Linux        │     │
-│  │                  │        │                   │     │
-│  │  ┌────────────┐  │        │  ┌─────────────┐ │     │
-│  │  │  launchd   │  │        │  │  systemd    │ │     │
-│  │  └─────┬──────┘  │        │  └──────┬──────┘ │     │
-│  │        │         │        │         │        │     │
-│  │        ▼         │        │         ▼        │     │
-│  │  ┌────────────┐  │        │  ┌─────────────┐ │     │
-│  │  │   .plist   │  │        │  │.timer/.service│     │
-│  │  └─────┬──────┘  │        │  └──────┬──────┘ │     │
-│  └────────┼─────────┘        └─────────┼────────┘     │
-│           │                            │              │
-│           └──────────┬─────────────────┘              │
-│                      ▼                                │
-│           ┌──────────────────────┐                    │
-│           │ auto_update_tools.sh │                    │
-│           └──────────┬───────────┘                    │
-│                      │                                │
-│        ┌─────────────┼─────────────┐                  │
-│        ▼             ▼             ▼                  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐             │
-│  │ Platform │ │  GitHub  │ │   npm    │             │
-│  │ Detection│ │   API    │ │ Registry │             │
-│  └──────────┘ └──────────┘ └──────────┘             │
-│                                                       │
-└───────────────────────────────────────────────────────┘
+│  ┌────────────────────────────────────────────────┐    │
+│  │                launchd (PRIMARY)                │    │
+│  │  ┌──────────────────────────────────────────┐  │    │
+│  │  │  com.slotmap.toolupdate.plist           │  │    │
+│  │  │  - Daily @ 9:00 AM                      │  │    │
+│  │  │  - RunAtLoad: false (default)           │  │    │
+│  │  └────────────────┬─────────────────────────┘  │    │
+│  └───────────────────┼─────────────────────────────┘    │
+│                      ▼                                  │
+│         ┌────────────────────────────┐                  │
+│         │ update_tools_with_remotes.sh│                  │
+│         └────────────┬───────────────┘                  │
+│                      │                                  │
+│        ┌─────────────┼─────────────┐                    │
+│        ▼                           ▼                    │
+│  ┌──────────┐              ┌──────────────┐            │
+│  │  Local   │              │  SSH Remote  │            │
+│  │  Update  │              │   Execution  │            │
+│  └────┬─────┘              └───────┬──────┘            │
+│       │                            │                    │
+│       ▼                            ▼                    │
+│  ┌──────────┐              ┌──────────────┐            │
+│  │ Homebrew │              │  Remote Host │            │
+│  │ npm local│              │  (c0802s4)   │            │
+│  └──────────┘              └──────────────┘            │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+
+Remote Linux Servers (DEFERRED systemd):
+┌─────────────────────────────────────────────────────────┐
+│                    Linux Server                          │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │  systemd configuration DEFERRED                  │   │
+│  │  - Not currently deployed                        │   │
+│  │  - Updates handled via SSH from macOS           │   │
+│  └─────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ## Implementation Details

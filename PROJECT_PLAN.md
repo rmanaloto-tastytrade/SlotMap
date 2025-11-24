@@ -188,23 +188,40 @@ grep -r "c0802s4\.ny5" docs/ README.md CLAUDE.md TEST_BRANCH_README.md
 
 ### Task 0.5.2: Modern Scheduling Implementation
 **Status:** ✅ COMPLETED (2025-11-23)
+**Approach:** macOS-centric with SSH remote execution
+
 **Components Created:**
-- ✅ `scripts/schedulers/com.slotmap.toolupdate.plist` - launchd config for macOS
-- ✅ `scripts/schedulers/slotmap-toolupdate.service` - systemd service for Linux
-- ✅ `scripts/schedulers/slotmap-toolupdate.timer` - systemd timer for Linux
+- ✅ `scripts/schedulers/com.slotmap.toolupdate.plist` - launchd config for macOS (PRIMARY)
+- ✅ `scripts/schedulers/sync_launchd.sh` - Sync launchd config from repo to system
+- ✅ `scripts/update_tools_with_remotes.sh` - Orchestrator for local + remote updates
+- ✅ `scripts/schedulers/slotmap-toolupdate.service` - systemd service (DEFERRED)
+- ✅ `scripts/schedulers/slotmap-toolupdate.timer` - systemd timer (DEFERRED)
 - ✅ `scripts/schedulers/install_scheduler.sh` - One-command installer
-- ✅ Updated documentation with modern best practices
+- ✅ Comprehensive documentation with 39+ research citations
+
+**Architecture Decision:**
+- **Primary**: macOS launchd manages all scheduling
+- **Remote Updates**: SSH execution from Mac to Linux servers
+- **Configuration**: All configs stored in GitHub repo
+- **Sync Mechanism**: `sync_launchd.sh` maintains consistency
+- **RunAtLoad**: Disabled by default (prevents flooding on bootup)
 
 **Benefits:**
-- Always latest `gh` CLI and `devcontainer` CLI versions
+- Single scheduler to manage (macOS launchd only)
+- No changes required on remote Linux servers
+- Configuration version-controlled in GitHub
+- Automatic updates via SSH from Mac
 - No sudo required - everything user-level
-- Modern schedulers (launchd/systemd) instead of crontab
-- Automatic updates without manual intervention
 
-**Next Steps:**
-- Deploy to MacBook: `./scripts/schedulers/install_scheduler.sh`
-- Deploy to c0802s4.ny5: Copy scripts and run installer
-- Monitor for any issues in first week
+**Deferred Changes:**
+- systemd implementation on remote servers (may never be needed)
+- Remote server schedulers (handled via SSH from Mac)
+
+**Deployment Steps:**
+1. On MacBook: `./scripts/schedulers/sync_launchd.sh`
+2. Configure remote hosts: `~/.slotmap/remote-hosts.conf`
+3. Load agent: `launchctl load ~/Library/LaunchAgents/com.slotmap.toolupdate.plist`
+4. Monitor: `tail -f /tmp/slotmap-toolupdate.log`
 
 ---
 

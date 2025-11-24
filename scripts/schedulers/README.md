@@ -1,29 +1,42 @@
 # Modern Scheduler Configuration
 
-This directory contains modern scheduling configurations for automatic tool updates, replacing traditional crontab with platform-native solutions.
+This directory contains modern scheduling configurations for automatic tool updates, using a **macOS-centric approach** with SSH remote execution.
+
+## Architecture: macOS-Centric with Remote SSH
+
+**Primary Strategy**: Use macOS launchd as the single scheduler, executing updates on remote Linux servers via SSH.
+- Single point of control (macOS)
+- No systemd changes required on remote servers
+- Configuration stored in GitHub repository
+- Automatic syncing via `sync_launchd.sh`
 
 ## Files
 
-### macOS (launchd)
+### macOS (launchd) - PRIMARY
 - `com.slotmap.toolupdate.plist` - launchd agent configuration
   - Runs daily at 9:00 AM
-  - Runs at system startup
+  - RunAtLoad DISABLED by default (prevents flooding)
+  - Executes `update_tools_with_remotes.sh`
   - Logs to `/tmp/slotmap-toolupdate.log`
+- `sync_launchd.sh` - Syncs plist from repo to system
+  - Validates configuration
+  - Creates backups
+  - Manages RunAtLoad setting
+- `update_tools_with_remotes.sh` - Orchestrator script
+  - Updates local Mac tools
+  - SSH executes updates on remote hosts
+  - Handles connectivity failures gracefully
 
-### Linux (systemd)
-- `slotmap-toolupdate.service` - systemd service unit
-  - Defines the update task
-  - User-level service (no sudo)
-  - Security hardening enabled
-- `slotmap-toolupdate.timer` - systemd timer unit
-  - Schedules the service
-  - Daily at 9:00 AM + random delay
-  - Persistent (runs missed jobs)
+### Linux (systemd) - DEFERRED
+- `slotmap-toolupdate.service` - systemd service unit (NOT DEPLOYED)
+- `slotmap-toolupdate.timer` - systemd timer unit (NOT DEPLOYED)
+- **Note**: These files exist for future use if needed, but are not currently deployed
 
 ### Installation
 - `install_scheduler.sh` - Universal installer
   - Auto-detects OS
-  - Installs appropriate scheduler
+  - On macOS: Installs launchd configuration
+  - On Linux: DEFERRED - not currently used
   - No sudo required
 
 ## Why Modern Schedulers?
