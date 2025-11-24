@@ -8,3 +8,34 @@ xcode
 logs/
 
 .idea/
+
+# Security - Never commit sensitive information
+*.pem
+*.key
+*.pub
+!scripts/**/*.pub  # Allow public keys in scripts for examples
+.env
+.env.*
+*.token
+*.secret
+*_token
+*_secret
+.config/gh/
+hosts.yml
+credentials
+.npmrc
+.ssh/
+id_rsa*
+id_ed25519*
+id_ecdsa*
+id_dsa*
+
+# Remote host configuration (may contain IPs/hostnames)
+.slotmap/remote-hosts.conf
+
+# Temporary/backup files
+*.bak
+*.tmp
+*.swp
+*.swo
+*~
