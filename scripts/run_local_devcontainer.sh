@@ -26,10 +26,16 @@ CONTAINER_UID=${CONTAINER_UID:-$(id -u)}
 CONTAINER_GID=${CONTAINER_GID:-$(id -g)}
 # Get latest devcontainer CLI version from GitHub
 get_latest_devcontainer_version() {
-  if command -v gh &>/dev/null; then
-    gh api "repos/devcontainers/cli/releases/latest" --jq '.tag_name' 2>/dev/null | sed 's/^v//' || echo "0.80.2"
+  # Try using curl first (doesn't require authentication)
+  local version
+  version=$(curl -s "https://api.github.com/repos/devcontainers/cli/releases/latest" 2>/dev/null | grep '"tag_name":' | sed -E 's/.*"v?([^"]+)".*/\1/')
+
+  # Check if we got a valid version (should start with a number)
+  if [[ "$version" =~ ^[0-9] ]]; then
+    echo "$version"
   else
-    curl -s "https://api.github.com/repos/devcontainers/cli/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' | sed 's/^v//' || echo "0.80.2"
+    # Fallback to known good version
+    echo "0.80.2"
   fi
 }
 
@@ -55,6 +61,11 @@ if [[ -n "$DOCKER_CONTEXT" ]]; then
 fi
 
 ensure_devcontainer_cli() {
+  # Always ensure ~/.npm-global/bin is in PATH first
+  if [[ -d "$HOME/.npm-global/bin" ]]; then
+    export PATH="$HOME/.npm-global/bin:$PATH"
+  fi
+
   if command -v devcontainer >/dev/null 2>&1; then
     local current
     current="$(devcontainer --version 2>/dev/null || true)"
@@ -126,9 +137,20 @@ ensure_devcontainer_cli() {
     echo "[remote] Added ~/.npm-global/bin to PATH for this session"
   fi
 
-  if devcontainer --version >/dev/null 2>&1; then
+  # Use hash to force shell to re-scan PATH
+  hash -r
+
+  # Now check the version using the full path if needed
+  local devcontainer_cmd
+  if [[ -x "$HOME/.npm-global/bin/devcontainer" ]]; then
+    devcontainer_cmd="$HOME/.npm-global/bin/devcontainer"
+  else
+    devcontainer_cmd="devcontainer"
+  fi
+
+  if $devcontainer_cmd --version >/dev/null 2>&1; then
     local post_install
-    post_install="$(devcontainer --version 2>/dev/null || true)"
+    post_install="$($devcontainer_cmd --version 2>/dev/null || true)"
     if [[ "$post_install" == "$DEVCONTAINER_CLI_VERSION" ]]; then
       echo "[remote] Installed devcontainer CLI $post_install."
     else
