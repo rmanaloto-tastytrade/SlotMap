@@ -91,13 +91,23 @@ ensure_devcontainer_cli() {
     npm config set prefix "$HOME/.npm-global"
     mkdir -p "$HOME/.npm-global/bin"
     export PATH="$HOME/.npm-global/bin:$PATH"
-    echo "[remote] npm prefix changed to: $(npm config get prefix)"
+
+    # Force npm to reload configuration
+    npm_prefix="$HOME/.npm-global"
+    echo "[remote] npm prefix changed to: $npm_prefix"
+
+    # Add to shell config if not already there
+    if ! grep -q "/.npm-global/bin" "$HOME/.bashrc" 2>/dev/null; then
+      echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> "$HOME/.bashrc"
+      echo "[remote] Added npm global bin to .bashrc"
+    fi
   fi
 
   echo "[remote] Attempting to install @devcontainers/cli@${DEVCONTAINER_CLI_VERSION}..."
+  echo "[remote] Installing to: $npm_prefix/lib/node_modules"
 
-  # Try npm install with verbose output
-  if ! npm install -g "@devcontainers/cli@${DEVCONTAINER_CLI_VERSION}"; then
+  # Try npm install with the correct prefix explicitly set
+  if ! npm install -g "@devcontainers/cli@${DEVCONTAINER_CLI_VERSION}" --prefix "$npm_prefix"; then
     echo "[remote] WARNING: Failed to upgrade devcontainer CLI"
     echo "[remote] The npm install command tried to write to: $(npm config get prefix)/lib/node_modules"
     echo "[remote] Current user $(whoami) may not have write permissions there"
@@ -108,6 +118,14 @@ ensure_devcontainer_cli() {
     echo "[remote] Continuing with existing version..."
     return 0
   fi
+
+  # After successful install, ensure devcontainer is in PATH
+  # The new installation might be in ~/.npm-global/bin
+  if [[ -x "$HOME/.npm-global/bin/devcontainer" ]]; then
+    export PATH="$HOME/.npm-global/bin:$PATH"
+    echo "[remote] Added ~/.npm-global/bin to PATH for this session"
+  fi
+
   if devcontainer --version >/dev/null 2>&1; then
     local post_install
     post_install="$(devcontainer --version 2>/dev/null || true)"
