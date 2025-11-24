@@ -24,7 +24,22 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONTAINER_USER=${CONTAINER_USER:-$(id -un)}
 CONTAINER_UID=${CONTAINER_UID:-$(id -u)}
 CONTAINER_GID=${CONTAINER_GID:-$(id -g)}
-DEVCONTAINER_CLI_VERSION=${DEVCONTAINER_CLI_VERSION:-"0.80.2"}
+# Get latest devcontainer CLI version from GitHub
+get_latest_devcontainer_version() {
+  if command -v gh &>/dev/null; then
+    gh api "repos/devcontainers/cli/releases/latest" --jq '.tag_name' 2>/dev/null | sed 's/^v//' || echo "0.80.2"
+  else
+    curl -s "https://api.github.com/repos/devcontainers/cli/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' | sed 's/^v//' || echo "0.80.2"
+  fi
+}
+
+# Use latest version unless overridden
+if [[ -z "${DEVCONTAINER_CLI_VERSION:-}" ]]; then
+  DEVCONTAINER_CLI_VERSION=$(get_latest_devcontainer_version)
+  echo "[remote] Using latest devcontainer CLI version: $DEVCONTAINER_CLI_VERSION"
+else
+  echo "[remote] Using specified devcontainer CLI version: $DEVCONTAINER_CLI_VERSION"
+fi
 DOCKER_CONTEXT=${DOCKER_CONTEXT:-}
 WORKSPACE_PATH=${WORKSPACE_PATH:-"/home/${CONTAINER_USER}/dev/devcontainers/workspace"}
 
