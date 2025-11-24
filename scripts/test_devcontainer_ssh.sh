@@ -107,13 +107,11 @@ elif [[ -x /opt/mrdocs/bin/mrdocs ]]; then
 else
   echo "[ssh-remote] MISSING mrdocs"; failed=1
 fi
-echo "[ssh-remote] ssh -T git@github.com (expect success message)"
-# Use the agent (`SSH_AUTH_SOCK`) rather than a bind-mounted private key. Try port 22 first, then fall back to 443 per GitHub docs.
-attempt_github_ssh() {
-  local port="$1"; shift
-  local host="$1"; shift
+echo "[ssh-remote] ssh -T git@github.com (expect success message over 443)"
+# Use the agent (`SSH_AUTH_SOCK`) rather than a bind-mounted private key. Only attempt ssh.github.com:443 (port 22 is blocked).
+attempt_github_ssh_443() {
   local output status
-  output="$(ssh -o BatchMode=yes -o ConnectTimeout=10 -p "$port" -o Hostname="$host" -T git@github.com 2>&1)"
+  output="$(ssh -o BatchMode=yes -o ConnectTimeout=10 -p 443 -o Hostname=ssh.github.com -T git@github.com 2>&1)"
   status=$?
   if echo "$output" | grep -qi "successfully authenticated"; then
     echo "$output"
@@ -123,17 +121,11 @@ attempt_github_ssh() {
   return $status
 }
 
-if attempt_github_ssh 22 github.com; then
-  echo "[ssh-remote] github.com:22 OK"
+if attempt_github_ssh_443; then
+  echo "[ssh-remote] ssh.github.com:443 OK"
 else
   status=$?
-  echo "[ssh-remote] github.com:22 failed (exit $status); trying ssh.github.com:443"
-  if attempt_github_ssh 443 ssh.github.com; then
-    echo "[ssh-remote] ssh.github.com:443 OK"
-  else
-    status2=$?
-    echo "[ssh-remote] github.com SSH failed on 22 and 443 (exit $status2)"; failed=1
-  fi
+  echo "[ssh-remote] github.com SSH failed on 443 (exit $status)"; failed=1
 fi
 exit $failed
 REMOTE
