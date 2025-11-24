@@ -13,7 +13,7 @@
 ```yaml
 local_machine:
   type: "macOS"
-  working_directory: "/Users/ray.manaloto@tastytrade.com/dev/github/SergeyMakeev/SlotMap"
+  working_directory: "<repo_root>"  # set to your local clone path
   private_key: "~/.ssh/id_ed25519"
   public_key: "~/.ssh/id_ed25519.pub"
 
