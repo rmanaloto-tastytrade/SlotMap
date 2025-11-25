@@ -246,9 +246,14 @@ grep -r "c0802s4\.ny5" docs/ README.md CLAUDE.md TEST_BRANCH_README.md
 
 ## Phase 2: Policy & Concept Scaffolding
 
-**Status:** Pending
+**Status:** Current Phase
 **Dependencies:** Phase 1 complete
 
+### Top Priority (Do First)
+1. **Bootstrap vcpkg into CMake** - Proper vcpkg toolchain integration
+2. **Replace Google Test with boost-ext/ut** - Use [μt](https://github.com/boost-ext/ut) for unit testing
+
+### Core Tasks
 - Formalize concepts in `include/slotmap/Concepts.hpp` for handles, slots, storage, and lookup.
 - Provide default policies (growth, storage, lookup, instrumentation) backed by qlibs/stdx overlays.
 - Document each policy in `docs/Policies/*.md` and illustrate flows in `docs/Diagrams/`.
@@ -281,7 +286,7 @@ grep -r "c0802s4\.ny5" docs/ README.md CLAUDE.md TEST_BRANCH_README.md
 **Status:** Pending
 **Dependencies:** Phase 4 complete
 
-- Expand gtest coverage, add sanitizers presets, and document release/deployment steps.
+- Expand ut test coverage, add sanitizers presets, and document release/deployment steps.
 - Ensure `scripts/generate_docs.sh` artifacts feed CI/publishing.
 
 ---
