@@ -1,0 +1,7 @@
+{
+  "name": "qlibs-perf",
+  "version-string": "0.1.0",
+  "description": "C++2x Performance library - profiling, analyzing, benchmarking via linux/perf and llvm/mca",
+  "homepage": "https://github.com/qlibs/perf",
+  "license": "MIT"
+}

@@ -1,0 +1,11 @@
+qlibs-perf provides CMake targets:
+
+    find_package(qlibs-perf CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE qlibs::perf)
+
+Then include in your source files:
+
+    #include <qlibs/perf>
+
+Note: Full functionality requires Linux with perf-event-open support and optionally LLVM.
+For basic timing (rdtsc/chrono), no additional dependencies are needed.

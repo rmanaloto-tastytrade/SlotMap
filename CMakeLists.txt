@@ -10,6 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Build options
 option(SLOTMAP_BUILD_TESTS "Build SlotMap unit tests" ON)
+option(SLOTMAP_BUILD_BENCHMARKS "Build SlotMap performance benchmarks" ON)
 option(SLOTMAP_BUILD_DOCS "Enable documentation targets" ON)
 option(SLOTMAP_ENABLE_WARNINGS_AS_ERRORS "Treat warnings as errors" ON)
 
@@ -105,6 +106,8 @@ if(CLANG_FORMAT_EXE)
         ${CMAKE_SOURCE_DIR}/src/*.hpp
         ${CMAKE_SOURCE_DIR}/tests/*.cpp
         ${CMAKE_SOURCE_DIR}/tests/*.hpp
+        ${CMAKE_SOURCE_DIR}/benchmarks/*.cpp
+        ${CMAKE_SOURCE_DIR}/benchmarks/*.hpp
     )
 
     add_custom_target(format
@@ -170,6 +173,10 @@ target_compile_definitions(
 if(SLOTMAP_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+if(SLOTMAP_BUILD_BENCHMARKS)
+    add_subdirectory(benchmarks)
 endif()
 
 if(SLOTMAP_BUILD_DOCS)
