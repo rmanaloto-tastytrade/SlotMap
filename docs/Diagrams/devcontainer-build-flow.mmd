@@ -1,0 +1,37 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4a90d9', 'primaryTextColor': '#fff', 'primaryBorderColor': '#2d5986', 'lineColor': '#5c6bc0', 'secondaryColor': '#81c784', 'tertiaryColor': '#fff3e0'}}}%%
+flowchart TD
+    subgraph MacBook["MacBook (Local)"]
+        A[deploy_remote_devcontainer.sh] --> B{SYNC_MAC_SSH?}
+        B -->|Yes| C[rsync SSH keys]
+        B -->|No| D[Skip key sync]
+        C --> E[git push branch]
+        D --> E
+        E --> F[scp public key]
+        F --> G[SSH to remote]
+    end
+
+    subgraph Remote["Remote Host (c0802s4.ny5)"]
+        G --> H[run_local_devcontainer.sh]
+        H --> I[git fetch & checkout]
+        I --> J[Copy repo to sandbox]
+        J --> K[Stage SSH keys]
+        K --> L{Base image exists?}
+        L -->|No| M[docker bake base]
+        L -->|Yes| N[docker bake devcontainer]
+        M --> N
+        N --> O[devcontainer up]
+        O --> P[postCreateCommand]
+        P --> Q[vcpkg install]
+        Q --> R[Container Ready]
+    end
+
+    subgraph Container["DevContainer :9222"]
+        R --> S[SSH Server]
+        S --> T[clang-21 / clang-p2996]
+        S --> U[cmake / ninja / mold]
+        S --> V[vcpkg overlays]
+    end
+
+    style A fill:#4a90d9,stroke:#2d5986,color:#fff
+    style R fill:#81c784,stroke:#4caf50,color:#fff
+    style S fill:#ffb74d,stroke:#ff9800,color:#000

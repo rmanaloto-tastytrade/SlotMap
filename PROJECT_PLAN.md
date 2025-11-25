@@ -286,20 +286,36 @@ grep -r "c0802s4\.ny5" docs/ README.md CLAUDE.md TEST_BRANCH_README.md
 
 ---
 
+## Backlog (Deferred from Phase 1)
+
+**Status:** Deferred - Not blocking core development
+**Priority:** Low
+
+These tasks were identified during Phase 1 but deferred to focus on core SlotMap implementation:
+
+1. **Pin package/tool versions in Dockerfile** - Lock apt/npm versions for reproducibility
+2. **Satisfy remaining Dockerfile lint rules** - Address any hadolint warnings
+3. **CI/CD Pipeline** - GitHub Actions for automated testing and deployment
+
+---
+
 ## Quick Reference
 
-**Current Priority:** Phase 1 - Environment & Tooling (with auto-update infrastructure)
-**Just Completed:** Phase 0.5 - Tool Auto-Update Infrastructure
-**Previously Completed:** Phase 0 - All security fixes tested and validated on c0802s4.ny5
+**Current Priority:** Phase 2 - Policy & Concept Scaffolding
+**Just Completed:** Phase 1 - Environment & Tooling (workflow diagrams, devcontainer stable)
+**Previously Completed:** Phase 0/0.5 - Security fixes, auto-update infrastructure
 
-**Immediate Actions Required:**
-1. Run `./scripts/schedulers/install_scheduler.sh` on MacBook
-2. Deploy and run update scripts on c0802s4.ny5
-3. Test devcontainer deployment with updated scripts
-**Completed:** Hostname configuration, SSH security fixes, dynamic usernames
+**Phase 1 Completion Summary:**
+- ✅ Scheduler installed on MacBook (launchd)
+- ✅ Remote tools deployed (gh CLI, devcontainer CLI)
+- ✅ DevContainer fully functional on c0802s4.ny5:9222
+- ✅ clang-21 (system) and clang-p2996 (experimental) properly separated
+- ✅ Workflow diagrams created (`docs/Diagrams/*.mmd`)
+- ✅ Export script (`scripts/generate_diagrams.sh`)
 
 **Key Files:**
 - This plan: `PROJECT_PLAN.md`
 - Security roadmap: `docs/REFACTORING_ROADMAP.md`
 - Implementation guide: `docs/AI_AGENT_CONTEXT.md`
 - Testing procedures: `TEST_BRANCH_README.md`
+- Workflow diagrams: `docs/Diagrams/*.mmd`

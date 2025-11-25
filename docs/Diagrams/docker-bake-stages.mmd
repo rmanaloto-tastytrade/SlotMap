@@ -1,0 +1,50 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4a90d9', 'primaryTextColor': '#fff', 'primaryBorderColor': '#2d5986', 'lineColor': '#5c6bc0', 'secondaryColor': '#81c784', 'tertiaryColor': '#fff3e0'}}}%%
+flowchart TD
+    subgraph Base["Base Image (dev-base:local)"]
+        A[Ubuntu 24.04] --> B[LLVM 21 APT Repo]
+        B --> C[clang-21 / clang++-21]
+        C --> D[Core packages]
+        D --> E[dev-base:local]
+    end
+
+    subgraph Tools["Tool Stages (Parallel)"]
+        E --> F1[clang_p2996]
+        E --> F2[node_mermaid]
+        E --> F3[mold]
+        E --> F4[gh_cli]
+        E --> F5[ccache]
+        E --> F6[sccache]
+        E --> F7[ripgrep]
+        E --> F8[cppcheck]
+        E --> F9[valgrind]
+        E --> F10[python_tools]
+        E --> F11[pixi]
+        E --> F12[iwyu]
+        E --> F13[mrdocs]
+        E --> F14[jq]
+        E --> F15[awscli]
+    end
+
+    subgraph Merge["Tools Merge Stage"]
+        F1 & F2 & F3 & F4 & F5 & F6 & F7 & F8 & F9 & F10 & F11 & F12 & F13 & F14 & F15 --> G[tools_merge]
+        G --> H[COPY --from each stage]
+        H --> I[vcpkg bootstrap]
+    end
+
+    subgraph Final["DevContainer Image"]
+        I --> J[devcontainer stage]
+        J --> K[Create user]
+        K --> L[Setup directories]
+        L --> M[devcontainer:local]
+    end
+
+    subgraph Features["DevContainer Features"]
+        M --> N[SSHD Feature]
+        N --> O[Final Image]
+    end
+
+    style A fill:#e3f2fd,stroke:#1976d2
+    style E fill:#4a90d9,stroke:#2d5986,color:#fff
+    style G fill:#ffb74d,stroke:#ff9800
+    style M fill:#81c784,stroke:#4caf50,color:#fff
+    style O fill:#7e57c2,stroke:#5e35b1,color:#fff

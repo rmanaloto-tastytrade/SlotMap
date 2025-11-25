@@ -1,0 +1,38 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4a90d9', 'primaryTextColor': '#fff', 'primaryBorderColor': '#2d5986', 'lineColor': '#5c6bc0', 'secondaryColor': '#81c784', 'tertiaryColor': '#ef5350'}}}%%
+flowchart TD
+    subgraph Mac["MacBook"]
+        A[SSH Agent] --> B[id_ed25519 keys]
+        B --> C{SYNC_MAC_SSH=0}
+    end
+
+    subgraph Sync["Key Sync Decision"]
+        C -->|Default: No Sync| D[Only public key copied]
+        C -->|Override: Yes| E[rsync with filters]
+        E --> F[Exclude private keys]
+        F --> G[Exclude sensitive files]
+    end
+
+    subgraph Remote["Remote Host"]
+        D --> H[~/devcontainers/ssh_keys/]
+        G --> H
+        H --> I[id_ed25519.pub only]
+        I --> J[Bind mount to container]
+    end
+
+    subgraph Container["DevContainer"]
+        J --> K[~/.ssh/]
+        K --> L[authorized_keys]
+        L --> M[SSH Server :9222]
+    end
+
+    subgraph Access["Secure Access"]
+        A -.->|Agent Forwarding -A| M
+        M --> N[git@github.com]
+        N --> O[GitHub Access]
+    end
+
+    style A fill:#4a90d9,stroke:#2d5986,color:#fff
+    style C fill:#ffb74d,stroke:#ff9800
+    style I fill:#81c784,stroke:#4caf50,color:#fff
+    style M fill:#7e57c2,stroke:#5e35b1,color:#fff
+    style O fill:#81c784,stroke:#4caf50,color:#fff
