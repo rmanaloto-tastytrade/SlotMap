@@ -57,19 +57,119 @@
     {
       "name": "clang-release",
       "displayName": "Clang Release (C++23)",
+      "description": "Optimized release build with LTO",
       "inherits": "base-cxx23",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF",
+        "SLOTMAP_ENABLE_LTO": "ON",
+        "SLOTMAP_ENABLE_THIN_LTO": "ON"
       }
     },
     {
       "name": "clang-release-cxx26",
       "displayName": "Clang Release (C++26)",
+      "description": "Optimized release build with LTO (C++26)",
       "inherits": "base-cxx26",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF",
+        "SLOTMAP_ENABLE_LTO": "ON",
+        "SLOTMAP_ENABLE_THIN_LTO": "ON"
+      }
+    },
+    {
+      "name": "clang-release-full-lto",
+      "displayName": "Clang Release Full LTO (C++23)",
+      "description": "Release build with full LTO (slower link, better optimization)",
+      "inherits": "base-cxx23",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF",
+        "SLOTMAP_ENABLE_LTO": "ON",
+        "SLOTMAP_ENABLE_THIN_LTO": "OFF"
+      }
+    },
+    {
+      "name": "clang-release-full-lto-cxx26",
+      "displayName": "Clang Release Full LTO (C++26)",
+      "description": "Release build with full LTO (C++26)",
+      "inherits": "base-cxx26",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF",
+        "SLOTMAP_ENABLE_LTO": "ON",
+        "SLOTMAP_ENABLE_THIN_LTO": "OFF"
+      }
+    },
+    {
+      "name": "clang-bolt-instrument",
+      "displayName": "Clang BOLT Instrumentation (C++23)",
+      "description": "Release build prepared for BOLT profiling - run binary, then use llvm-bolt to optimize",
+      "inherits": "base-cxx23",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF",
+        "SLOTMAP_ENABLE_LTO": "ON",
+        "SLOTMAP_ENABLE_THIN_LTO": "ON",
+        "SLOTMAP_ENABLE_BOLT_INSTRUMENTATION": "ON"
+      }
+    },
+    {
+      "name": "clang-bolt-instrument-cxx26",
+      "displayName": "Clang BOLT Instrumentation (C++26)",
+      "description": "Release build prepared for BOLT profiling (C++26)",
+      "inherits": "base-cxx26",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF",
+        "SLOTMAP_ENABLE_LTO": "ON",
+        "SLOTMAP_ENABLE_THIN_LTO": "ON",
+        "SLOTMAP_ENABLE_BOLT_INSTRUMENTATION": "ON"
+      }
+    },
+    {
+      "name": "clang-tidy",
+      "displayName": "Clang-Tidy Analysis (C++23)",
+      "description": "Debug build with clang-tidy static analysis enabled",
+      "inherits": "base-cxx23",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF",
+        "SLOTMAP_ENABLE_CLANG_TIDY": "ON"
+      }
+    },
+    {
+      "name": "clang-tidy-cxx26",
+      "displayName": "Clang-Tidy Analysis (C++26)",
+      "description": "Debug build with clang-tidy static analysis (C++26)",
+      "inherits": "base-cxx26",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF",
+        "SLOTMAP_ENABLE_CLANG_TIDY": "ON"
+      }
+    },
+    {
+      "name": "clang-iwyu",
+      "displayName": "Include-What-You-Use (C++23)",
+      "description": "Debug build with IWYU to check include dependencies",
+      "inherits": "base-cxx23",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF",
+        "SLOTMAP_ENABLE_IWYU": "ON"
+      }
+    },
+    {
+      "name": "clang-iwyu-cxx26",
+      "displayName": "Include-What-You-Use (C++26)",
+      "description": "Debug build with IWYU (C++26)",
+      "inherits": "base-cxx26",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF",
+        "SLOTMAP_ENABLE_IWYU": "ON"
       }
     },
     {
@@ -405,6 +505,38 @@
       "configurePreset": "clang-release-cxx26"
     },
     {
+      "name": "clang-release-full-lto",
+      "configurePreset": "clang-release-full-lto"
+    },
+    {
+      "name": "clang-release-full-lto-cxx26",
+      "configurePreset": "clang-release-full-lto-cxx26"
+    },
+    {
+      "name": "clang-bolt-instrument",
+      "configurePreset": "clang-bolt-instrument"
+    },
+    {
+      "name": "clang-bolt-instrument-cxx26",
+      "configurePreset": "clang-bolt-instrument-cxx26"
+    },
+    {
+      "name": "clang-tidy",
+      "configurePreset": "clang-tidy"
+    },
+    {
+      "name": "clang-tidy-cxx26",
+      "configurePreset": "clang-tidy-cxx26"
+    },
+    {
+      "name": "clang-iwyu",
+      "configurePreset": "clang-iwyu"
+    },
+    {
+      "name": "clang-iwyu-cxx26",
+      "configurePreset": "clang-iwyu-cxx26"
+    },
+    {
       "name": "clang-asan",
       "configurePreset": "clang-asan"
     },
@@ -518,6 +650,62 @@
     {
       "name": "clang-release-cxx26",
       "configurePreset": "clang-release-cxx26",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang-release-full-lto",
+      "configurePreset": "clang-release-full-lto",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang-release-full-lto-cxx26",
+      "configurePreset": "clang-release-full-lto-cxx26",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang-bolt-instrument",
+      "configurePreset": "clang-bolt-instrument",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang-bolt-instrument-cxx26",
+      "configurePreset": "clang-bolt-instrument-cxx26",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang-tidy",
+      "configurePreset": "clang-tidy",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang-tidy-cxx26",
+      "configurePreset": "clang-tidy-cxx26",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang-iwyu",
+      "configurePreset": "clang-iwyu",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang-iwyu-cxx26",
+      "configurePreset": "clang-iwyu-cxx26",
       "output": {
         "outputOnFailure": true
       }

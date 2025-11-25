@@ -1,0 +1,46 @@
+# SlotMap include-what-you-use mapping file
+# See: https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUMappings.md
+
+[
+  # Standard library mappings
+  { include: ["<bits/std_abs.h>", private, "<cstdlib>", public] },
+  { include: ["<bits/stdint-intn.h>", private, "<cstdint>", public] },
+  { include: ["<bits/stdint-uintn.h>", private, "<cstdint>", public] },
+  { include: ["<bits/types/struct_tm.h>", private, "<ctime>", public] },
+  { include: ["<bits/types/time_t.h>", private, "<ctime>", public] },
+
+  # C++ standard library
+  { include: ["@<bits/.*>", private, "<algorithm>", public] },
+  { include: ["<__algorithm/.*>", private, "<algorithm>", public] },
+  { include: ["<__memory/.*>", private, "<memory>", public] },
+  { include: ["<__utility/.*>", private, "<utility>", public] },
+  { include: ["<__functional/.*>", private, "<functional>", public] },
+  { include: ["<__iterator/.*>", private, "<iterator>", public] },
+  { include: ["<__ranges/.*>", private, "<ranges>", public] },
+  { include: ["<__concepts/.*>", private, "<concepts>", public] },
+  { include: ["<__expected/.*>", private, "<expected>", public] },
+
+  # Project-specific mappings
+  { include: ["\"slotmap/detail/.*\"", private, "\"slotmap/SlotMap.hpp\"", public] },
+
+  # Boost.ut mappings
+  { include: ["<boost/ut.hpp>", public, "<boost/ut.hpp>", public] },
+
+  # vcpkg dependencies
+  { include: ["<fmt/core.h>", public, "<fmt/format.h>", public] },
+  { include: ["<fmt/ostream.h>", public, "<fmt/format.h>", public] },
+
+  # Symbol mappings
+  { symbol: ["std::nullptr_t", private, "<cstddef>", public] },
+  { symbol: ["std::size_t", private, "<cstddef>", public] },
+  { symbol: ["std::ptrdiff_t", private, "<cstddef>", public] },
+  { symbol: ["std::byte", private, "<cstddef>", public] },
+  { symbol: ["std::uint8_t", private, "<cstdint>", public] },
+  { symbol: ["std::uint16_t", private, "<cstdint>", public] },
+  { symbol: ["std::uint32_t", private, "<cstdint>", public] },
+  { symbol: ["std::uint64_t", private, "<cstdint>", public] },
+  { symbol: ["std::int8_t", private, "<cstdint>", public] },
+  { symbol: ["std::int16_t", private, "<cstdint>", public] },
+  { symbol: ["std::int32_t", private, "<cstdint>", public] },
+  { symbol: ["std::int64_t", private, "<cstdint>", public] },
+]

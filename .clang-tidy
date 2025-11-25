@@ -1,0 +1,76 @@
+---
+# SlotMap clang-tidy configuration
+# Run with: clang-tidy-21 --config-file=.clang-tidy <file>
+
+Checks: >
+  -*,
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  hicpp-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -readability-magic-numbers,
+  -bugprone-easily-swappable-parameters,
+  -misc-non-private-member-variables-in-classes,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -hicpp-no-array-decay,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -hicpp-signed-bitwise,
+
+WarningsAsErrors: ''
+
+HeaderFilterRegex: '.*/(include|src)/.*\.hpp$'
+
+CheckOptions:
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: '_'
+  - key: readability-identifier-naming.ConstantCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: lower_case
+  - key: readability-identifier-naming.StaticConstantCase
+    value: lower_case
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.TemplateParameterCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypeAliasCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypedefCase
+    value: CamelCase
+  - key: modernize-use-nullptr.NullMacros
+    value: 'NULL'
+  - key: performance-unnecessary-value-param.AllowedTypes
+    value: 'std::string_view;string_view'
+  - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+    value: true
+  - key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
+    value: true
+  - key: readability-function-cognitive-complexity.Threshold
+    value: 25
+...
