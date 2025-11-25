@@ -22,6 +22,13 @@ SSH_TARGET="$HOME/.ssh"
 if compgen -G "$SSH_SOURCE/"'*.pub' > /dev/null; then
   mkdir -p "$SSH_TARGET"
   chmod 700 "$SSH_TARGET"
+  if ls "$SSH_TARGET"/id_* 2>/dev/null | grep -v '\.pub$' > /dev/null; then
+    echo "[post_create] WARNING: Private keys detected in $SSH_TARGET - will not modify them"
+  fi
+  if [[ -f "$SSH_TARGET/authorized_keys" ]]; then
+    cp "$SSH_TARGET/authorized_keys" "$SSH_TARGET/authorized_keys.backup.$(date +%Y%m%d-%H%M%S)"
+    echo "[post_create] Backed up existing authorized_keys"
+  fi
   cat "$SSH_SOURCE/"*.pub > "$SSH_TARGET/authorized_keys"
   chmod 600 "$SSH_TARGET/authorized_keys"
   echo "[post_create] Installed authorized_keys from $SSH_SOURCE"
