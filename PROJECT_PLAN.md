@@ -249,9 +249,12 @@ grep -r "c0802s4\.ny5" docs/ README.md CLAUDE.md TEST_BRANCH_README.md
 **Status:** Current Phase
 **Dependencies:** Phase 1 complete
 
-### Top Priority (Do First)
-1. **Bootstrap vcpkg into CMake** - Proper vcpkg toolchain integration
-2. **Replace Google Test with boost-ext/ut** - Use [μt](https://github.com/boost-ext/ut) for unit testing
+### Top Priority (Do First) ✅ COMPLETED
+1. ✅ **Bootstrap vcpkg into CMake** - Proper vcpkg toolchain integration (already configured in CMakePresets.json)
+2. ✅ **Replace Google Test with boost-ext/ut** - Use [μt](https://github.com/boost-ext/ut) for unit testing
+   - Added boost-ext-ut v2.3.1 overlay port
+   - Removed gtest dependency
+   - Updated tests to ut syntax
 
 ### Core Tasks
 - Formalize concepts in `include/slotmap/Concepts.hpp` for handles, slots, storage, and lookup.
@@ -317,6 +320,11 @@ These tasks were identified during Phase 1 but deferred to focus on core SlotMap
 - ✅ clang-21 (system) and clang-p2996 (experimental) properly separated
 - ✅ Workflow diagrams created (`docs/Diagrams/*.mmd`)
 - ✅ Export script (`scripts/generate_diagrams.sh`)
+
+**Phase 2 Progress:**
+- ✅ vcpkg already bootstrapped via CMakePresets.json toolchain file
+- ✅ Replaced Google Test with boost-ext/ut (v2.3.1)
+- 🔄 Core tasks: Concepts, policies, and documentation pending
 
 **Key Files:**
 - This plan: `PROJECT_PLAN.md`
