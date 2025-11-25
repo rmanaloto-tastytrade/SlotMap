@@ -247,6 +247,144 @@
         "ASAN_OPTIONS": "detect_leaks=1:detect_stack_use_after_return=1",
         "UBSAN_OPTIONS": "print_stacktrace=1:halt_on_error=1"
       }
+    },
+    {
+      "name": "clang-rtsan",
+      "displayName": "Clang RTSan (C++23)",
+      "description": "Debug build with RealtimeSanitizer (detects non-deterministic calls in [[clang::nonblocking]] functions)",
+      "inherits": "base-cxx23",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=realtime -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=realtime",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      },
+      "environment": {
+        "RTSAN_OPTIONS": "halt_on_error=1:print_stats_on_exit=1"
+      }
+    },
+    {
+      "name": "clang-rtsan-cxx26",
+      "displayName": "Clang RTSan (C++26)",
+      "description": "Debug build with RealtimeSanitizer (C++26)",
+      "inherits": "base-cxx26",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=realtime -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=realtime",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      },
+      "environment": {
+        "RTSAN_OPTIONS": "halt_on_error=1:print_stats_on_exit=1"
+      }
+    },
+    {
+      "name": "clang-hwasan",
+      "displayName": "Clang HWASan (C++23)",
+      "description": "Debug build with Hardware-assisted AddressSanitizer (requires ARM64 or x86_64 with TBI kernel support)",
+      "inherits": "base-cxx23",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=hwaddress -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=hwaddress",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      },
+      "environment": {
+        "HWASAN_OPTIONS": "halt_on_error=1"
+      }
+    },
+    {
+      "name": "clang-hwasan-cxx26",
+      "displayName": "Clang HWASan (C++26)",
+      "description": "Debug build with Hardware-assisted AddressSanitizer (C++26, requires ARM64 or x86_64 with TBI kernel support)",
+      "inherits": "base-cxx26",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=hwaddress -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=hwaddress",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      },
+      "environment": {
+        "HWASAN_OPTIONS": "halt_on_error=1"
+      }
+    },
+    {
+      "name": "clang-dfsan",
+      "displayName": "Clang DFSan (C++23)",
+      "description": "Debug build with DataFlowSanitizer (requires DFSan-instrumented libc++, use for custom taint tracking)",
+      "inherits": "base-cxx23",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=dataflow -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=dataflow",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang-dfsan-cxx26",
+      "displayName": "Clang DFSan (C++26)",
+      "description": "Debug build with DataFlowSanitizer (C++26, requires DFSan-instrumented libc++)",
+      "inherits": "base-cxx26",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=dataflow -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=dataflow",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang-scudo",
+      "displayName": "Clang Scudo (C++23)",
+      "description": "Debug build with Scudo hardened allocator (security-hardened memory allocation)",
+      "inherits": "base-cxx23",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=scudo -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=scudo",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      },
+      "environment": {
+        "SCUDO_OPTIONS": "quarantine_size_kb=256:thread_local_quarantine_size_kb=64"
+      }
+    },
+    {
+      "name": "clang-scudo-cxx26",
+      "displayName": "Clang Scudo (C++26)",
+      "description": "Debug build with Scudo hardened allocator (C++26)",
+      "inherits": "base-cxx26",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=scudo -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=scudo",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      },
+      "environment": {
+        "SCUDO_OPTIONS": "quarantine_size_kb=256:thread_local_quarantine_size_kb=64"
+      }
+    },
+    {
+      "name": "clang-cfi",
+      "displayName": "Clang CFI (C++23)",
+      "description": "Release build with Control Flow Integrity (requires LTO, protects against control-flow hijacking)",
+      "inherits": "base-cxx23",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_FLAGS": "-flto -fvisibility=hidden -fsanitize=cfi -fno-omit-frame-pointer",
+        "CMAKE_EXE_LINKER_FLAGS": "-flto -fsanitize=cfi",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
+      }
+    },
+    {
+      "name": "clang-cfi-cxx26",
+      "displayName": "Clang CFI (C++26)",
+      "description": "Release build with Control Flow Integrity (C++26, requires LTO)",
+      "inherits": "base-cxx26",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_FLAGS": "-flto -fvisibility=hidden -fsanitize=cfi -fno-omit-frame-pointer",
+        "CMAKE_EXE_LINKER_FLAGS": "-flto -fsanitize=cfi",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
+      }
     }
   ],
   "buildPresets": [
@@ -313,6 +451,46 @@
     {
       "name": "clang-asan-ubsan-cxx26",
       "configurePreset": "clang-asan-ubsan-cxx26"
+    },
+    {
+      "name": "clang-rtsan",
+      "configurePreset": "clang-rtsan"
+    },
+    {
+      "name": "clang-rtsan-cxx26",
+      "configurePreset": "clang-rtsan-cxx26"
+    },
+    {
+      "name": "clang-hwasan",
+      "configurePreset": "clang-hwasan"
+    },
+    {
+      "name": "clang-hwasan-cxx26",
+      "configurePreset": "clang-hwasan-cxx26"
+    },
+    {
+      "name": "clang-dfsan",
+      "configurePreset": "clang-dfsan"
+    },
+    {
+      "name": "clang-dfsan-cxx26",
+      "configurePreset": "clang-dfsan-cxx26"
+    },
+    {
+      "name": "clang-scudo",
+      "configurePreset": "clang-scudo"
+    },
+    {
+      "name": "clang-scudo-cxx26",
+      "configurePreset": "clang-scudo-cxx26"
+    },
+    {
+      "name": "clang-cfi",
+      "configurePreset": "clang-cfi"
+    },
+    {
+      "name": "clang-cfi-cxx26",
+      "configurePreset": "clang-cfi-cxx26"
     }
   ],
   "testPresets": [
@@ -326,6 +504,20 @@
     {
       "name": "clang-debug-cxx26",
       "configurePreset": "clang-debug-cxx26",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang-release",
+      "configurePreset": "clang-release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang-release-cxx26",
+      "configurePreset": "clang-release-cxx26",
       "output": {
         "outputOnFailure": true
       }
@@ -450,6 +642,94 @@
       "environment": {
         "ASAN_OPTIONS": "detect_leaks=1:detect_stack_use_after_return=1",
         "UBSAN_OPTIONS": "print_stacktrace=1:halt_on_error=1"
+      }
+    },
+    {
+      "name": "clang-rtsan",
+      "configurePreset": "clang-rtsan",
+      "output": {
+        "outputOnFailure": true
+      },
+      "environment": {
+        "RTSAN_OPTIONS": "halt_on_error=1:print_stats_on_exit=1"
+      }
+    },
+    {
+      "name": "clang-rtsan-cxx26",
+      "configurePreset": "clang-rtsan-cxx26",
+      "output": {
+        "outputOnFailure": true
+      },
+      "environment": {
+        "RTSAN_OPTIONS": "halt_on_error=1:print_stats_on_exit=1"
+      }
+    },
+    {
+      "name": "clang-hwasan",
+      "configurePreset": "clang-hwasan",
+      "output": {
+        "outputOnFailure": true
+      },
+      "environment": {
+        "HWASAN_OPTIONS": "halt_on_error=1"
+      }
+    },
+    {
+      "name": "clang-hwasan-cxx26",
+      "configurePreset": "clang-hwasan-cxx26",
+      "output": {
+        "outputOnFailure": true
+      },
+      "environment": {
+        "HWASAN_OPTIONS": "halt_on_error=1"
+      }
+    },
+    {
+      "name": "clang-dfsan",
+      "configurePreset": "clang-dfsan",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang-dfsan-cxx26",
+      "configurePreset": "clang-dfsan-cxx26",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang-scudo",
+      "configurePreset": "clang-scudo",
+      "output": {
+        "outputOnFailure": true
+      },
+      "environment": {
+        "SCUDO_OPTIONS": "quarantine_size_kb=256:thread_local_quarantine_size_kb=64"
+      }
+    },
+    {
+      "name": "clang-scudo-cxx26",
+      "configurePreset": "clang-scudo-cxx26",
+      "output": {
+        "outputOnFailure": true
+      },
+      "environment": {
+        "SCUDO_OPTIONS": "quarantine_size_kb=256:thread_local_quarantine_size_kb=64"
+      }
+    },
+    {
+      "name": "clang-cfi",
+      "configurePreset": "clang-cfi",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang-cfi-cxx26",
+      "configurePreset": "clang-cfi-cxx26",
+      "output": {
+        "outputOnFailure": true
       }
     }
   ]
