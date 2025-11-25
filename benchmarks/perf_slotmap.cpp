@@ -1,20 +1,16 @@
 /*
 
-**SlotMap Performance Profiling with qlibs/perf**
+**SlotMap Performance Profiling**
 
-This file provides detailed performance profiling using qlibs/perf, which offers:
-- Hardware performance counters via linux/perf
-- Cycle-accurate timing via rdtsc
-- CPU cache statistics
-- Branch prediction analysis
+This file provides detailed performance profiling using std::chrono for timing.
+Future versions will integrate qlibs/perf for hardware counter access.
 
-Note: Full perf counters require Linux with perf_event_open support.
-Basic timing works on all platforms.
+Note: For full hardware performance counters, use the Google Benchmark-based
+bench_slotmap.cpp which integrates better with standard tooling.
 
 */
 
-#include <qlibs/perf>
-
+#include <chrono>
 #include <cstdint>
 #include <iostream>
 #include <random>
@@ -24,6 +20,41 @@ Basic timing works on all platforms.
 // #include <slotmap/SlotMap.hpp>
 
 namespace {
+
+/*
+
+**Timing Utilities**
+
+Simple RAII timer for measuring operation durations.
+
+*/
+
+class Timer {
+public:
+    void start() { start_ = std::chrono::high_resolution_clock::now(); }
+    void stop() { stop_ = std::chrono::high_resolution_clock::now(); }
+
+    [[nodiscard]] auto elapsed_ns() const {
+        return std::chrono::duration_cast<std::chrono::nanoseconds>(stop_ - start_).count();
+    }
+
+    [[nodiscard]] auto elapsed_us() const {
+        return std::chrono::duration_cast<std::chrono::microseconds>(stop_ - start_).count();
+    }
+
+    [[nodiscard]] auto elapsed_ms() const {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(stop_ - start_).count();
+    }
+
+private:
+    std::chrono::high_resolution_clock::time_point start_{};
+    std::chrono::high_resolution_clock::time_point stop_{};
+};
+
+template <typename T>
+void do_not_optimize(T const& value) {
+    asm volatile("" : : "r,m"(value) : "memory");
+}
 
 /*
 
@@ -41,7 +72,7 @@ void profile_vector_operations() {
     // Profile insertion
     {
         std::cout << "Vector insertion (" << count << " elements):\n";
-        perf::timer timer;
+        Timer timer;
 
         std::vector<std::uint64_t> vec;
         vec.reserve(count);
@@ -53,7 +84,7 @@ void profile_vector_operations() {
         timer.stop();
 
         std::cout << "  Time: " << timer.elapsed_ns() << " ns\n";
-        std::cout << "  Per element: " << timer.elapsed_ns() / count << " ns\n\n";
+        std::cout << "  Per element: " << timer.elapsed_ns() / static_cast<std::int64_t>(count) << " ns\n\n";
     }
 
     // Profile random access
@@ -71,7 +102,7 @@ void profile_vector_operations() {
         }
 
         std::cout << "Vector random access (" << count << " lookups):\n";
-        perf::timer timer;
+        Timer timer;
 
         timer.start();
         std::uint64_t sum = 0;
@@ -80,9 +111,9 @@ void profile_vector_operations() {
         }
         timer.stop();
 
-        perf::donotoptimize(sum);
+        do_not_optimize(sum);
         std::cout << "  Time: " << timer.elapsed_ns() << " ns\n";
-        std::cout << "  Per access: " << timer.elapsed_ns() / count << " ns\n\n";
+        std::cout << "  Per access: " << timer.elapsed_ns() / static_cast<std::int64_t>(count) << " ns\n\n";
     }
 
     // Profile iteration
@@ -93,7 +124,7 @@ void profile_vector_operations() {
         }
 
         std::cout << "Vector iteration (" << count << " elements):\n";
-        perf::timer timer;
+        Timer timer;
 
         timer.start();
         std::uint64_t sum = 0;
@@ -102,11 +133,11 @@ void profile_vector_operations() {
         }
         timer.stop();
 
-        perf::donotoptimize(sum);
+        do_not_optimize(sum);
         std::cout << "  Time: " << timer.elapsed_ns() << " ns\n";
-        std::cout << "  Per element: " << timer.elapsed_ns() / count << " ns\n";
+        std::cout << "  Per element: " << timer.elapsed_ns() / static_cast<std::int64_t>(count) << " ns\n";
         std::cout << "  Throughput: "
-                  << (count * sizeof(std::uint64_t) * 1000) / timer.elapsed_ns()
+                  << (count * sizeof(std::uint64_t) * 1000) / static_cast<std::size_t>(timer.elapsed_ns())
                   << " MB/s\n\n";
     }
 }
@@ -118,27 +149,24 @@ void profile_slotmap_operations() {
 
     std::cout << "\n=== SlotMap Profiling ===\n\n";
 
-    // Profile insertion with perf counters
+    // Profile insertion
     {
         std::cout << "SlotMap insertion (" << count << " elements):\n";
 
         slotmap::SlotMap<std::uint64_t> sm;
         sm.reserve(count);
 
-        perf::counter counter;  // Uses hardware performance counters if available
+        Timer timer;
 
-        counter.start();
+        timer.start();
         for (std::size_t i = 0; i < count; ++i) {
             auto handle = sm.insert(i);
-            perf::donotoptimize(handle);
+            do_not_optimize(handle);
         }
-        counter.stop();
+        timer.stop();
 
-        std::cout << "  Cycles: " << counter.cycles() << "\n";
-        std::cout << "  Instructions: " << counter.instructions() << "\n";
-        std::cout << "  IPC: " << counter.ipc() << "\n";
-        std::cout << "  Cache misses: " << counter.cache_misses() << "\n";
-        std::cout << "  Branch misses: " << counter.branch_misses() << "\n\n";
+        std::cout << "  Time: " << timer.elapsed_ns() << " ns\n";
+        std::cout << "  Per element: " << timer.elapsed_ns() / static_cast<std::int64_t>(count) << " ns\n\n";
     }
 
     // Profile lookup patterns
@@ -155,23 +183,20 @@ void profile_slotmap_operations() {
         std::shuffle(handles.begin(), handles.end(), rng);
 
         std::cout << "SlotMap random lookup (" << count << " accesses):\n";
-        perf::counter counter;
+        Timer timer;
 
-        counter.start();
+        timer.start();
         std::uint64_t sum = 0;
         for (const auto& h : handles) {
             if (auto* val = sm.get(h)) {
                 sum += *val;
             }
         }
-        counter.stop();
+        timer.stop();
 
-        perf::donotoptimize(sum);
-        std::cout << "  Cycles: " << counter.cycles() << "\n";
-        std::cout << "  Instructions: " << counter.instructions() << "\n";
-        std::cout << "  IPC: " << counter.ipc() << "\n";
-        std::cout << "  Cache misses: " << counter.cache_misses() << "\n";
-        std::cout << "  Branch misses: " << counter.branch_misses() << "\n\n";
+        do_not_optimize(sum);
+        std::cout << "  Time: " << timer.elapsed_ns() << " ns\n";
+        std::cout << "  Per access: " << timer.elapsed_ns() / static_cast<std::int64_t>(count) << " ns\n\n";
     }
 
     // Profile iteration (should be cache-friendly)
@@ -183,20 +208,18 @@ void profile_slotmap_operations() {
         }
 
         std::cout << "SlotMap iteration (" << count << " elements):\n";
-        perf::counter counter;
+        Timer timer;
 
-        counter.start();
+        timer.start();
         std::uint64_t sum = 0;
         for (const auto& val : sm) {
             sum += val;
         }
-        counter.stop();
+        timer.stop();
 
-        perf::donotoptimize(sum);
-        std::cout << "  Cycles: " << counter.cycles() << "\n";
-        std::cout << "  Instructions: " << counter.instructions() << "\n";
-        std::cout << "  IPC: " << counter.ipc() << "\n";
-        std::cout << "  Cache misses: " << counter.cache_misses() << "\n\n";
+        do_not_optimize(sum);
+        std::cout << "  Time: " << timer.elapsed_ns() << " ns\n";
+        std::cout << "  Per element: " << timer.elapsed_ns() / static_cast<std::int64_t>(count) << " ns\n\n";
     }
 }
 
