@@ -430,46 +430,308 @@ git push origin main  # Uses Mac's SSH agent through the chain
 
 ---
 
-## Recommendations Summary
+## Known Bugs in Current Branch
 
-### High Priority (Security) - MUST ADOPT
+This section identifies **actual bugs** (not just missing features) in the `security-fixes-phase1` branch that need to be fixed based on the comparison analysis.
 
-| Item | Reason |
-|------|--------|
-| SSH agent socket mounting | Private keys never in container |
-| Localhost-only port binding | Container SSH not exposed on network |
-| config/env/devcontainer.env pattern | Secrets stay out of git |
-| CI hardcoded refs guard | Prevent accidental commits |
+### 🚨 Critical (Security Vulnerabilities)
 
-### Medium Priority (Reliability) - SHOULD ADOPT
+| Bug | Location | Impact | Fix Required |
+|-----|----------|--------|--------------|
+| **SSH port exposed on all interfaces** | `devcontainer.json:10` | Container SSH is accessible from any network interface (`0.0.0.0:9222`), not just localhost | Change `-p 9222:2222` → `-p 127.0.0.1:9222:2222` |
+| **SSH directory bind-mounted** | `devcontainer.json:22` | Mounts entire `~/.ssh` directory into container; any compromise exposes private keys | Replace with SSH agent socket mount (`SSH_AUTH_SOCK`) |
 
-| Item | Reason |
-|------|--------|
-| SSH config generator script | Simplifies ProxyJump workflow |
-| GitHub SSH over 443 | Firewall-friendly |
-| macOS SSH config filtering | Fixes UseKeychain errors on Linux |
-| Stale CMake cache detection | Prevents build path issues |
-| Pinned devcontainer CLI version | Reproducible builds |
+### ⚠️ High Priority (Portability/Reliability)
+
+| Bug | Location | Impact | Fix Required |
+|-----|----------|--------|--------------|
+| **Hardcoded hostname `c0802s4.ny5`** | `scripts/deploy_remote_devcontainer.sh:32`, `scripts/test_devcontainer_ssh.sh:22`, `scripts/sync_gh_auth.sh:7` | Scripts fail for any user with different remote host; hostname is user-specific | Remove hardcoded default, require config file or CLI arg |
+| **No hardcoded refs CI guard** | Missing | Hardcoded hostnames/usernames can be accidentally committed to git | Add `hardcoded-guard.yml` workflow |
+| **macOS SSH config breaks Linux** | `.devcontainer/scripts/post_create.sh` | `UseKeychain` directive in copied SSH config causes errors on Linux containers | Filter out macOS-specific directives |
+
+### ⚡ Medium Priority (Build Reliability)
+
+| Bug | Location | Impact | Fix Required |
+|-----|----------|--------|--------------|
+| **No stale CMake cache detection** | `.devcontainer/scripts/post_create.sh` | If workspace path changes, old `CMakeCache.txt` has wrong paths causing build failures | Detect and remove stale cache on path mismatch |
+| **GitHub SSH only works on port 22** | `.devcontainer/scripts/post_create.sh` | Corporate firewalls may block port 22; GitHub supports port 443 alternative | Add GitHub SSH over port 443 configuration |
+
+### Evidence from Code Review
+
+**Bug 1: SSH port on all interfaces**
+```json
+// devcontainer.json:9-11
+"runArgs": [
+  ...
+  "-p",
+  "9222:2222"  // BUG: Should be "127.0.0.1:9222:2222"
+]
+```
+
+**Bug 2: SSH directory bind-mount**
+```json
+// devcontainer.json:22
+"source=${localEnv:REMOTE_SSH_SYNC_DIR},target=/home/${env:DEVCONTAINER_USER}/.ssh,type=bind,consistency=cached"
+// BUG: Private keys exposed in container
+```
+
+**Bug 3: Hardcoded hostname**
+```bash
+# scripts/deploy_remote_devcontainer.sh:32
+DEFAULT_REMOTE_HOST="${DEFAULT_REMOTE_HOST:-c0802s4.ny5}"  # BUG: User-specific
+
+# scripts/test_devcontainer_ssh.sh:22
+HOST="c0802s4.ny5"  # BUG: User-specific
+```
+
+### Bug Severity Scoring
+
+| Bug | Security Impact | Portability Impact | Reliability Impact | Total Score |
+|-----|-----------------|-------------------|-------------------|-------------|
+| SSH on all interfaces | 🔴 Critical (10) | - | - | **10** |
+| SSH dir bind-mount | 🔴 Critical (10) | - | - | **10** |
+| Hardcoded hostname | - | 🔴 Critical (10) | - | **10** |
+| No CI guard | 🟡 Medium (5) | 🟡 Medium (5) | - | **10** |
+| macOS SSH config | - | - | 🟠 High (7) | **7** |
+| No stale cache detection | - | - | 🟡 Medium (5) | **5** |
+| GitHub SSH port 22 only | - | - | 🟡 Medium (5) | **5** |
+
+**Recommendation**: Fix all Critical and High priority bugs before any new feature work.
+
+---
+
+## Adoption Plan
+
+This section details exactly what we will adopt from `modernization.20251118` into `security-fixes-phase1`.
+
+### High Priority (Security) - MUST DO
+
+| Item | What It Does | Why | Files Changed |
+|------|--------------|-----|---------------|
+| **SSH agent socket mounting** | Replace `~/.ssh` bind-mount with `SSH_AUTH_SOCK` socket mount | Private keys never enter container | `devcontainer.json` |
+| **Localhost-only port binding** | Change `-p 9222:2222` to `-p 127.0.0.1:9222:2222` | Container SSH not exposed on network | `devcontainer.json` |
+| **config/env/devcontainer.env** | Gitignored local config file for host/user/port | Keeps hostnames/credentials out of git | `config/env/*`, `.gitignore` |
+| **CI hardcoded refs guard** | GitHub Actions workflow that fails on personal hostnames | Prevents accidental commits | `.github/workflows/hardcoded-guard.yml` |
+
+### Medium Priority (Reliability) - SHOULD DO
+
+| Item | What It Does | Why | Files Changed |
+|------|--------------|-----|---------------|
+| **SSH config generator** | Script creates `~/.ssh/cpp-devcontainer.conf` with ProxyJump | Simplifies connection to localhost-bound container | `scripts/generate_cpp_devcontainer_ssh_config.sh` |
+| **GitHub SSH over 443** | Configure `ssh.github.com:443` in post_create.sh | Works through corporate firewalls | `.devcontainer/scripts/post_create.sh` |
+| **macOS SSH config filter** | Remove `UseKeychain` directive in post_create.sh | Fixes Linux compatibility errors | `.devcontainer/scripts/post_create.sh` |
+| **Stale CMake cache detection** | Remove CMakeCache.txt if workspace path changed | Prevents build path mismatch issues | `.devcontainer/scripts/post_create.sh` |
+| **Remove hardcoded hostname** | Remove `c0802s4.ny5` default from deploy script | Makes scripts portable for any user | `scripts/deploy_remote_devcontainer.sh` |
+| **Load config env file** | Scripts source `config/env/devcontainer.env` if present | No need to pass flags every time | `scripts/deploy_remote_devcontainer.sh`, `scripts/run_local_devcontainer.sh`, `scripts/test_devcontainer_ssh.sh` |
 
 ### Low Priority (Cleanup) - NICE TO HAVE
 
-| Item | Reason |
-|------|--------|
-| Remove scheduler scripts (~500 lines) | Dead code |
-| Remove update scripts (~400 lines) | Dead code |
-| Remove obsolete docs (~2500 lines) | Outdated |
-| Add status_devcontainer.sh | Useful diagnostics |
-| Add new SSH documentation | Better guidance |
+| Item | Lines Removed/Added | Why | Files Changed |
+|------|---------------------|-----|---------------|
+| Remove scheduler scripts | -500 lines | Unused feature | `scripts/schedulers/*` |
+| Remove update_tools_*.sh | -400 lines | Unused | `scripts/update_tools_*.sh`, `scripts/sync_gh_auth.sh` |
+| Remove obsolete docs | -2500 lines | Outdated SSH/scheduler docs | `docs/SCHEDULER_*.md`, `docs/SSH_KEY_*.md`, etc. |
+| Add status_devcontainer.sh | +21 lines | Useful diagnostics | `scripts/status_devcontainer.sh` |
+| Add SSH documentation | +100 lines | Better guidance | `docs/ssh-configurations.md`, `docs/ssh-key-management-options.md` |
 
 ### DO NOT ADOPT (Keep Ours)
 
-| Item | Reason |
-|------|--------|
-| CMakeLists.txt | Our version has benchmarks, sanitizers |
-| CMakePresets.json | Our version has full sanitizer presets |
-| benchmarks/ directory | We just added this |
-| .clang-tidy | We need this |
-| .iwyu.imp | We need this |
+| Item | Why Keep Ours |
+|------|---------------|
+| `CMakeLists.txt` | Our version has benchmarks, BOLT, LTO, clang-tidy, IWYU options |
+| `CMakePresets.json` | Our version has full sanitizer presets (ASan, UBSan, TSan, MSan, CFI, Scudo, RTSan) |
+| `benchmarks/` directory | Just added Google Benchmark + chrono perf tests |
+| `.clang-tidy` | Need for static analysis |
+| `.iwyu.imp` | Need for include-what-you-use mappings |
+
+---
+
+## Implementation Steps
+
+When ready to adopt, execute these steps in order:
+
+### Step 1: Create config/env/ Directory Structure
+
+```bash
+mkdir -p config/env
+```
+
+**Create `config/env/README.md`:**
+```markdown
+# Local Environment Overrides
+
+Use this directory to store machine-specific settings for devcontainer scripts.
+The file `devcontainer.env` is NOT tracked (see .gitignore).
+
+## Setup
+cp config/env/devcontainer.env.example config/env/devcontainer.env
+# Edit with your values
+```
+
+**Create `config/env/devcontainer.env.example`:**
+```bash
+# Devcontainer script defaults (copy to devcontainer.env and edit)
+DEVCONTAINER_REMOTE_HOST=myhost.example.com
+DEVCONTAINER_REMOTE_USER=myuser
+DEVCONTAINER_SSH_PORT=9222
+```
+
+### Step 2: Update .gitignore
+
+```bash
+echo "" >> .gitignore
+echo "# Local environment overrides (not committed)" >> .gitignore
+echo "config/env/devcontainer.env" >> .gitignore
+```
+
+### Step 3: Update devcontainer.json
+
+Change SSH port binding to localhost-only:
+```diff
+  "runArgs": [
+    "--cap-add=SYS_PTRACE",
+    "--security-opt=seccomp=unconfined",
+    "-p",
+-   "9222:2222"
++   "127.0.0.1:${localEnv:DEVCONTAINER_SSH_PORT:-9222}:2222"
+  ],
+```
+
+Add SSH_AUTH_SOCK environment variable:
+```diff
+  "containerEnv": {
+    "CC": "clang-21",
+    "CXX": "clang++-21",
+    ...
++   "SSH_AUTH_SOCK": "/tmp/ssh-agent.socket"
+  },
+```
+
+Replace SSH key mount with agent socket mount:
+```diff
+  "mounts": [
+    "source=slotmap-vcpkg,target=/opt/vcpkg/downloads,type=volume",
+-   "source=${localEnv:REMOTE_SSH_SYNC_DIR},target=/home/${env:DEVCONTAINER_USER}/.ssh,type=bind,consistency=cached"
++   "source=${localEnv:SSH_AUTH_SOCK},target=/tmp/ssh-agent.socket,type=bind,consistency=cached"
+  ],
+```
+
+Update sshd feature port:
+```diff
+  "features": {
+    "ghcr.io/devcontainers/features/sshd:1": {
+      "version": "latest",
+-     "port": "9222",
++     "port": "${localEnv:DEVCONTAINER_SSH_PORT:-9222}",
+      ...
+    }
+  }
+```
+
+### Step 4: Add New Scripts
+
+Copy from modernization branch:
+```bash
+git show origin/modernization.20251118:scripts/generate_cpp_devcontainer_ssh_config.sh > scripts/generate_cpp_devcontainer_ssh_config.sh
+git show origin/modernization.20251118:scripts/check_hardcoded_refs.sh > scripts/check_hardcoded_refs.sh
+git show origin/modernization.20251118:scripts/status_devcontainer.sh > scripts/status_devcontainer.sh
+chmod +x scripts/generate_cpp_devcontainer_ssh_config.sh scripts/check_hardcoded_refs.sh scripts/status_devcontainer.sh
+```
+
+### Step 5: Add CI Workflow
+
+```bash
+mkdir -p .github/workflows
+git show origin/modernization.20251118:.github/workflows/hardcoded-guard.yml > .github/workflows/hardcoded-guard.yml
+```
+
+### Step 6: Update deploy_remote_devcontainer.sh
+
+Add config file loading at the top (after `cd "$REPO_ROOT"`):
+```bash
+# Optional local env overrides
+CONFIG_ENV_FILE=${CONFIG_ENV_FILE:-"$REPO_ROOT/config/env/devcontainer.env"}
+if [[ -f "$CONFIG_ENV_FILE" ]]; then
+  # shellcheck disable=SC1090
+  source "$CONFIG_ENV_FILE"
+fi
+```
+
+Remove hardcoded default and add validation:
+```diff
+- DEFAULT_REMOTE_HOST="${DEFAULT_REMOTE_HOST:-c0802s4.ny5}"
++ DEFAULT_REMOTE_HOST="${DEFAULT_REMOTE_HOST:-""}"
+
+# After parsing args, add:
++ REMOTE_HOST=${REMOTE_HOST:-${DEVCONTAINER_REMOTE_HOST:-${DEFAULT_REMOTE_HOST:-""}}}
++ [[ -n "$REMOTE_HOST" ]] || die "Remote host required (set DEVCONTAINER_REMOTE_HOST or pass --remote-host)"
+```
+
+### Step 7: Update post_create.sh
+
+Add macOS SSH config filtering:
+```bash
+# Sanitize macOS SSH config (UseKeychain is unsupported on Linux)
+SSH_CONFIG_FILE="$SSH_TARGET/config"
+if [[ -f "$SSH_CONFIG_FILE" ]] && grep -q "UseKeychain" "$SSH_CONFIG_FILE"; then
+  cp "$SSH_CONFIG_FILE" "$SSH_TARGET/config.macbak"
+  grep -v "UseKeychain" "$SSH_TARGET/config.macbak" > "$SSH_CONFIG_FILE"
+  chmod 600 "$SSH_CONFIG_FILE"
+  echo "[post_create] Filtered UseKeychain from ~/.ssh/config"
+fi
+```
+
+Add GitHub SSH over 443:
+```bash
+# Force GitHub SSH over 443 (port 22 often blocked)
+{
+  echo ""
+  echo "# GitHub SSH over 443 (added by post_create.sh)"
+  echo "Host github.com"
+  echo "  Hostname ssh.github.com"
+  echo "  Port 443"
+  echo "  User git"
+} >> "$SSH_CONFIG_FILE"
+```
+
+Add stale CMake cache detection:
+```bash
+BUILD_DIR="${WORKSPACE_DIR}/build/clang-debug"
+CACHE_FILE="${BUILD_DIR}/CMakeCache.txt"
+if [[ -f "$CACHE_FILE" ]]; then
+  if ! grep -q "CMAKE_HOME_DIRECTORY:INTERNAL=${WORKSPACE_DIR}" "$CACHE_FILE"; then
+    echo "[post_create] Removing stale CMake cache (workspace path changed)"
+    rm -rf "$BUILD_DIR"
+  fi
+fi
+```
+
+### Step 8: Add New Documentation
+
+```bash
+git show origin/modernization.20251118:docs/ssh-configurations.md > docs/ssh-configurations.md
+git show origin/modernization.20251118:docs/ssh-key-management-options.md > docs/ssh-key-management-options.md
+```
+
+### Step 9: Test the Changes
+
+```bash
+# 1. Create your local config
+cp config/env/devcontainer.env.example config/env/devcontainer.env
+# Edit with your actual host/user/port
+
+# 2. Deploy (no flags needed now!)
+./scripts/deploy_remote_devcontainer.sh
+
+# 3. Generate SSH config
+./scripts/generate_cpp_devcontainer_ssh_config.sh
+
+# 4. Connect via ProxyJump
+ssh -F ~/.ssh/cpp-devcontainer.conf cpp-devcontainer
+
+# 5. Verify GitHub SSH works inside container
+ssh -T git@github.com
+```
 
 ---
 
