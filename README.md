@@ -7,12 +7,57 @@ This repository hosts the policy-driven rewrite of Sergey Makeev's SlotMap conta
 1. **Bootstrap dependencies**  
    Use the provided devcontainer (`.devcontainer/`) on any Ubuntu 24.04 host or bootstrap the toolchain manually with clang-21, gcc-14 (from the Ubuntu Toolchain PPA), cmake 3.28+, ninja, mold, vcpkg, Graphviz, Doxygen, MRDocs, IWYU, and the productivity tooling we bundle (ccache, sccache, ripgrep).
 
-2. **Configure & build**  
+2. **Configure & build**
    ```bash
    cmake --preset clang-debug
    cmake --build --preset clang-debug
    ctest --preset clang-debug
    ```
+
+### Available CMake Presets
+
+All presets are available in both C++23 and C++26 variants (append `-cxx26` for C++26).
+
+#### Build Configurations
+
+| Preset | Description |
+|--------|-------------|
+| `clang-debug` | Debug build with full debug symbols |
+| `clang-release` | Release build with ThinLTO optimization |
+| `clang-release-full-lto` | Release build with full LTO (slower link, better optimization) |
+| `clang-bolt-instrument` | Release build prepared for LLVM BOLT profiling |
+
+#### Sanitizer Presets
+
+| Preset | Description |
+|--------|-------------|
+| `clang-asan` | AddressSanitizer - detects memory errors |
+| `clang-ubsan` | UndefinedBehaviorSanitizer - detects undefined behavior |
+| `clang-tsan` | ThreadSanitizer - detects data races |
+| `clang-lsan` | LeakSanitizer - detects memory leaks |
+| `clang-asan-ubsan` | Combined ASan + UBSan |
+| `clang-rtsan` | RealtimeSanitizer - detects real-time violations |
+| `clang-scudo` | Scudo hardened allocator |
+| `clang-cfi` | Control Flow Integrity |
+
+> **Note on MSan:** The `clang-msan` (MemorySanitizer) preset exists but is **not recommended for regular use**. MSan requires all code—including dependencies—to be compiled with MSan instrumentation. Since vcpkg-installed libraries (like boost-ext/ut) are not MSan-instrumented, false positives will occur in third-party code. MSan is most useful when you can rebuild the entire dependency tree with instrumentation.
+
+#### Static Analysis Presets
+
+| Preset | Description |
+|--------|-------------|
+| `clang-tidy` | Build with clang-tidy static analysis enabled |
+| `clang-iwyu` | Build with include-what-you-use checking |
+
+#### Code Formatting
+
+```bash
+# Format all source files
+cmake --build --preset clang-debug --target format
+
+# Check formatting (CI-friendly, fails on violations)
+cmake --build --preset clang-debug --target format-check
+```
 
 3. **Documentation**  
    Documentation (MRDocs + Doxygen + Mermaid) is generated via:
