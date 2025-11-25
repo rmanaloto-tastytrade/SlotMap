@@ -45,7 +45,8 @@ void BM_VectorInsert(benchmark::State& state) {
         benchmark::DoNotOptimize(vec.data());
         benchmark::ClobberMemory();
     }
-    state.SetItemsProcessed(static_cast<std::int64_t>(state.iterations() * count));
+    state.SetItemsProcessed(
+        static_cast<std::int64_t>(static_cast<std::size_t>(state.iterations()) * count));
 }
 
 BENCHMARK(BM_VectorInsert)
@@ -76,7 +77,8 @@ void BM_VectorRandomAccess(benchmark::State& state) {
         }
         benchmark::DoNotOptimize(sum);
     }
-    state.SetItemsProcessed(static_cast<std::int64_t>(state.iterations() * count));
+    state.SetItemsProcessed(
+        static_cast<std::int64_t>(static_cast<std::size_t>(state.iterations()) * count));
 }
 
 BENCHMARK(BM_VectorRandomAccess)
@@ -99,8 +101,10 @@ void BM_VectorIteration(benchmark::State& state) {
         }
         benchmark::DoNotOptimize(sum);
     }
-    state.SetItemsProcessed(static_cast<std::int64_t>(state.iterations() * count));
-    state.SetBytesProcessed(static_cast<std::int64_t>(state.iterations() * count * sizeof(std::uint64_t)));
+    state.SetItemsProcessed(
+        static_cast<std::int64_t>(static_cast<std::size_t>(state.iterations()) * count));
+    state.SetBytesProcessed(
+        static_cast<std::int64_t>(static_cast<std::size_t>(state.iterations()) * count * sizeof(std::uint64_t)));
 }
 
 BENCHMARK(BM_VectorIteration)
