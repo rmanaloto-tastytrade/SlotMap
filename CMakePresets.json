@@ -16,15 +16,39 @@
         "VCPKG_OVERLAY_PORTS": "${sourceDir}/vcpkg-overlays/cib/ports;${sourceDir}/vcpkg-overlays/stdx/ports;${sourceDir}/vcpkg-overlays/qlibs/ports;${sourceDir}/vcpkg-overlays/boost-ext/ports",
         "CMAKE_CXX_COMPILER": "clang++-21",
         "CMAKE_C_COMPILER": "clang-21",
-        "CMAKE_CXX_STANDARD": "23",
         "SLOTMAP_BUILD_TESTS": "ON",
         "SLOTMAP_BUILD_DOCS": "ON"
       }
     },
     {
-      "name": "clang-debug",
-      "displayName": "Clang Debug",
+      "name": "base-cxx23",
+      "hidden": true,
       "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "23"
+      }
+    },
+    {
+      "name": "base-cxx26",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "26"
+      }
+    },
+    {
+      "name": "clang-debug",
+      "displayName": "Clang Debug (C++23)",
+      "inherits": "base-cxx23",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang-debug-cxx26",
+      "displayName": "Clang Debug (C++26)",
+      "inherits": "base-cxx26",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
@@ -32,8 +56,17 @@
     },
     {
       "name": "clang-release",
-      "displayName": "Clang Release",
-      "inherits": "base",
+      "displayName": "Clang Release (C++23)",
+      "inherits": "base-cxx23",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
+      }
+    },
+    {
+      "name": "clang-release-cxx26",
+      "displayName": "Clang Release (C++26)",
+      "inherits": "base-cxx26",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
@@ -41,9 +74,24 @@
     },
     {
       "name": "clang-asan",
-      "displayName": "Clang AddressSanitizer",
+      "displayName": "Clang ASan (C++23)",
       "description": "Debug build with AddressSanitizer (memory errors, buffer overflows, use-after-free)",
-      "inherits": "base",
+      "inherits": "base-cxx23",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      },
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
+      }
+    },
+    {
+      "name": "clang-asan-cxx26",
+      "displayName": "Clang ASan (C++26)",
+      "description": "Debug build with AddressSanitizer (C++26)",
+      "inherits": "base-cxx26",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CXX_FLAGS": "-fsanitize=address -fno-omit-frame-pointer -g",
@@ -56,9 +104,24 @@
     },
     {
       "name": "clang-ubsan",
-      "displayName": "Clang UndefinedBehaviorSanitizer",
+      "displayName": "Clang UBSan (C++23)",
       "description": "Debug build with UBSan (undefined behavior, integer overflow, null pointer dereference)",
-      "inherits": "base",
+      "inherits": "base-cxx23",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=undefined -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=undefined",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      },
+      "environment": {
+        "UBSAN_OPTIONS": "print_stacktrace=1:halt_on_error=1"
+      }
+    },
+    {
+      "name": "clang-ubsan-cxx26",
+      "displayName": "Clang UBSan (C++26)",
+      "description": "Debug build with UBSan (C++26)",
+      "inherits": "base-cxx26",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CXX_FLAGS": "-fsanitize=undefined -fno-omit-frame-pointer -g",
@@ -71,9 +134,24 @@
     },
     {
       "name": "clang-tsan",
-      "displayName": "Clang ThreadSanitizer",
+      "displayName": "Clang TSan (C++23)",
       "description": "Debug build with ThreadSanitizer (data races, deadlocks)",
-      "inherits": "base",
+      "inherits": "base-cxx23",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=thread -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=thread",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      },
+      "environment": {
+        "TSAN_OPTIONS": "halt_on_error=1:second_deadlock_stack=1"
+      }
+    },
+    {
+      "name": "clang-tsan-cxx26",
+      "displayName": "Clang TSan (C++26)",
+      "description": "Debug build with ThreadSanitizer (C++26)",
+      "inherits": "base-cxx26",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CXX_FLAGS": "-fsanitize=thread -fno-omit-frame-pointer -g",
@@ -86,9 +164,24 @@
     },
     {
       "name": "clang-msan",
-      "displayName": "Clang MemorySanitizer",
-      "description": "Debug build with MemorySanitizer (uninitialized memory reads)",
-      "inherits": "base",
+      "displayName": "Clang MSan (C++23)",
+      "description": "Debug build with MemorySanitizer (uninitialized memory reads) - requires MSan-instrumented libc++",
+      "inherits": "base-cxx23",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=memory -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=memory",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      },
+      "environment": {
+        "MSAN_OPTIONS": "halt_on_error=1"
+      }
+    },
+    {
+      "name": "clang-msan-cxx26",
+      "displayName": "Clang MSan (C++26)",
+      "description": "Debug build with MemorySanitizer (C++26) - requires MSan-instrumented libc++",
+      "inherits": "base-cxx26",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CXX_FLAGS": "-fsanitize=memory -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -g",
@@ -101,24 +194,49 @@
     },
     {
       "name": "clang-lsan",
-      "displayName": "Clang LeakSanitizer",
+      "displayName": "Clang LSan (C++23)",
       "description": "Debug build with standalone LeakSanitizer (memory leaks)",
-      "inherits": "base",
+      "inherits": "base-cxx23",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CXX_FLAGS": "-fsanitize=leak -fno-omit-frame-pointer -g",
         "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=leak",
         "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
-      },
-      "environment": {
-        "LSAN_OPTIONS": "suppressions=${sourceDir}/lsan.supp"
+      }
+    },
+    {
+      "name": "clang-lsan-cxx26",
+      "displayName": "Clang LSan (C++26)",
+      "description": "Debug build with standalone LeakSanitizer (C++26)",
+      "inherits": "base-cxx26",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=leak -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=leak",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
       }
     },
     {
       "name": "clang-asan-ubsan",
-      "displayName": "Clang ASan+UBSan Combined",
+      "displayName": "Clang ASan+UBSan (C++23)",
       "description": "Debug build with both AddressSanitizer and UndefinedBehaviorSanitizer",
-      "inherits": "base",
+      "inherits": "base-cxx23",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address,undefined",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      },
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=1:detect_stack_use_after_return=1",
+        "UBSAN_OPTIONS": "print_stacktrace=1:halt_on_error=1"
+      }
+    },
+    {
+      "name": "clang-asan-ubsan-cxx26",
+      "displayName": "Clang ASan+UBSan (C++26)",
+      "description": "Debug build with ASan+UBSan (C++26)",
+      "inherits": "base-cxx26",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer -g",
@@ -137,32 +255,64 @@
       "configurePreset": "clang-debug"
     },
     {
+      "name": "clang-debug-cxx26",
+      "configurePreset": "clang-debug-cxx26"
+    },
+    {
       "name": "clang-release",
       "configurePreset": "clang-release"
+    },
+    {
+      "name": "clang-release-cxx26",
+      "configurePreset": "clang-release-cxx26"
     },
     {
       "name": "clang-asan",
       "configurePreset": "clang-asan"
     },
     {
+      "name": "clang-asan-cxx26",
+      "configurePreset": "clang-asan-cxx26"
+    },
+    {
       "name": "clang-ubsan",
       "configurePreset": "clang-ubsan"
+    },
+    {
+      "name": "clang-ubsan-cxx26",
+      "configurePreset": "clang-ubsan-cxx26"
     },
     {
       "name": "clang-tsan",
       "configurePreset": "clang-tsan"
     },
     {
+      "name": "clang-tsan-cxx26",
+      "configurePreset": "clang-tsan-cxx26"
+    },
+    {
       "name": "clang-msan",
       "configurePreset": "clang-msan"
+    },
+    {
+      "name": "clang-msan-cxx26",
+      "configurePreset": "clang-msan-cxx26"
     },
     {
       "name": "clang-lsan",
       "configurePreset": "clang-lsan"
     },
     {
+      "name": "clang-lsan-cxx26",
+      "configurePreset": "clang-lsan-cxx26"
+    },
+    {
       "name": "clang-asan-ubsan",
       "configurePreset": "clang-asan-ubsan"
+    },
+    {
+      "name": "clang-asan-ubsan-cxx26",
+      "configurePreset": "clang-asan-ubsan-cxx26"
     }
   ],
   "testPresets": [
@@ -174,8 +324,25 @@
       }
     },
     {
+      "name": "clang-debug-cxx26",
+      "configurePreset": "clang-debug-cxx26",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
       "name": "clang-asan",
       "configurePreset": "clang-asan",
+      "output": {
+        "outputOnFailure": true
+      },
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
+      }
+    },
+    {
+      "name": "clang-asan-cxx26",
+      "configurePreset": "clang-asan-cxx26",
       "output": {
         "outputOnFailure": true
       },
@@ -194,8 +361,28 @@
       }
     },
     {
+      "name": "clang-ubsan-cxx26",
+      "configurePreset": "clang-ubsan-cxx26",
+      "output": {
+        "outputOnFailure": true
+      },
+      "environment": {
+        "UBSAN_OPTIONS": "print_stacktrace=1:halt_on_error=1"
+      }
+    },
+    {
       "name": "clang-tsan",
       "configurePreset": "clang-tsan",
+      "output": {
+        "outputOnFailure": true
+      },
+      "environment": {
+        "TSAN_OPTIONS": "halt_on_error=1:second_deadlock_stack=1"
+      }
+    },
+    {
+      "name": "clang-tsan-cxx26",
+      "configurePreset": "clang-tsan-cxx26",
       "output": {
         "outputOnFailure": true
       },
@@ -214,6 +401,16 @@
       }
     },
     {
+      "name": "clang-msan-cxx26",
+      "configurePreset": "clang-msan-cxx26",
+      "output": {
+        "outputOnFailure": true
+      },
+      "environment": {
+        "MSAN_OPTIONS": "halt_on_error=1"
+      }
+    },
+    {
       "name": "clang-lsan",
       "configurePreset": "clang-lsan",
       "output": {
@@ -224,8 +421,29 @@
       }
     },
     {
+      "name": "clang-lsan-cxx26",
+      "configurePreset": "clang-lsan-cxx26",
+      "output": {
+        "outputOnFailure": true
+      },
+      "environment": {
+        "LSAN_OPTIONS": "exitcode=0"
+      }
+    },
+    {
       "name": "clang-asan-ubsan",
       "configurePreset": "clang-asan-ubsan",
+      "output": {
+        "outputOnFailure": true
+      },
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=1:detect_stack_use_after_return=1",
+        "UBSAN_OPTIONS": "print_stacktrace=1:halt_on_error=1"
+      }
+    },
+    {
+      "name": "clang-asan-ubsan-cxx26",
+      "configurePreset": "clang-asan-ubsan-cxx26",
       "output": {
         "outputOnFailure": true
       },
