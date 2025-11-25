@@ -230,8 +230,14 @@ RUN --mount=type=cache,target=/tmp/clang-p2996-build \
         -DLIBCXX_ENABLE_EXPERIMENTAL_LIBRARY=ON; \
     cmake --build "${BUILD_DIR}" -j"$(nproc)"; \
     cmake --install "${BUILD_DIR}"; \
-    ln -sf clang "${STAGE_PREFIX}/bin/clang-p2996"; \
-    ln -sf clang++ "${STAGE_PREFIX}/bin/clang++-p2996"; \
+    # Rename clang-21 to clang-p2996 to avoid shadowing system clang-21 \
+    mv "${STAGE_PREFIX}/bin/clang-21" "${STAGE_PREFIX}/bin/clang-p2996-bin"; \
+    ln -sf clang-p2996-bin "${STAGE_PREFIX}/bin/clang-p2996"; \
+    ln -sf clang-p2996-bin "${STAGE_PREFIX}/bin/clang++-p2996"; \
+    # Update clang/clang++ symlinks to point to renamed binary \
+    rm -f "${STAGE_PREFIX}/bin/clang" "${STAGE_PREFIX}/bin/clang++"; \
+    ln -sf clang-p2996-bin "${STAGE_PREFIX}/bin/clang"; \
+    ln -sf clang-p2996-bin "${STAGE_PREFIX}/bin/clang++"; \
     rm -rf "${CLONE_DIR}"
 
 FROM prebuilt_base AS node_mermaid
