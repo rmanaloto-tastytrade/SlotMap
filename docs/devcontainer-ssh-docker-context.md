@@ -47,6 +47,19 @@ This note explains how to make SSH into the devcontainer work when the container
 - `scripts/generate_cpp_devcontainer_ssh_config.sh` — writes a dedicated SSH config at `~/.ssh/cpp-devcontainer.conf` using `config/env/devcontainer.env` (keeps ProxyJump/tunnel settings out of your main ssh config).
 - `.devcontainer/scripts/post_create.sh` — installs authorized_keys from `${workspace}/.devcontainer/ssh` and runs CMake preset.
 
+## SSH config helper (one source of truth)
+- Script: `scripts/generate_cpp_devcontainer_ssh_config.sh`
+- Reads: `config/env/devcontainer.env` by default (or another file via `--env-file <path>`)
+- Writes: `~/.ssh/cpp-devcontainer.conf` with:
+  - `ProxyJump <user>@<host>` (host resolved via `ssh -G` so search domains/FQDN are applied)
+  - `HostName 127.0.0.1`, `Port ${DEVCONTAINER_SSH_PORT}`, `User ${DEVCONTAINER_REMOTE_USER}`, `Include ~/.ssh/config`
+- Usage examples:
+  - Default env file: `./scripts/generate_cpp_devcontainer_ssh_config.sh`
+  - Explicit env file (multiple devcontainers): `./scripts/generate_cpp_devcontainer_ssh_config.sh --env-file config/env/devcontainer-alt.env --output ~/.ssh/cpp-devcontainer-alt.conf`
+  - Override proxy user (rare): `./scripts/generate_cpp_devcontainer_ssh_config.sh --proxy-user otheruser`
+- Re-run the script whenever `DEVCONTAINER_REMOTE_HOST`, `DEVCONTAINER_REMOTE_USER`, or `DEVCONTAINER_SSH_PORT` changes in the env file.
+- Connect with the generated config: `ssh -F ~/.ssh/cpp-devcontainer.conf cpp-devcontainer` (or point to the alternate output file you chose).
+
 ## Quick verification
 1) From your Mac (ProxyJump): `ssh -J rmanaloto@c24s1.ch2 -i ~/.ssh/id_ed25519 -p 9222 rmanaloto@127.0.0.1` (remove stale host key if prompted).
 2) On the remote host: `ssh -i ~/.ssh/id_ed25519 -p 9222 <user>@127.0.0.1` (or whichever key matches your `KEY_CACHE`).
