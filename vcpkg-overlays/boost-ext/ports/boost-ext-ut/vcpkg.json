@@ -1,0 +1,7 @@
+{
+  "name": "boost-ext-ut",
+  "version-string": "2.3.1",
+  "description": "C++20 μ(micro)/Unit Testing Framework - single header, no dependencies",
+  "homepage": "https://github.com/boost-ext/ut",
+  "license": "BSL-1.0"
+}

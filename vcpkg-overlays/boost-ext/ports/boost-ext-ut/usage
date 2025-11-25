@@ -1,0 +1,10 @@
+boost-ext-ut is a header-only library.
+
+To use it in your CMake project:
+
+    target_include_directories(main PRIVATE ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include)
+    target_compile_features(main PRIVATE cxx_std_20)
+
+Then include in your source files:
+
+    #include <boost/ut.hpp>
