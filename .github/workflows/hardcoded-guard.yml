@@ -1,0 +1,74 @@
+name: Hardcoded References Guard
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+jobs:
+  check-hardcoded-refs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for hardcoded hostnames and usernames
+        run: |
+          echo "Checking for hardcoded hostnames and usernames..."
+
+          # Patterns to detect (add more as needed)
+          # These are examples - adjust the patterns based on your environment
+          PATTERNS=(
+            # Common internal hostname patterns
+            'c[0-9]+s[0-9]+\.ny[0-9]+'
+            # IP addresses (be careful with false positives)
+            '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:9222'
+            # Common username patterns in SSH commands
+            'ssh.*@.*:9222'
+          )
+
+          # Files to check (exclude binary, generated, and example files)
+          FILES=$(git ls-files --cached | grep -E '\.(sh|json|yml|yaml|md)$' | grep -v '\.example' | grep -v 'hardcoded-guard\.yml')
+
+          FOUND=0
+          for pattern in "${PATTERNS[@]}"; do
+            while IFS= read -r file; do
+              if [[ -f "$file" ]]; then
+                if grep -qE "$pattern" "$file" 2>/dev/null; then
+                  echo "::error file=$file::Found hardcoded reference matching pattern: $pattern"
+                  grep -nE "$pattern" "$file" | head -5
+                  FOUND=1
+                fi
+              fi
+            done <<< "$FILES"
+          done
+
+          if [[ $FOUND -eq 1 ]]; then
+            echo ""
+            echo "::error::Hardcoded hostnames or usernames detected!"
+            echo "Please use config/env/devcontainer.env for host-specific configuration."
+            echo "See config/env/README.md for setup instructions."
+            exit 1
+          fi
+
+          echo "No hardcoded references found."
+
+      - name: Verify config files are gitignored
+        run: |
+          echo "Checking that sensitive config files are gitignored..."
+
+          # Check that devcontainer.env would be ignored
+          if git check-ignore -q "config/env/devcontainer.env" 2>/dev/null || \
+             grep -q "config/env/\*\.env" .gitignore 2>/dev/null; then
+            echo "config/env/*.env is properly gitignored"
+          else
+            echo "::warning::config/env/*.env should be added to .gitignore"
+          fi
+
+          # Verify no actual .env files (not .example) are tracked
+          if git ls-files --cached | grep -E 'config/env/.*\.env$' | grep -v '\.example'; then
+            echo "::error::Found tracked .env files that should be gitignored!"
+            exit 1
+          fi
+
+          echo "Sensitive config files are properly excluded."

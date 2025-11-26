@@ -33,6 +33,10 @@ id_dsa*
 # Remote host configuration (may contain IPs/hostnames)
 .slotmap/remote-hosts.conf
 
+# Local environment config files (contain host-specific settings)
+config/env/*.env
+!config/env/*.env.example
+
 # Rendered diagrams (generated from .mmd sources)
 docs/Diagrams/rendered/
 

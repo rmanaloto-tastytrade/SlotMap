@@ -11,7 +11,7 @@ usage() {
 Usage: scripts/deploy_remote_devcontainer.sh [options]
 
 Options:
-  --remote-host <host>       Remote SSH host (default: c0802s4.ny5)
+  --remote-host <host>       Remote SSH host (required, or set DEVCONTAINER_REMOTE_HOST)
   --remote-user <user>       Remote SSH user (default: current user)
   --ssh-key <path>           Local public key to copy (default: ~/.ssh/id_ed25519.pub)
   --remote-key-cache <path>  Remote key cache dir (default: ~/macbook_ssh_keys)
@@ -29,8 +29,19 @@ USAGE
 die(){ echo "Error: $*" >&2; exit 1; }
 
 LOCAL_USER="$(id -un)"
-DEFAULT_REMOTE_HOST="${DEFAULT_REMOTE_HOST:-c0802s4.ny5}"
-REMOTE_HOST="$DEFAULT_REMOTE_HOST"
+
+# Load local config file if present (gitignored, contains host-specific settings)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT_EARLY="$(cd "$SCRIPT_DIR/.." && pwd)"
+CONFIG_ENV_FILE="${CONFIG_ENV_FILE:-$REPO_ROOT_EARLY/config/env/devcontainer.env}"
+if [[ -f "$CONFIG_ENV_FILE" ]]; then
+  echo "Loading configuration from $CONFIG_ENV_FILE"
+  # shellcheck disable=SC1090
+  source "$CONFIG_ENV_FILE"
+fi
+
+# No hardcoded default - must be configured via env file or CLI
+REMOTE_HOST="${DEVCONTAINER_REMOTE_HOST:-}"
 REMOTE_USER=""  # Will be dynamically determined from git config or current user
 SSH_KEY_PATH="$HOME/.ssh/id_ed25519.pub"
 REMOTE_PORT="${REMOTE_PORT:-9222}"
@@ -81,6 +92,14 @@ done
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 cd "$REPO_ROOT"
+
+# Validate required REMOTE_HOST
+if [[ -z "$REMOTE_HOST" ]]; then
+  die "Remote host is required. Either:
+  1. Create config/env/devcontainer.env with DEVCONTAINER_REMOTE_HOST=your.host
+  2. Pass --remote-host your.host on command line
+  3. Set DEVCONTAINER_REMOTE_HOST environment variable"
+fi
 
 CONFIG_REMOTE_USER="$(git config --get slotmap.remoteUser || true)"
 if [[ -z "$REMOTE_USER" ]]; then

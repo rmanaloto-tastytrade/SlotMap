@@ -7,7 +7,7 @@
     "--cap-add=SYS_PTRACE",
     "--security-opt=seccomp=unconfined",
     "-p",
-    "9222:2222"
+    "127.0.0.1:${localEnv:DEVCONTAINER_SSH_PORT:-9222}:2222"
   ],
   "containerEnv": {
     "CC": "clang-21",
@@ -15,11 +15,12 @@
     "VCPKG_ROOT": "/opt/vcpkg",
     "VCPKG_OVERLAY_PORTS": "${containerWorkspaceFolder}/vcpkg-overlays/cib/ports:${containerWorkspaceFolder}/vcpkg-overlays/stdx/ports:${containerWorkspaceFolder}/vcpkg-overlays/qlibs/ports:${containerWorkspaceFolder}/vcpkg-overlays/boost-ext/ports",
     "DEVCONTAINER_USER": "${localEnv:DEVCONTAINER_USER:-slotmap}",
-    "MRDOCS_EXECUTABLE": "/opt/mrdocs/bin/mrdocs"
+    "MRDOCS_EXECUTABLE": "/opt/mrdocs/bin/mrdocs",
+    "SSH_AUTH_SOCK": "/tmp/ssh-agent.socket"
   },
   "mounts": [
     "source=slotmap-vcpkg,target=/opt/vcpkg/downloads,type=volume",
-    "source=${localEnv:REMOTE_SSH_SYNC_DIR},target=/home/${env:DEVCONTAINER_USER}/.ssh,type=bind,consistency=cached"
+    "source=${localEnv:SSH_AUTH_SOCK},target=/tmp/ssh-agent.socket,type=bind"
   ],
   "forwardPorts": [9222],
   "postCreateCommand": ".devcontainer/scripts/post_create.sh",

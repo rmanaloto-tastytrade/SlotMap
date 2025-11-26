@@ -4,7 +4,24 @@ set -euo pipefail
 # Sync GitHub CLI authentication from Mac to remote host
 # This securely transfers the gh token to a remote host
 
-REMOTE_HOST="${1:-c0802s4.ny5}"
+# Load local config file if present
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+CONFIG_ENV_FILE="${CONFIG_ENV_FILE:-$REPO_ROOT/config/env/devcontainer.env}"
+if [[ -f "$CONFIG_ENV_FILE" ]]; then
+  # shellcheck disable=SC1090
+  source "$CONFIG_ENV_FILE"
+fi
+
+# Use CLI arg, then config file, then fail
+REMOTE_HOST="${1:-${DEVCONTAINER_REMOTE_HOST:-}}"
+
+if [[ -z "$REMOTE_HOST" ]]; then
+  echo "ERROR: Remote host is required." >&2
+  echo "Usage: $0 <remote-host>" >&2
+  echo "Or set DEVCONTAINER_REMOTE_HOST in config/env/devcontainer.env" >&2
+  exit 1
+fi
 
 echo "=== GitHub CLI Auth Sync ==="
 echo "Syncing gh authentication to $REMOTE_HOST"

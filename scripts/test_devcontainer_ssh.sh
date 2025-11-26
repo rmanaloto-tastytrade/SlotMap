@@ -2,15 +2,15 @@
 set -euo pipefail
 
 # Verbose SSH connectivity test to the devcontainer exposed on a remote host.
-# Defaults match our current flow (c0802s4.ny5:9222, dynamic user detection, key ~/.ssh/id_ed25519).
+# Configuration: Set DEVCONTAINER_REMOTE_HOST in config/env/devcontainer.env or pass --host
 
 usage() {
   cat <<'USAGE'
 Usage: scripts/test_devcontainer_ssh.sh [options]
 
 Options:
-  --host <hostname>        Remote host (default: c0802s4.ny5)
-  --port <port>            Remote SSH port (default: 9222)
+  --host <hostname>        Remote host (required, or set DEVCONTAINER_REMOTE_HOST)
+  --port <port>            Remote SSH port (default: 9222 or DEVCONTAINER_SSH_PORT)
   --user <username>        SSH username (default: git config or current user)
   --key <path>             Private key path (default: ~/.ssh/id_ed25519)
   --known-hosts <path>     Known hosts file (default: ~/.ssh/known_hosts)
@@ -19,8 +19,18 @@ Options:
 USAGE
 }
 
-HOST="c0802s4.ny5"
-PORT="9222"
+# Load local config file if present
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+CONFIG_ENV_FILE="${CONFIG_ENV_FILE:-$REPO_ROOT/config/env/devcontainer.env}"
+if [[ -f "$CONFIG_ENV_FILE" ]]; then
+  # shellcheck disable=SC1090
+  source "$CONFIG_ENV_FILE"
+fi
+
+# No hardcoded default - use config file or CLI
+HOST="${DEVCONTAINER_REMOTE_HOST:-}"
+PORT="${DEVCONTAINER_SSH_PORT:-9222}"
 USER_NAME=""  # Will be dynamically determined or can be overridden with --user
 KEY_PATH="$HOME/.ssh/id_ed25519"
 KNOWN_HOSTS_FILE="$HOME/.ssh/known_hosts"
@@ -38,6 +48,15 @@ while [[ $# -gt 0 ]]; do
     *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
   esac
 done
+
+# Validate required HOST
+if [[ -z "$HOST" ]]; then
+  echo "[ssh-test] ERROR: Remote host is required." >&2
+  echo "[ssh-test] Either:" >&2
+  echo "  1. Create config/env/devcontainer.env with DEVCONTAINER_REMOTE_HOST=your.host" >&2
+  echo "  2. Pass --host your.host on command line" >&2
+  exit 1
+fi
 
 # Dynamically determine username if not provided
 if [[ -z "$USER_NAME" ]]; then

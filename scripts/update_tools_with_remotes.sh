@@ -17,7 +17,7 @@ mkdir -p "$LOG_DIR"
 # Leave empty to skip remote updates
 REMOTE_HOSTS="${SLOTMAP_REMOTE_HOSTS:-}"
 
-# Example: SLOTMAP_REMOTE_HOSTS="c0802s4.ny5"
+# Example: SLOTMAP_REMOTE_HOSTS="your-remote-host.example.com"
 # Or read from config file if it exists
 CONFIG_FILE="${HOME}/.slotmap/remote-hosts.conf"
 if [[ -z "$REMOTE_HOSTS" ]] && [[ -f "$CONFIG_FILE" ]]; then
