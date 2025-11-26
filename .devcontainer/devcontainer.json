@@ -9,8 +9,8 @@
   ],
   "appPort": ["127.0.0.1:9222:2222"],
   "containerEnv": {
-    "CC": "${localEnv:DEVCONTAINER_CC:-clang-21}",
-    "CXX": "${localEnv:DEVCONTAINER_CXX:-clang++-21}",
+    "CC": "clang-21",
+    "CXX": "clang++-21",
     "VCPKG_ROOT": "/opt/vcpkg",
     "VCPKG_OVERLAY_PORTS": "${containerWorkspaceFolder}/vcpkg-overlays/cib/ports:${containerWorkspaceFolder}/vcpkg-overlays/stdx/ports:${containerWorkspaceFolder}/vcpkg-overlays/qlibs/ports:${containerWorkspaceFolder}/vcpkg-overlays/boost-ext/ports",
     "DEVCONTAINER_USER": "${localEnv:DEVCONTAINER_USER:-slotmap}",

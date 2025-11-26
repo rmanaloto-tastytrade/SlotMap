@@ -2,47 +2,47 @@
 
 This document describes the available approaches for selecting between the standard clang-21 (via llvm.sh) and the experimental clang-p2996 variant in devcontainers.
 
-## Current Implementation: Option 3 (Runtime Selection)
+## Current Implementation: Hardcoded Default with P2996 Override Option
 
-The current implementation uses environment variables to select the compiler at container runtime. This keeps a single image with both compilers available.
+The current implementation uses hardcoded compiler settings in devcontainer.json with clang-21 as the default. The P2996 compiler is available in the same image at `/opt/clang-p2996/bin/`.
 
 ### Usage
 
 **Default (clang-21 via llvm.sh):**
 ```bash
-# No environment variable needed - uses clang-21 by default
+# Uses clang-21 by default - no configuration needed
 devcontainer up
 ```
 
 **P2996 variant:**
+To use P2996, override the CC/CXX environment variables inside the container:
 ```bash
-# Set compiler paths before opening container
-export DEVCONTAINER_CC=/opt/clang-p2996/bin/clang
-export DEVCONTAINER_CXX=/opt/clang-p2996/bin/clang++
-devcontainer up
+# Inside the container, before building:
+export CC=/opt/clang-p2996/bin/clang
+export CXX=/opt/clang-p2996/bin/clang++
+cmake --preset clang-debug  # Will use P2996 compiler
 ```
 
-Or add to your local `config/env/devcontainer.env`:
-```bash
-DEVCONTAINER_CC=/opt/clang-p2996/bin/clang
-DEVCONTAINER_CXX=/opt/clang-p2996/bin/clang++
-```
+Or create a separate CMake preset for P2996 (recommended for regular P2996 usage).
 
-### How It Works
+### Why Not Environment Variable Substitution?
 
-The `devcontainer.json` uses simple environment variable substitution:
+The devcontainer CLI's `${localEnv:VAR:-default}` syntax has parsing issues where the `-` from the default syntax gets incorrectly included in the value (e.g., `-clang-21` instead of `clang-21`). This causes compiler detection failures.
+
+### Current Configuration
 
 ```json
 {
   "containerEnv": {
-    "CC": "${localEnv:DEVCONTAINER_CC:-clang-21}",
-    "CXX": "${localEnv:DEVCONTAINER_CXX:-clang++-21}"
+    "CC": "clang-21",
+    "CXX": "clang++-21"
   }
 }
 ```
 
-- When `DEVCONTAINER_CC/CXX` are unset: Uses `clang-21` and `clang++-21` from PATH (llvm.sh install)
-- When set: Uses the specified compiler paths (e.g., `/opt/clang-p2996/bin/clang`)
+Both compilers are available in the container:
+- **clang-21**: `/usr/bin/clang-21` (from llvm.sh/apt.llvm.org)
+- **clang-p2996**: `/opt/clang-p2996/bin/clang` (Bloomberg P2996 branch)
 
 ---
 
