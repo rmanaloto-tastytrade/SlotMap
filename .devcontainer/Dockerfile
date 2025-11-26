@@ -238,13 +238,14 @@ ENV CC=clang-21 \
 # binutils + gdb (latest release)
 # Note: We build binutils-gdb primarily for gdb. The binutils portion is replaced
 # with LLVM symlinks to maintain a consistent LLVM toolchain.
+# gprofng is disabled because it has version script issues when built with LLD.
 RUN set -eux; \
     curl -fsSL "https://github.com/bminor/binutils-gdb/archive/refs/tags/${BINUTILS_GDB_TAG}.tar.gz" -o /tmp/binutils-gdb.tar.gz; \
     mkdir -p /tmp/binutils-gdb; \
     tar -xzf /tmp/binutils-gdb.tar.gz -C /tmp/binutils-gdb --strip-components=1; \
     mkdir -p /tmp/binutils-gdb/build; \
     cd /tmp/binutils-gdb/build; \
-    ../configure --disable-multilib --enable-gold --enable-plugins --with-system-zlib; \
+    ../configure --disable-multilib --enable-gold --enable-plugins --with-system-zlib --disable-gprofng; \
     make -j"$(nproc)"; \
     make install; \
     rm -rf /tmp/binutils-gdb.tar.gz /tmp/binutils-gdb; \
