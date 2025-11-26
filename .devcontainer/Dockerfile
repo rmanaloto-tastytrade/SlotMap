@@ -186,7 +186,12 @@ RUN --mount=type=cache,target=/var/cache/apt \
         libllvmlibc-${LLVM_VERSION}-dev; \
     LC_ALL=C apt-cache search ${LLVM_VERSION} | sort > /opt/llvm-packages-${LLVM_VERSION}.txt; \
     rm /tmp/llvm.sh; \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/*; \
+    # Set clang-21 as the default cc/c++ compiler via update-alternatives \
+    update-alternatives --install /usr/bin/cc cc /usr/bin/clang-${LLVM_VERSION} 100; \
+    update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-${LLVM_VERSION} 100; \
+    update-alternatives --set cc /usr/bin/clang-${LLVM_VERSION}; \
+    update-alternatives --set c++ /usr/bin/clang++-${LLVM_VERSION}
 
 ENV CC=clang-21 CXX=clang++-21
 
