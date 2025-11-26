@@ -187,3 +187,22 @@ target "devcontainer" {
 group "default" {
   targets = ["devcontainer"]
 }
+
+# Optional slim profile: builds devcontainer without heavyweight optional tools.
+group "slim" {
+  targets = ["devcontainer_slim"]
+}
+
+# Slim variant excludes heavy optional tools; toggles controlled via build args.
+target "devcontainer_slim" {
+  inherits  = ["_base"]
+  target    = "devcontainer"
+  dependsOn = ["tools_merge"]
+  tags      = ["${TAG}-slim"]
+  args = {
+    ENABLE_VALGRIND    = "0"
+    ENABLE_CPPCHECK    = "0"
+    ENABLE_IWYU        = "0"
+    ENABLE_CLANG_P2996 = "0"
+  }
+}
