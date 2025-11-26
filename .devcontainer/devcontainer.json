@@ -7,7 +7,7 @@
     "--cap-add=SYS_PTRACE",
     "--security-opt=seccomp=unconfined",
     "-p",
-    "127.0.0.1:${localEnv:DEVCONTAINER_SSH_PORT:-9222}:2222"
+    "127.0.0.1:9222:2222"
   ],
   "containerEnv": {
     "CC": "clang-21",
