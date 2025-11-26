@@ -20,6 +20,8 @@ KEY_CACHE=${KEY_CACHE:-"$HOME/macbook_ssh_keys"}
 SSH_SUBDIR=".devcontainer/ssh"
 DEV_IMAGE=${DEVCONTAINER_IMAGE:-"devcontainer:local"}
 BASE_IMAGE=${DEVCONTAINER_BASE_IMAGE:-"dev-base:local"}
+# SSH port for container (host port that maps to container's internal 2222)
+DEVCONTAINER_SSH_PORT=${DEVCONTAINER_SSH_PORT:-9222}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONTAINER_USER=${CONTAINER_USER:-$(id -un)}
 CONTAINER_UID=${CONTAINER_UID:-$(id -u)}
@@ -244,11 +246,33 @@ export REMOTE_SSH_SYNC_DIR="${KEY_CACHE}"
 
 echo "[remote] Building container user ${CONTAINER_USER} (uid=${CONTAINER_UID}, gid=${CONTAINER_GID})"
 
-echo "[remote] Running devcontainer up..."
+echo "[remote] Running devcontainer up (SSH port: $DEVCONTAINER_SSH_PORT)..."
+
+# Generate override config for port mapping if using non-default port
+OVERRIDE_CONFIG=""
+OVERRIDE_CONFIG_FILE=""
+if [[ "$DEVCONTAINER_SSH_PORT" != "9222" ]]; then
+  OVERRIDE_CONFIG_FILE=$(mktemp)
+  cat > "$OVERRIDE_CONFIG_FILE" <<EOF
+{
+  "appPort": ["127.0.0.1:${DEVCONTAINER_SSH_PORT}:2222"]
+}
+EOF
+  OVERRIDE_CONFIG="--override-config $OVERRIDE_CONFIG_FILE"
+  echo "[remote] Using port override: $DEVCONTAINER_SSH_PORT (config: $OVERRIDE_CONFIG_FILE)"
+fi
+
+# shellcheck disable=SC2086
 devcontainer up \
   --workspace-folder "$SANDBOX_PATH" \
   --remove-existing-container \
-  --build-no-cache
+  --build-no-cache \
+  $OVERRIDE_CONFIG
+
+# Clean up temp file
+if [[ -n "$OVERRIDE_CONFIG_FILE" ]] && [[ -f "$OVERRIDE_CONFIG_FILE" ]]; then
+  rm -f "$OVERRIDE_CONFIG_FILE"
+fi
 
 CONTAINER_ID=$(docker ps --filter "label=devcontainer.local_folder=${SANDBOX_PATH}" -q | head -n1)
 if [[ -n "$CONTAINER_ID" ]]; then
@@ -263,8 +287,8 @@ docker exec "$CONTAINER_ID" sh -c 'echo "--- LLVM packages list ---"; if [ -f /o
   # SSH connectivity check if a private key is available
   SSH_TEST_KEY="${KEY_CACHE}/id_ed25519"
   if [[ -f "$SSH_TEST_KEY" ]]; then
-    echo "[remote] Testing SSH into container on port 9222..."
-    if ssh -i "$SSH_TEST_KEY" -o StrictHostKeyChecking=no -o BatchMode=yes -p 9222 "${CONTAINER_USER}@localhost" exit >/dev/null 2>&1; then
+    echo "[remote] Testing SSH into container on port $DEVCONTAINER_SSH_PORT..."
+    if ssh -i "$SSH_TEST_KEY" -o StrictHostKeyChecking=no -o BatchMode=yes -p "$DEVCONTAINER_SSH_PORT" "${CONTAINER_USER}@localhost" exit >/dev/null 2>&1; then
       echo "[remote] SSH test succeeded using ${SSH_TEST_KEY}."
     else
       echo "[remote] WARNING: SSH test failed using ${SSH_TEST_KEY}. Check authorized_keys and port mapping."

@@ -16,31 +16,33 @@ devcontainer up
 
 **P2996 variant:**
 ```bash
-# Set USE_P2996 to any non-empty value before opening container
-export USE_P2996=1
+# Set compiler paths before opening container
+export DEVCONTAINER_CC=/opt/clang-p2996/bin/clang
+export DEVCONTAINER_CXX=/opt/clang-p2996/bin/clang++
 devcontainer up
 ```
 
 Or add to your local `config/env/devcontainer.env`:
 ```bash
-USE_P2996=1
+DEVCONTAINER_CC=/opt/clang-p2996/bin/clang
+DEVCONTAINER_CXX=/opt/clang-p2996/bin/clang++
 ```
 
 ### How It Works
 
-The `devcontainer.json` uses shell parameter expansion to select compilers:
+The `devcontainer.json` uses simple environment variable substitution:
 
 ```json
 {
   "containerEnv": {
-    "CC": "${localEnv:USE_P2996:+/opt/clang-p2996/bin/clang}${localEnv:USE_P2996:-clang-21}",
-    "CXX": "${localEnv:USE_P2996:+/opt/clang-p2996/bin/clang++}${localEnv:USE_P2996:-clang++-21}"
+    "CC": "${localEnv:DEVCONTAINER_CC:-clang-21}",
+    "CXX": "${localEnv:DEVCONTAINER_CXX:-clang++-21}"
   }
 }
 ```
 
-- When `USE_P2996` is unset/empty: Uses `clang-21` and `clang++-21` from PATH (llvm.sh install)
-- When `USE_P2996` is set: Uses `/opt/clang-p2996/bin/clang` and `/opt/clang-p2996/bin/clang++`
+- When `DEVCONTAINER_CC/CXX` are unset: Uses `clang-21` and `clang++-21` from PATH (llvm.sh install)
+- When set: Uses the specified compiler paths (e.g., `/opt/clang-p2996/bin/clang`)
 
 ---
 

@@ -5,13 +5,12 @@
   "workspaceMount": "source=${localEnv:REMOTE_WORKSPACE_PATH},target=/home/${env:DEVCONTAINER_USER}/workspace,type=bind,consistency=cached",
   "runArgs": [
     "--cap-add=SYS_PTRACE",
-    "--security-opt=seccomp=unconfined",
-    "-p",
-    "127.0.0.1:${localEnv:DEVCONTAINER_SSH_PORT:-9222}:2222"
+    "--security-opt=seccomp=unconfined"
   ],
+  "appPort": ["127.0.0.1:9222:2222"],
   "containerEnv": {
-    "CC": "${localEnv:USE_P2996:+/opt/clang-p2996/bin/clang}${localEnv:USE_P2996:-clang-21}",
-    "CXX": "${localEnv:USE_P2996:+/opt/clang-p2996/bin/clang++}${localEnv:USE_P2996:-clang++-21}",
+    "CC": "${localEnv:DEVCONTAINER_CC:-clang-21}",
+    "CXX": "${localEnv:DEVCONTAINER_CXX:-clang++-21}",
     "VCPKG_ROOT": "/opt/vcpkg",
     "VCPKG_OVERLAY_PORTS": "${containerWorkspaceFolder}/vcpkg-overlays/cib/ports:${containerWorkspaceFolder}/vcpkg-overlays/stdx/ports:${containerWorkspaceFolder}/vcpkg-overlays/qlibs/ports:${containerWorkspaceFolder}/vcpkg-overlays/boost-ext/ports",
     "DEVCONTAINER_USER": "${localEnv:DEVCONTAINER_USER:-slotmap}",
@@ -22,7 +21,7 @@
     "source=slotmap-vcpkg,target=/opt/vcpkg/downloads,type=volume",
     "source=${localEnv:SSH_AUTH_SOCK},target=/tmp/ssh-agent.socket,type=bind"
   ],
-  "forwardPorts": ["${localEnv:DEVCONTAINER_SSH_PORT:-9222}"],
+  "forwardPorts": [9222],
   "postCreateCommand": ".devcontainer/scripts/post_create.sh",
   "features": {
     "ghcr.io/devcontainers/features/sshd:1": {
