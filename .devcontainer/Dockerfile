@@ -236,6 +236,8 @@ ENV CC=clang-21 \
     COMPILER_RT_PATH=/usr/lib/llvm-21/lib/clang/21/lib/linux
 
 # binutils + gdb (latest release)
+# Note: We build binutils-gdb primarily for gdb. The binutils portion is replaced
+# with LLVM symlinks to maintain a consistent LLVM toolchain.
 RUN set -eux; \
     curl -fsSL "https://github.com/bminor/binutils-gdb/archive/refs/tags/${BINUTILS_GDB_TAG}.tar.gz" -o /tmp/binutils-gdb.tar.gz; \
     mkdir -p /tmp/binutils-gdb; \
@@ -245,7 +247,26 @@ RUN set -eux; \
     ../configure --disable-multilib --enable-gold --enable-plugins --with-system-zlib; \
     make -j"$(nproc)"; \
     make install; \
-    rm -rf /tmp/binutils-gdb.tar.gz /tmp/binutils-gdb
+    rm -rf /tmp/binutils-gdb.tar.gz /tmp/binutils-gdb; \
+    # Replace GNU binutils in /usr/local/bin with symlinks to LLVM equivalents \
+    # This ensures LLVM toolchain consistency since /usr/local/bin is in PATH before /usr/bin \
+    cd /usr/local/bin; \
+    rm -f ar nm ranlib objdump strip objcopy readelf addr2line size strings; \
+    ln -sf /usr/bin/llvm-ar-21 ar; \
+    ln -sf /usr/bin/llvm-nm-21 nm; \
+    ln -sf /usr/bin/llvm-ranlib-21 ranlib; \
+    ln -sf /usr/bin/llvm-objdump-21 objdump; \
+    ln -sf /usr/bin/llvm-strip-21 strip; \
+    ln -sf /usr/bin/llvm-objcopy-21 objcopy; \
+    ln -sf /usr/bin/llvm-readelf-21 readelf; \
+    ln -sf /usr/bin/llvm-addr2line-21 addr2line; \
+    ln -sf /usr/bin/llvm-size-21 size; \
+    ln -sf /usr/bin/llvm-strings-21 strings; \
+    # Replace GNU ld with LLD (mold will be added in tools_merge stage with higher priority) \
+    rm -f ld ld.bfd; \
+    ln -sf /usr/bin/ld.lld-21 ld; \
+    # Keep gold for potential edge cases, but rename it \
+    mv ld.gold ld.gold-gnu 2>/dev/null || true
 
 # ---------- Parallel builders (FROM base) ----------
 
@@ -462,7 +483,10 @@ RUN git clone https://github.com/microsoft/vcpkg.git ${VCPKG_ROOT} && \
     ln -s ${VCPKG_ROOT}/vcpkg /usr/local/bin/vcpkg && \
     # Register mold as highest priority linker alternative (priority 200 > LLD's 100) \
     update-alternatives --install /usr/bin/ld ld /usr/local/bin/ld.mold 200 && \
-    update-alternatives --install /usr/bin/ld.mold ld.mold /usr/local/bin/ld.mold 200
+    update-alternatives --install /usr/bin/ld.mold ld.mold /usr/local/bin/ld.mold 200 && \
+    # Ensure /usr/local/bin/ld points to mold (overrides the LLD symlink from base stage) \
+    rm -f /usr/local/bin/ld && \
+    ln -sf /usr/local/bin/ld.mold /usr/local/bin/ld
 
 # ---------- final devcontainer ----------
 
