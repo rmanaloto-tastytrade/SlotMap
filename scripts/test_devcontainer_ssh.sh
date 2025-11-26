@@ -82,6 +82,14 @@ if [[ "$USE_PROXYJUMP" -eq 1 ]]; then
   TARGET_HOST="127.0.0.1"
 fi
 
+# Proactively clear stale container host key to avoid mismatch errors when the
+# devcontainer is rebuilt (host key changes frequently).
+HOSTPORT="[$TARGET_HOST]:$PORT"
+if ssh-keygen -F "$HOSTPORT" -f "$KNOWN_HOSTS_FILE" >/dev/null 2>&1; then
+  echo "[ssh-test] Removing stale host key for $HOSTPORT from $KNOWN_HOSTS_FILE"
+  ssh-keygen -R "$HOSTPORT" -f "$KNOWN_HOSTS_FILE" >/dev/null 2>&1 || true
+fi
+
 SSH_CMD=(ssh -vvv
   -i "$KEY_PATH"
   -o IdentitiesOnly=yes
