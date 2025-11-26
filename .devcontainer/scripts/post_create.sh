@@ -11,10 +11,59 @@ else
   echo "[post_create] Skipping chown (sudo password required or unavailable)."
 fi
 
+echo "[post_create] Validating toolchain configuration..."
+
+# Validate compilers
 if ! command -v clang++-21 >/dev/null 2>&1; then
   echo "[post_create] ERROR: clang++-21 not found in PATH" >&2
   exit 1
 fi
+echo "[post_create] ✓ clang++-21 found"
+
+# Validate linker (mold)
+if ! command -v mold >/dev/null 2>&1 && ! command -v ld.mold >/dev/null 2>&1; then
+  echo "[post_create] WARNING: mold linker not found, falling back to LLD"
+else
+  echo "[post_create] ✓ mold linker found: $(which mold 2>/dev/null || which ld.mold)"
+fi
+
+# Validate LLD (fallback linker, also required for LTO)
+if ! command -v ld.lld-21 >/dev/null 2>&1; then
+  echo "[post_create] WARNING: ld.lld-21 not found (needed for LTO)"
+else
+  echo "[post_create] ✓ ld.lld-21 found"
+fi
+
+# Validate LLVM binutils
+LLVM_TOOLS="llvm-ar-21 llvm-nm-21 llvm-ranlib-21 llvm-objdump-21 llvm-strip-21"
+for tool in $LLVM_TOOLS; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    echo "[post_create] WARNING: $tool not found"
+  fi
+done
+echo "[post_create] ✓ LLVM binutils validated"
+
+# Validate update-alternatives configuration
+echo "[post_create] Checking update-alternatives configuration..."
+CC_LINK=$(update-alternatives --query cc 2>/dev/null | grep "Value:" | awk '{print $2}' || echo "unknown")
+CXX_LINK=$(update-alternatives --query c++ 2>/dev/null | grep "Value:" | awk '{print $2}' || echo "unknown")
+LD_LINK=$(update-alternatives --query ld 2>/dev/null | grep "Value:" | awk '{print $2}' || echo "unknown")
+AR_LINK=$(update-alternatives --query ar 2>/dev/null | grep "Value:" | awk '{print $2}' || echo "unknown")
+
+echo "[post_create]   cc  -> $CC_LINK"
+echo "[post_create]   c++ -> $CXX_LINK"
+echo "[post_create]   ld  -> $LD_LINK"
+echo "[post_create]   ar  -> $AR_LINK"
+
+# Warn if alternatives don't point to expected tools
+if [[ "$CC_LINK" != *"clang"* ]]; then
+  echo "[post_create] WARNING: cc doesn't point to clang ($CC_LINK)"
+fi
+if [[ "$LD_LINK" != *"mold"* ]] && [[ "$LD_LINK" != *"lld"* ]]; then
+  echo "[post_create] WARNING: ld doesn't point to mold or lld ($LD_LINK)"
+fi
+
+echo "[post_create] Toolchain validation complete"
 
 SSH_SOURCE="${WORKSPACE_DIR}/.devcontainer/ssh"
 SSH_TARGET="$HOME/.ssh"

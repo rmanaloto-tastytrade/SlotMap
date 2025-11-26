@@ -16,6 +16,16 @@
         "VCPKG_OVERLAY_PORTS": "${sourceDir}/vcpkg-overlays/cib/ports;${sourceDir}/vcpkg-overlays/stdx/ports;${sourceDir}/vcpkg-overlays/qlibs/ports;${sourceDir}/vcpkg-overlays/boost-ext/ports",
         "CMAKE_CXX_COMPILER": "clang++-21",
         "CMAKE_C_COMPILER": "clang-21",
+        "CMAKE_AR": "llvm-ar-21",
+        "CMAKE_NM": "llvm-nm-21",
+        "CMAKE_RANLIB": "llvm-ranlib-21",
+        "CMAKE_STRIP": "llvm-strip-21",
+        "CMAKE_OBJCOPY": "llvm-objcopy-21",
+        "CMAKE_OBJDUMP": "llvm-objdump-21",
+        "CMAKE_READELF": "llvm-readelf-21",
+        "CMAKE_EXE_LINKER_FLAGS_INIT": "-fuse-ld=mold",
+        "CMAKE_SHARED_LINKER_FLAGS_INIT": "-fuse-ld=mold",
+        "CMAKE_MODULE_LINKER_FLAGS_INIT": "-fuse-ld=mold",
         "SLOTMAP_BUILD_TESTS": "ON",
         "SLOTMAP_BUILD_DOCS": "ON"
       }

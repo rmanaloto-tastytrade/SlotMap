@@ -191,9 +191,49 @@ RUN --mount=type=cache,target=/var/cache/apt \
     update-alternatives --install /usr/bin/cc cc /usr/bin/clang-${LLVM_VERSION} 100; \
     update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-${LLVM_VERSION} 100; \
     update-alternatives --set cc /usr/bin/clang-${LLVM_VERSION}; \
-    update-alternatives --set c++ /usr/bin/clang++-${LLVM_VERSION}
+    update-alternatives --set c++ /usr/bin/clang++-${LLVM_VERSION}; \
+    # Set LLVM binutils as default (ar, nm, ranlib, objdump, strip, objcopy, readelf, addr2line) \
+    update-alternatives --install /usr/bin/ar ar /usr/bin/llvm-ar-${LLVM_VERSION} 100; \
+    update-alternatives --install /usr/bin/nm nm /usr/bin/llvm-nm-${LLVM_VERSION} 100; \
+    update-alternatives --install /usr/bin/ranlib ranlib /usr/bin/llvm-ranlib-${LLVM_VERSION} 100; \
+    update-alternatives --install /usr/bin/objdump objdump /usr/bin/llvm-objdump-${LLVM_VERSION} 100; \
+    update-alternatives --install /usr/bin/strip strip /usr/bin/llvm-strip-${LLVM_VERSION} 100; \
+    update-alternatives --install /usr/bin/objcopy objcopy /usr/bin/llvm-objcopy-${LLVM_VERSION} 100; \
+    update-alternatives --install /usr/bin/readelf readelf /usr/bin/llvm-readelf-${LLVM_VERSION} 100; \
+    update-alternatives --install /usr/bin/addr2line addr2line /usr/bin/llvm-addr2line-${LLVM_VERSION} 100; \
+    update-alternatives --install /usr/bin/size size /usr/bin/llvm-size-${LLVM_VERSION} 100; \
+    update-alternatives --install /usr/bin/strings strings /usr/bin/llvm-strings-${LLVM_VERSION} 100; \
+    # Set LLD as the default linker (ld) - mold will override via -fuse-ld=mold in CMake \
+    update-alternatives --install /usr/bin/ld ld /usr/bin/ld.lld-${LLVM_VERSION} 100; \
+    update-alternatives --install /usr/bin/ld.lld ld.lld /usr/bin/ld.lld-${LLVM_VERSION} 100; \
+    update-alternatives --set ar /usr/bin/llvm-ar-${LLVM_VERSION}; \
+    update-alternatives --set nm /usr/bin/llvm-nm-${LLVM_VERSION}; \
+    update-alternatives --set ranlib /usr/bin/llvm-ranlib-${LLVM_VERSION}; \
+    update-alternatives --set objdump /usr/bin/llvm-objdump-${LLVM_VERSION}; \
+    update-alternatives --set strip /usr/bin/llvm-strip-${LLVM_VERSION}; \
+    update-alternatives --set objcopy /usr/bin/llvm-objcopy-${LLVM_VERSION}; \
+    update-alternatives --set readelf /usr/bin/llvm-readelf-${LLVM_VERSION}; \
+    update-alternatives --set addr2line /usr/bin/llvm-addr2line-${LLVM_VERSION}; \
+    update-alternatives --set size /usr/bin/llvm-size-${LLVM_VERSION}; \
+    update-alternatives --set strings /usr/bin/llvm-strings-${LLVM_VERSION}; \
+    update-alternatives --set ld /usr/bin/ld.lld-${LLVM_VERSION}; \
+    update-alternatives --set ld.lld /usr/bin/ld.lld-${LLVM_VERSION}
 
-ENV CC=clang-21 CXX=clang++-21
+ENV CC=clang-21 \
+    CXX=clang++-21 \
+    AR=llvm-ar-21 \
+    NM=llvm-nm-21 \
+    RANLIB=llvm-ranlib-21 \
+    STRIP=llvm-strip-21 \
+    OBJCOPY=llvm-objcopy-21 \
+    OBJDUMP=llvm-objdump-21 \
+    READELF=llvm-readelf-21 \
+    # Use LLD as default linker, mold available via -fuse-ld=mold \
+    LD=ld.lld-21 \
+    # LLVM tools path for cmake/vcpkg \
+    LLVM_ROOT=/usr/lib/llvm-21 \
+    # Ensure LLVM compiler-rt is found for sanitizers \
+    COMPILER_RT_PATH=/usr/lib/llvm-21/lib/clang/21/lib/linux
 
 # binutils + gdb (latest release)
 RUN set -eux; \
@@ -419,7 +459,10 @@ COPY --from=awscli /opt/stage/ /
 RUN git clone https://github.com/microsoft/vcpkg.git ${VCPKG_ROOT} && \
     mkdir -p ${VCPKG_DOWNLOADS} && \
     ${VCPKG_ROOT}/bootstrap-vcpkg.sh -disableMetrics && \
-    ln -s ${VCPKG_ROOT}/vcpkg /usr/local/bin/vcpkg
+    ln -s ${VCPKG_ROOT}/vcpkg /usr/local/bin/vcpkg && \
+    # Register mold as highest priority linker alternative (priority 200 > LLD's 100) \
+    update-alternatives --install /usr/bin/ld ld /usr/local/bin/ld.mold 200 && \
+    update-alternatives --install /usr/bin/ld.mold ld.mold /usr/local/bin/ld.mold 200
 
 # ---------- final devcontainer ----------
 
@@ -430,11 +473,44 @@ ARG USER_GID
 ARG VCPKG_ROOT
 ARG VCPKG_DOWNLOADS
 
+ARG LLVM_VERSION
 ENV CC=clang-21 \
     CXX=clang++-21 \
+    AR=llvm-ar-21 \
+    NM=llvm-nm-21 \
+    RANLIB=llvm-ranlib-21 \
+    STRIP=llvm-strip-21 \
+    OBJCOPY=llvm-objcopy-21 \
+    OBJDUMP=llvm-objdump-21 \
+    READELF=llvm-readelf-21 \
+    # Default linker is mold (via update-alternatives), LLD as fallback \
+    LD=ld.mold \
+    # CMake configuration for consistent builds \
     CMAKE_GENERATOR=Ninja \
-    PATH="${VCPKG_ROOT}:/opt/mrdocs/bin:${PATH}" \
-    WORKSPACE_DIR="/home/${USERNAME}/workspace"
+    CMAKE_C_COMPILER=clang-21 \
+    CMAKE_CXX_COMPILER=clang++-21 \
+    CMAKE_AR=/usr/bin/llvm-ar-21 \
+    CMAKE_NM=/usr/bin/llvm-nm-21 \
+    CMAKE_RANLIB=/usr/bin/llvm-ranlib-21 \
+    CMAKE_STRIP=/usr/bin/llvm-strip-21 \
+    CMAKE_OBJCOPY=/usr/bin/llvm-objcopy-21 \
+    CMAKE_OBJDUMP=/usr/bin/llvm-objdump-21 \
+    CMAKE_READELF=/usr/bin/llvm-readelf-21 \
+    # LLVM paths for tools and libraries \
+    LLVM_ROOT=/usr/lib/llvm-21 \
+    LLVM_DIR=/usr/lib/llvm-21/lib/cmake/llvm \
+    Clang_DIR=/usr/lib/llvm-21/lib/cmake/clang \
+    LLD_DIR=/usr/lib/llvm-21/lib/cmake/lld \
+    # Compiler-RT path for sanitizers \
+    COMPILER_RT_PATH=/usr/lib/llvm-21/lib/clang/21/lib/linux \
+    # vcpkg configuration for using LLVM toolchain \
+    VCPKG_CXX_FLAGS="-stdlib=libc++" \
+    VCPKG_LINKER_FLAGS="-fuse-ld=mold -rtlib=compiler-rt" \
+    # Paths \
+    PATH="${VCPKG_ROOT}:/opt/mrdocs/bin:/usr/lib/llvm-21/bin:${PATH}" \
+    WORKSPACE_DIR="/home/${USERNAME}/workspace" \
+    # Library paths for sanitizers and libc++ \
+    LD_LIBRARY_PATH="/usr/lib/llvm-21/lib:/usr/lib/llvm-21/lib/clang/21/lib/linux:${LD_LIBRARY_PATH}"
 
 # Create non-root user for IDE/devcontainer usage
 RUN if ! getent group ${USERNAME} >/dev/null; then \
