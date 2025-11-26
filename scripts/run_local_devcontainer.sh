@@ -252,14 +252,21 @@ echo "[remote] Running devcontainer up (SSH port: $DEVCONTAINER_SSH_PORT)..."
 OVERRIDE_CONFIG=""
 OVERRIDE_CONFIG_FILE=""
 if [[ "$DEVCONTAINER_SSH_PORT" != "9222" ]]; then
-  OVERRIDE_CONFIG_FILE=$(mktemp)
-  cat > "$OVERRIDE_CONFIG_FILE" <<EOF
-{
-  "appPort": ["127.0.0.1:${DEVCONTAINER_SSH_PORT}:2222"]
-}
-EOF
-  OVERRIDE_CONFIG="--override-config $OVERRIDE_CONFIG_FILE"
-  echo "[remote] Using port override: $DEVCONTAINER_SSH_PORT (config: $OVERRIDE_CONFIG_FILE)"
+  # Read the original devcontainer.json and patch the appPort
+  OVERRIDE_CONFIG_FILE=$(mktemp --suffix=.json)
+  ORIGINAL_CONFIG="$SANDBOX_PATH/.devcontainer/devcontainer.json"
+
+  # Use jq to merge the appPort into the existing config
+  if command -v jq >/dev/null 2>&1; then
+    jq --arg port "127.0.0.1:${DEVCONTAINER_SSH_PORT}:2222" \
+       '.appPort = [$port]' \
+       "$ORIGINAL_CONFIG" > "$OVERRIDE_CONFIG_FILE"
+    OVERRIDE_CONFIG="--override-config $OVERRIDE_CONFIG_FILE"
+    echo "[remote] Using port override: $DEVCONTAINER_SSH_PORT (config: $OVERRIDE_CONFIG_FILE)"
+  else
+    echo "[remote] WARNING: jq not available, using default port 9222"
+    DEVCONTAINER_SSH_PORT=9222
+  fi
 fi
 
 # shellcheck disable=SC2086
