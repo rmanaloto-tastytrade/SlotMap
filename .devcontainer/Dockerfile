@@ -238,7 +238,15 @@ ENV CC=clang-21 \
 # binutils + gdb (latest release)
 # Note: We build binutils-gdb primarily for gdb. The binutils portion is replaced
 # with LLVM symlinks to maintain a consistent LLVM toolchain.
-# gprofng is disabled because it has version script issues when built with LLD.
+#
+# gprofng is disabled (--disable-gprofng) because its version script references
+# glibc symbols (fclose, pthread_join, dlopen, etc.) that aren't linked into the
+# library. LLD enforces strict validation via --no-undefined-version (default since
+# LLD 16), causing build failures with errors like:
+#   "ld: error: version script assignment of 'GLIBC_2.0' to symbol 'fclose' failed"
+# This is a known issue: https://github.com/llvm/llvm-project/issues/87438
+# GNU ld silently ignores this, but LLD correctly identifies it as a bug.
+# See also: https://reviews.llvm.org/D135402 (LLD strictness rationale)
 RUN set -eux; \
     curl -fsSL "https://github.com/bminor/binutils-gdb/archive/refs/tags/${BINUTILS_GDB_TAG}.tar.gz" -o /tmp/binutils-gdb.tar.gz; \
     mkdir -p /tmp/binutils-gdb; \
