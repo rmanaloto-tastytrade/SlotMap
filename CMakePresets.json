@@ -1,10 +1,6 @@
 {
   "version": 6,
-  "cmakeMinimumRequired": {
-    "major": 3,
-    "minor": 28,
-    "patch": 0
-  },
+  "cmakeMinimumRequired": { "major": 3, "minor": 28, "patch": 0 },
   "configurePresets": [
     {
       "name": "base",
@@ -14,49 +10,173 @@
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "VCPKG_OVERLAY_PORTS": "${sourceDir}/vcpkg-overlays/cib/ports;${sourceDir}/vcpkg-overlays/stdx/ports;${sourceDir}/vcpkg-overlays/qlibs/ports;${sourceDir}/vcpkg-overlays/boost-ext/ports",
-        "CMAKE_CXX_COMPILER": "clang++-21",
-        "CMAKE_C_COMPILER": "clang-21",
+        "CMAKE_C_STANDARD": "23",
         "CMAKE_CXX_STANDARD": "23",
         "SLOTMAP_BUILD_TESTS": "ON",
         "SLOTMAP_BUILD_DOCS": "ON"
       }
     },
     {
-      "name": "clang-debug",
-      "displayName": "Clang Debug",
+      "name": "clang21-base",
+      "hidden": true,
       "inherits": "base",
+      "cacheVariables": {
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/clang21.cmake"
+      }
+    },
+    {
+      "name": "clang21-debug",
+      "displayName": "Clang21 Debug",
+      "inherits": "clang21-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
       }
     },
     {
-      "name": "clang-release",
-      "displayName": "Clang Release",
-      "inherits": "base",
+      "name": "clang21-release",
+      "displayName": "Clang21 Release",
+      "inherits": "clang21-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
+      }
+    },
+    {
+      "name": "clang21-asan",
+      "displayName": "Clang21 ASan",
+      "inherits": "clang21-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_FLAGS": "-fsanitize=address -fno-omit-frame-pointer -g",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address -fno-omit-frame-pointer -g",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang21-ubsan",
+      "displayName": "Clang21 UBSan",
+      "inherits": "clang21-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_FLAGS": "-fsanitize=undefined -fno-omit-frame-pointer -g",
+        "CMAKE_CXX_FLAGS": "-fsanitize=undefined -fno-omit-frame-pointer -g",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang21-cpp26-debug",
+      "displayName": "Clang21 C++26 Debug",
+      "inherits": "clang21-debug",
+      "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "26"
+      }
+    },
+    {
+      "name": "gcc14-base",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/gcc14.cmake"
+      }
+    },
+    {
+      "name": "gcc14-debug",
+      "displayName": "GCC14 Debug",
+      "inherits": "gcc14-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "gcc14-release",
+      "displayName": "GCC14 Release",
+      "inherits": "gcc14-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
+      }
+    },
+    {
+      "name": "gcc15-base",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/gcc15.cmake"
+      }
+    },
+    {
+      "name": "gcc15-debug",
+      "displayName": "GCC15 Debug",
+      "inherits": "gcc15-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "gcc15-release",
+      "displayName": "GCC15 Release",
+      "inherits": "gcc15-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
+      }
+    },
+    {
+      "name": "clang-p2996-base",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/clang_p2996.cmake"
+      }
+    },
+    {
+      "name": "clang-p2996-debug",
+      "displayName": "Clang p2996 Debug (experimental)",
+      "inherits": "clang-p2996-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
         "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
       }
     }
   ],
   "buildPresets": [
-    {
-      "name": "clang-debug",
-      "configurePreset": "clang-debug"
-    },
-    {
-      "name": "clang-release",
-      "configurePreset": "clang-release"
-    }
+    { "name": "clang21-debug", "configurePreset": "clang21-debug" },
+    { "name": "clang21-release", "configurePreset": "clang21-release" },
+    { "name": "clang21-asan", "configurePreset": "clang21-asan" },
+    { "name": "clang21-ubsan", "configurePreset": "clang21-ubsan" },
+    { "name": "clang21-cpp26-debug", "configurePreset": "clang21-cpp26-debug" },
+    { "name": "gcc14-debug", "configurePreset": "gcc14-debug" },
+    { "name": "gcc14-release", "configurePreset": "gcc14-release" },
+    { "name": "gcc15-debug", "configurePreset": "gcc15-debug" },
+    { "name": "gcc15-release", "configurePreset": "gcc15-release" },
+    { "name": "clang-p2996-debug", "configurePreset": "clang-p2996-debug" }
   ],
   "testPresets": [
     {
-      "name": "clang-debug",
-      "configurePreset": "clang-debug",
-      "output": {
-        "outputOnFailure": true
-      }
+      "name": "clang21-debug",
+      "configurePreset": "clang21-debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "clang21-asan",
+      "configurePreset": "clang21-asan",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "clang21-ubsan",
+      "configurePreset": "clang21-ubsan",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "gcc15-release",
+      "configurePreset": "gcc15-release",
+      "output": { "outputOnFailure": true }
     }
   ]
 }

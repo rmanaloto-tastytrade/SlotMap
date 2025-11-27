@@ -1,0 +1,4 @@
+set(CMAKE_SYSTEM_NAME Linux)
+set(CMAKE_C_COMPILER "/opt/gcc-15/bin/gcc-15")
+set(CMAKE_CXX_COMPILER "/opt/gcc-15/bin/g++-15")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)

@@ -47,6 +47,7 @@ target "_base" {
     CLANG_P2996_PREFIX = "/opt/clang-p2996"
     JQ_VERSION         = "1.8.1"
     AWSCLI_VERSION     = "latest"
+    GCC15_VERSION      = "15.1.0"
   }
 }
 
@@ -77,6 +78,12 @@ target "mold" {
 target "gh_cli" {
   inherits  = ["_base"]
   target    = "gh_cli"
+  dependsOn = ["base"]
+}
+
+target "gcc15" {
+  inherits  = ["_base"]
+  target    = "gcc15"
   dependsOn = ["base"]
 }
 
@@ -152,6 +159,7 @@ group "tools" {
     "node_mermaid",
     "mold",
     "gh_cli",
+    "gcc15",
     "ccache",
     "sccache",
     "ripgrep",
