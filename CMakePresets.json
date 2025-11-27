@@ -74,6 +74,63 @@
       }
     },
     {
+      "name": "clang22-base",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/clang22.cmake"
+      }
+    },
+    {
+      "name": "clang22-debug",
+      "displayName": "Clang22 Debug",
+      "inherits": "clang22-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang22-release",
+      "displayName": "Clang22 Release",
+      "inherits": "clang22-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
+      }
+    },
+    {
+      "name": "clang22-asan",
+      "displayName": "Clang22 ASan",
+      "inherits": "clang22-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_FLAGS": "-fsanitize=address -fno-omit-frame-pointer -g",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address -fno-omit-frame-pointer -g",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang22-ubsan",
+      "displayName": "Clang22 UBSan",
+      "inherits": "clang22-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_FLAGS": "-fsanitize=undefined -fno-omit-frame-pointer -g",
+        "CMAKE_CXX_FLAGS": "-fsanitize=undefined -fno-omit-frame-pointer -g",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang22-cpp26-debug",
+      "displayName": "Clang22 C++26 Debug",
+      "inherits": "clang22-debug",
+      "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "26"
+      }
+    },
+    {
       "name": "gcc14-base",
       "hidden": true,
       "inherits": "base",
@@ -151,6 +208,11 @@
     { "name": "clang21-asan", "configurePreset": "clang21-asan" },
     { "name": "clang21-ubsan", "configurePreset": "clang21-ubsan" },
     { "name": "clang21-cpp26-debug", "configurePreset": "clang21-cpp26-debug" },
+    { "name": "clang22-debug", "configurePreset": "clang22-debug" },
+    { "name": "clang22-release", "configurePreset": "clang22-release" },
+    { "name": "clang22-asan", "configurePreset": "clang22-asan" },
+    { "name": "clang22-ubsan", "configurePreset": "clang22-ubsan" },
+    { "name": "clang22-cpp26-debug", "configurePreset": "clang22-cpp26-debug" },
     { "name": "gcc14-debug", "configurePreset": "gcc14-debug" },
     { "name": "gcc14-release", "configurePreset": "gcc14-release" },
     { "name": "gcc15-debug", "configurePreset": "gcc15-debug" },
@@ -171,6 +233,21 @@
     {
       "name": "clang21-ubsan",
       "configurePreset": "clang21-ubsan",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "clang22-debug",
+      "configurePreset": "clang22-debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "clang22-asan",
+      "configurePreset": "clang22-asan",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "clang22-ubsan",
+      "configurePreset": "clang22-ubsan",
       "output": { "outputOnFailure": true }
     },
     {

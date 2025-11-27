@@ -71,8 +71,13 @@ if [[ -f "$CACHE_FILE" ]]; then
 fi
 
 cd "$WORKSPACE_DIR"
-PREFERRED_PRESET="${CMAKE_PRESET:-clang-debug}"
+PREFERRED_PRESET="${CMAKE_PRESET:-clang21-debug}"
 if ! cmake --list-presets | grep -q "\"${PREFERRED_PRESET}\""; then
-  PREFERRED_PRESET="clang21-debug"
+  for candidate in clang21-debug clang22-debug gcc15-debug gcc14-debug clang-p2996-debug; do
+    if cmake --list-presets | grep -q "\"${candidate}\""; then
+      PREFERRED_PRESET="${candidate}"
+      break
+    fi
+  done
 fi
 cmake --preset "${PREFERRED_PRESET}"

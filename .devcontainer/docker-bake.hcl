@@ -10,6 +10,14 @@ variable "PLATFORM" {
   default = "linux/amd64"
 }
 
+variable "CLANG_VARIANT" {
+  default = "21"
+}
+
+variable "GCC_VERSION" {
+  default = "15"
+}
+
 target "_base" {
   context    = "."
   dockerfile = ".devcontainer/Dockerfile"
@@ -29,9 +37,9 @@ target "_base" {
     MOLD_VERSION       = "2.40.4"
     MOLD_ARCHIVE       = "mold-2.40.4-x86_64-linux.tar.gz"
     GH_CLI_VERSION     = "2.83.1"
-    LLVM_VERSION       = "21"
+    CLANG_VARIANT      = "${CLANG_VARIANT}"
     IWYU_COMMIT        = "clang_21"
-    GCC_VERSION        = "14"
+    GCC_VERSION        = "${GCC_VERSION}"
     CCACHE_VERSION     = "4.12.1"
     CCACHE_ARCHIVE     = "ccache-4.12.1-linux-x86_64.tar.xz"
     SCCACHE_VERSION    = "0.12.0"
@@ -196,21 +204,80 @@ group "default" {
   targets = ["devcontainer"]
 }
 
-# Optional slim profile: builds devcontainer without heavyweight optional tools.
-group "slim" {
-  targets = ["devcontainer_slim"]
-}
-
-# Slim variant excludes heavy optional tools; toggles controlled via build args.
-target "devcontainer_slim" {
+# Explicit compiler permutations (gcc/clang)
+target "devcontainer_gcc14_clang21" {
   inherits  = ["_base"]
   target    = "devcontainer"
   dependsOn = ["tools_merge"]
-  tags      = ["${TAG}-slim"]
+  tags      = ["devcontainer:gcc14-clang21"]
   args = {
-    ENABLE_VALGRIND    = "0"
-    ENABLE_CPPCHECK    = "0"
-    ENABLE_IWYU        = "0"
-    ENABLE_CLANG_P2996 = "0"
+    GCC_VERSION   = "14"
+    CLANG_VARIANT = "21"
   }
+}
+
+target "devcontainer_gcc14_clang22" {
+  inherits  = ["_base"]
+  target    = "devcontainer"
+  dependsOn = ["tools_merge"]
+  tags      = ["devcontainer:gcc14-clang22"]
+  args = {
+    GCC_VERSION   = "14"
+    CLANG_VARIANT = "22"
+  }
+}
+
+target "devcontainer_gcc14_clangp2996" {
+  inherits  = ["_base"]
+  target    = "devcontainer"
+  dependsOn = ["tools_merge"]
+  tags      = ["devcontainer:gcc14-clangp2996"]
+  args = {
+    GCC_VERSION   = "14"
+    CLANG_VARIANT = "p2996"
+  }
+}
+
+target "devcontainer_gcc15_clang21" {
+  inherits  = ["_base"]
+  target    = "devcontainer"
+  dependsOn = ["tools_merge"]
+  tags      = ["devcontainer:gcc15-clang21"]
+  args = {
+    GCC_VERSION   = "15"
+    CLANG_VARIANT = "21"
+  }
+}
+
+target "devcontainer_gcc15_clang22" {
+  inherits  = ["_base"]
+  target    = "devcontainer"
+  dependsOn = ["tools_merge"]
+  tags      = ["devcontainer:gcc15-clang22"]
+  args = {
+    GCC_VERSION   = "15"
+    CLANG_VARIANT = "22"
+  }
+}
+
+target "devcontainer_gcc15_clangp2996" {
+  inherits  = ["_base"]
+  target    = "devcontainer"
+  dependsOn = ["tools_merge"]
+  tags      = ["devcontainer:gcc15-clangp2996"]
+  args = {
+    GCC_VERSION   = "15"
+    CLANG_VARIANT = "p2996"
+  }
+}
+
+group "matrix" {
+  targets = [
+    "devcontainer_gcc14_clang21",
+    "devcontainer_gcc14_clang22",
+    "devcontainer_gcc14_clangp2996",
+    "devcontainer_gcc15_clang21",
+    "devcontainer_gcc15_clang22",
+    "devcontainer_gcc15_clangp2996",
+  ]
 }
