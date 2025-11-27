@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Build devcontainer images using the remote Docker SSH context only.
+# Defaults are derived from config/env/devcontainer.env.
+#
+# Usage:
+#   .devcontainer/scripts/build_remote_images.sh [--gcc-version 14|15] [--llvm-version <21|22|qualification|development|p2996>] [--all]
+#
+# Examples:
+#   # Build default (gcc15 + clang qualification branch)
+#   .devcontainer/scripts/build_remote_images.sh
+#   # Build gcc14 + clang development branch (numeric resolved from apt.llvm.org)
+#   .devcontainer/scripts/build_remote_images.sh --gcc-version 14 --llvm-version development
+#   # Build clang-p2996 variant with gcc15
+#   .devcontainer/scripts/build_remote_images.sh --llvm-version p2996
+#   # Build all permutations (gcc14/15 x clang qual/dev/p2996)
+#   .devcontainer/scripts/build_remote_images.sh --all
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+CONFIG_ENV_FILE="${CONFIG_ENV_FILE:-"$REPO_ROOT/config/env/devcontainer.env"}"
+[[ -f "$CONFIG_ENV_FILE" ]] && source "$CONFIG_ENV_FILE"
+
+REMOTE_HOST=${DEVCONTAINER_REMOTE_HOST:-""}
+REMOTE_USER=${DEVCONTAINER_REMOTE_USER:-""}
+REMOTE_PORT=${DEVCONTAINER_SSH_PORT:-9222}
+DOCKER_CONTEXT=${DEVCONTAINER_DOCKER_CONTEXT:-""}
+
+GCC_VERSION=15
+LLVM_INPUT="qualification"
+BUILD_ALL=0
+
+usage() {
+  cat <<'EOF'
+Usage: .devcontainer/scripts/build_remote_images.sh [options]
+  --gcc-version <14|15>            GCC version to pair (default: 15)
+  --llvm-version <21|22|qualification|development|p2996>
+                                   Clang/LLVM variant (default: qualification → numeric via apt.llvm.org)
+  --all                            Build all permutations (overrides individual selections)
+  -h, --help                       Show this help
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --gcc-version) GCC_VERSION="$2"; shift 2 ;;
+    --llvm-version) LLVM_INPUT="$2"; shift 2 ;;
+    --all) BUILD_ALL=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown arg: $1" >&2; usage; exit 1 ;;
+  esac
+done
+
+[[ -z "$REMOTE_HOST" || -z "$REMOTE_USER" ]] && { echo "Remote host/user not set (see config/env/devcontainer.env)"; exit 1; }
+
+# Derive context name if not provided
+if [[ -z "$DOCKER_CONTEXT" ]]; then
+  DOCKER_CONTEXT="ssh-${REMOTE_HOST}"
+fi
+
+ensure_context() {
+  if ! docker context inspect "$DOCKER_CONTEXT" >/dev/null 2>&1; then
+    echo "Creating docker context '$DOCKER_CONTEXT' for $REMOTE_USER@$REMOTE_HOST..."
+    docker context create "$DOCKER_CONTEXT" --docker "host=ssh://${REMOTE_USER}@${REMOTE_HOST}"
+  else
+    echo "Using docker context '$DOCKER_CONTEXT'."
+  fi
+}
+
+resolve_llvm() {
+  local selector="$1"
+  eval "$("$REPO_ROOT/.devcontainer/scripts/resolve_llvm_branches.sh" --export)"
+  local qual="${LLVM_QUAL:-21}"
+  local dev="${LLVM_DEV:-22}"
+  case "$selector" in
+    qualification|qual|"") echo "$qual" ;;
+    development|dev) echo "$dev" ;;
+    p2996|p2296|p2996) echo "p2996" ;;
+    *) echo "$selector" ;;
+  esac
+}
+
+QUAL_NUM="$(resolve_llvm qualification)"
+DEV_NUM="$(resolve_llvm development)"
+LLVM_VARIANT="$(resolve_llvm "$LLVM_INPUT")"
+
+targets=()
+set_args=(
+  "--set" "*.platform=linux/amd64"
+  "--set" "*.args.LLVM_VERSION=${LLVM_VARIANT}"
+)
+env_prefix=()
+
+if [[ "$BUILD_ALL" == "1" ]]; then
+  # Build full matrix; keep CLANG_QUAL/CLANG_DEV numeric in sync
+  env_prefix+=(CLANG_QUAL="${QUAL_NUM}" CLANG_DEV="${DEV_NUM}")
+  targets+=(matrix)
+else
+  case "$LLVM_VARIANT" in
+    p2996) targets+=("devcontainer_gcc${GCC_VERSION}_clangp2996") ;;
+    "$DEV_NUM") targets+=("devcontainer_gcc${GCC_VERSION}_clang_dev")
+                env_prefix+=(CLANG_DEV="${LLVM_VARIANT}") ;;
+    *) targets+=("devcontainer_gcc${GCC_VERSION}_clang_qual")
+       env_prefix+=(CLANG_QUAL="${LLVM_VARIANT}") ;;
+  esac
+fi
+
+echo "Remote host: ${REMOTE_USER}@${REMOTE_HOST} (port ${REMOTE_PORT}), context: ${DOCKER_CONTEXT}"
+echo "Building targets: ${targets[*]} (GCC=${GCC_VERSION}, LLVM/clang=${LLVM_VARIANT})"
+
+ensure_context
+
+cmd_env=("${env_prefix[@]}")
+cmd_env+=("DOCKER_CONTEXT=${DOCKER_CONTEXT}")
+
+env "${cmd_env[@]}" docker buildx bake -f "$REPO_ROOT/.devcontainer/docker-bake.hcl" \
+  --progress=plain \
+  "${set_args[@]}" \
+  "${targets[@]}"

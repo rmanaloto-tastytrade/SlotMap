@@ -14,6 +14,16 @@ variable "CLANG_VARIANT" {
   default = "21"
 }
 
+variable "CLANG_QUAL" {
+  # Qualification branch (defaults to 21; override via --set CLANG_QUAL=xx)
+  default = "21"
+}
+
+variable "CLANG_DEV" {
+  # Development branch (defaults to 22; override via --set CLANG_DEV=xx)
+  default = "22"
+}
+
 variable "GCC_VERSION" {
   default = "15"
 }
@@ -53,9 +63,11 @@ target "_base" {
     CLANG_P2996_BRANCH = "p2996"
     CLANG_P2996_REPO   = "https://github.com/bloomberg/clang-p2996.git"
     CLANG_P2996_PREFIX = "/opt/clang-p2996"
+    CLANG_P2996_JOBS   = "4"
     JQ_VERSION         = "1.8.1"
     AWSCLI_VERSION     = "latest"
     GCC15_VERSION      = "15.1.0"
+    GCC15_JOBS         = "4"
   }
 }
 
@@ -205,25 +217,25 @@ group "default" {
 }
 
 # Explicit compiler permutations (gcc/clang)
-target "devcontainer_gcc14_clang21" {
+target "devcontainer_gcc14_clang_qual" {
   inherits  = ["_base"]
   target    = "devcontainer"
   dependsOn = ["tools_merge"]
-  tags      = ["devcontainer:gcc14-clang21"]
+  tags      = ["devcontainer:gcc14-clang${CLANG_QUAL}"]
   args = {
     GCC_VERSION   = "14"
-    CLANG_VARIANT = "21"
+    CLANG_VARIANT = "${CLANG_QUAL}"
   }
 }
 
-target "devcontainer_gcc14_clang22" {
+target "devcontainer_gcc14_clang_dev" {
   inherits  = ["_base"]
   target    = "devcontainer"
   dependsOn = ["tools_merge"]
-  tags      = ["devcontainer:gcc14-clang22"]
+  tags      = ["devcontainer:gcc14-clang${CLANG_DEV}"]
   args = {
     GCC_VERSION   = "14"
-    CLANG_VARIANT = "22"
+    CLANG_VARIANT = "${CLANG_DEV}"
   }
 }
 
@@ -238,25 +250,25 @@ target "devcontainer_gcc14_clangp2996" {
   }
 }
 
-target "devcontainer_gcc15_clang21" {
+target "devcontainer_gcc15_clang_qual" {
   inherits  = ["_base"]
   target    = "devcontainer"
   dependsOn = ["tools_merge"]
-  tags      = ["devcontainer:gcc15-clang21"]
+  tags      = ["devcontainer:gcc15-clang${CLANG_QUAL}"]
   args = {
     GCC_VERSION   = "15"
-    CLANG_VARIANT = "21"
+    CLANG_VARIANT = "${CLANG_QUAL}"
   }
 }
 
-target "devcontainer_gcc15_clang22" {
+target "devcontainer_gcc15_clang_dev" {
   inherits  = ["_base"]
   target    = "devcontainer"
   dependsOn = ["tools_merge"]
-  tags      = ["devcontainer:gcc15-clang22"]
+  tags      = ["devcontainer:gcc15-clang${CLANG_DEV}"]
   args = {
     GCC_VERSION   = "15"
-    CLANG_VARIANT = "22"
+    CLANG_VARIANT = "${CLANG_DEV}"
   }
 }
 
@@ -273,11 +285,11 @@ target "devcontainer_gcc15_clangp2996" {
 
 group "matrix" {
   targets = [
-    "devcontainer_gcc14_clang21",
-    "devcontainer_gcc14_clang22",
+    "devcontainer_gcc14_clang_qual",
+    "devcontainer_gcc14_clang_dev",
     "devcontainer_gcc14_clangp2996",
-    "devcontainer_gcc15_clang21",
-    "devcontainer_gcc15_clang22",
+    "devcontainer_gcc15_clang_qual",
+    "devcontainer_gcc15_clang_dev",
     "devcontainer_gcc15_clangp2996",
   ]
 }

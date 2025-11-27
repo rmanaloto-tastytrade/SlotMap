@@ -1,42 +1,42 @@
 ## SlotMap Devcontainer Tooling
 
-This document captures the contents of `.devcontainer/Dockerfile`, similar in spirit to the official Dev Containers C++ image reference. Use it as a checklist when updating dependencies or auditing what is available inside the remote workspace.
+This document captures the contents of `.devcontainer/Dockerfile`, similar in spirit to the official Dev Containers C++ image reference. Use it as a checklist when updating dependencies or auditing what is available inside the remote workspace. The image now supports a compiler matrix (GCC 14/15 × Clang 21/22 plus clang-p2996); `docker-bake.hcl` tags reflect the chosen pair.
 
 ### Base Image and Users
 | Item | Details |
 | --- | --- |
 | Base | `ubuntu:24.04` |
-| Dev user | Matches remote host user (passed via build args; defaults to `vscode`) with passwordless sudo |
+| Dev user | `USERNAME` build arg (defaults to `slotmap`; we typically set to the remote host user) with passwordless sudo |
 | Shells | bash + zsh (Oh-My-Zsh not installed) |
 | Timezone | `UTC` |
 
 ### Core Packages (APT)
 Installed via `apt-get` in the first layer:
-- Build chain: `build-essential`, full LLVM 21 stack (clang/clangd/clang-tidy, lld, lldb, MLIR, BOLT, flang, libomp, libunwind, libclc, libfuzzer, polly, libllvmlibc, doc/examples packages), `gcc-14` (from Ubuntu Toolchain PPA), `binutils`
+- Build chain: `build-essential`, LLVM toolchain from `apt.llvm.org` for the selected `CLANG_VARIANT` (21 or 22; clang-p2996 is built from source), `binutils`, GCC from Ubuntu Toolchain PPA (`GCC_VERSION` arg, default 15 with fallback to 14 if the PPA lacks it)
 - Tooling: `curl`, `wget`, `sudo`, `pkg-config`, `bash-completion`, `zsh`, `graphviz`, `doxygen`, `rsync`, `python3` (+pip/venv), `tzdata`, `xz-utils`, `unzip`, `zip`, `tar`
 - Debugging helpers: `debuginfod`, `debuginfod-client`
 - vcpkg manifest prerequisites: `autoconf`, `automake`, `libtool`, `m4`, `autoconf-archive`, `patchelf`
 - SSH / misc: `openssh-client`, `ca-certificates`, `gnupg`
 
 ### Additional Toolchain Components
-| Tool | Version | Source |
+| Tool | Version / Variant | Source |
 | --- | --- | --- |
 | Git | Latest stable via `ppa:git-core/ppa` |
-| CMake | latest from Kitware APT |
+| CMake | Latest from Kitware APT |
 | GNU Make | 4.4.1 compiled from ftp.gnu.org |
 | Ninja | v1.13.1 GitHub release (curl with retry) |
 | Mold | v2.40.4 GitHub release (`mold` + `ld.mold`) |
 | GitHub CLI | v2.83.1 GitHub release |
-| IWYU | `clang_21` branch built from source (matches LLVM 21 install) |
-| Clang P2996 | Bloomberg `clang-p2996` branch (reflection prototype) |
+| GCC | PPA-installed `gcc-${GCC_VERSION}` (default 15, fallback to 14) + source-built GCC 15.1.0 under `/opt/gcc-15` |
+| LLVM/Clang | Via `llvm.sh ${CLANG_VARIANT}` for 21/22 with extras (MLIR, BOLT, flang, libclc, libllvmlibc); Bloomberg clang-p2996 built from source under `/opt/clang-p2996` |
+| IWYU | `clang_${LLVM_VERSION}` branch built from source (matches LLVM variant) |
 | MRDocs | v0.8.0 binary release |
-| Mermaid CLI | installed globally via npm |
+| Mermaid CLI | Installed globally via npm |
 | Node.js / npm | Official Node.js tarball v25.2.1 |
 | jq | v1.8.1 GitHub release (`jq-linux-amd64`) |
 | AWS CLI v2 | Latest Linux x86_64 zip installer |
 | Linux perf | `linux-tools-common` + `linux-tools-generic` (+ best-effort `linux-tools-$(uname -r)`) |
 | binutils + gdb | Built from source (`bminor/binutils-gdb` tag `binutils-2_45_1`) |
-| LLVM extras | Installed via `llvm.sh ${LLVM_VERSION} all` plus additional packages (MLIR, BOLT, flang, libclc, libllvmlibc); package list logged to `/opt/llvm-packages-21.txt` |
 | uv / ruff / ty | Astral install scripts (`/usr/local/bin`) |
 | pixi | Official installer, binary moved to `/usr/local/bin` |
 
@@ -59,7 +59,7 @@ Environment variables:
 ### Directory Layout
 | Path | Description |
 | --- | --- |
-| `/workspaces/SlotMap` | Default working directory (mounted from host) |
+| `/home/<user>/workspace` | Default working directory (remote host bind mount) |
 | `/var/cache/ccache` | Shared cache owned by the devcontainer user |
 | `/var/cache/sccache` | Shared cache owned by the devcontainer user |
 | `/opt/vcpkg` | vcpkg clone/tools |
@@ -69,10 +69,10 @@ Environment variables:
 | `/opt/clang-p2996` | Bloomberg Clang P2996 installation root |
 
 ### Verification Commands
-Run these inside the devcontainer to confirm key tools are available:
+Run these inside the devcontainer to confirm key tools are available (adjust versions to the selected bake target):
 ```bash
-clang++-21 --version
-gcc-14 --version
+clang++-21 --version     # or clang++-22 / clang++-p2996
+gcc-15 --version        # or gcc-14
 git --version
 cmake --version
 make --version
@@ -84,8 +84,8 @@ include-what-you-use --version
 gdb --version
 objdump --version
 clangd --version
-flang-21 --version
-clang-p2996 --version
+flang-21 --version      # adjust to variant
+clang-p2996 --version   # when using that variant
 perf --version || perf --help
 ccache --version
 sccache --version
@@ -102,3 +102,4 @@ vcpkg version
 - Pin vcpkg to a commit if reproducibility is required; currently the latest master is used.
 - npm-installed Mermaid CLI provides diagram rendering for docs – ensure Node.js remains current for security fixes.
 - The document draws inspiration from [devcontainers/images/src/cpp](https://github.com/devcontainers/images/tree/main/src/cpp); revisit periodically to stay aligned with upstream best practices.
+- LLVM branch numbers (stable/qualification/development) can be refreshed via `.devcontainer/scripts/resolve_llvm_branches.sh`; export its output and pass `--set CLANG_QUAL=… --set CLANG_DEV=… --set CLANG_VARIANT=…` to `docker buildx bake` to avoid hard-coded versions. The helper `.devcontainer/scripts/build_remote_images.sh` wires this up for remote builds.

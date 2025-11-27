@@ -2,6 +2,8 @@
 
 This note explains how to make SSH into the devcontainer work when the container runs on a remote Docker engine via SSH context. All agents (Codex, Gemini, Cursor, Copilot, Grok, etc.) must follow this when configuring/building/running the devcontainer.
 
+**Hard requirement when working from this MacBook:** all Docker image/devcontainer builds must run on the remote host via SSH Docker context. Do not run `docker build/buildx/bake` against the local engine. Use the helper `.devcontainer/scripts/build_remote_images.sh` (or set `DOCKER_CONTEXT` to the remote context) so images and caches live on the remote host.
+
 > Note: Host/user/port values mentioned here (e.g., c24s1.ch2, 9222, rmanaloto) are examples. Replace with your own `DEVCONTAINER_REMOTE_HOST/USER/SSH_PORT` when executing commands.
 
 ## Goals
