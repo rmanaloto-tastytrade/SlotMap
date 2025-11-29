@@ -46,6 +46,7 @@ Usage: .devcontainer/scripts/build_remote_images.sh [options]
   --builder <name>                 Buildx builder name (default: ${BUILDER_NAME})
   --registry-ref <ref>             Registry ref for cache/image outputs (default: ${REGISTRY_REF})
   --no-registry-cache              Disable registry cache; use only local cache-dir
+  --verify                         After bake, run scripts/verify_devcontainer.sh on the resulting image (single-target builds only)
   -h, --help                       Show this help
 EOF
 }
@@ -59,6 +60,7 @@ while [[ $# -gt 0 ]]; do
     --builder) BUILDER_NAME="$2"; shift 2 ;;
     --registry-ref) REGISTRY_REF="$2"; shift 2 ;;
     --no-registry-cache) USE_REGISTRY_CACHE="0"; shift ;;
+    --verify) VERIFY=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown arg: $1" >&2; usage; exit 1 ;;
   esac
@@ -160,3 +162,25 @@ env "${cmd_env[@]}" docker buildx bake \
   --progress=plain \
   "${set_args[@]}" \
   "${targets[@]}"
+
+# Post-build verification (single target only)
+if [[ "${VERIFY:-0}" == "1" ]]; then
+  if [[ "${BUILD_ALL}" == "1" ]]; then
+    echo "Skipping verify: --verify currently supports single-target builds only." >&2
+    exit 0
+  fi
+  image_tag=""
+  case "${targets[0]}" in
+    devcontainer_gcc${GCC_VERSION}_clangp2996) image_tag="devcontainer:gcc${GCC_VERSION}-clangp2996" ;;
+    devcontainer_gcc${GCC_VERSION}_clang_dev) image_tag="devcontainer:gcc${GCC_VERSION}-clang${LLVM_VARIANT}" ;;
+    devcontainer_gcc${GCC_VERSION}_clang_qual) image_tag="devcontainer:gcc${GCC_VERSION}-clang${LLVM_VARIANT}" ;;
+    devcontainer|default) image_tag="${TAG:-devcontainer:local}" ;;
+  esac
+  if [[ -z "$image_tag" ]]; then
+    echo "WARNING: Could not infer image tag for target ${targets[0]}; skipping verify." >&2
+    exit 0
+  fi
+  echo "Verifying image ${image_tag} via scripts/verify_devcontainer.sh..."
+  CONFIG_ENV_FILE="${CONFIG_ENV_FILE:-${REPO_ROOT}/config/env/devcontainer.env}" \
+    "${REPO_ROOT}/scripts/verify_devcontainer.sh" --image "${image_tag}"
+fi
