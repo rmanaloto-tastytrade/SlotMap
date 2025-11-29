@@ -40,19 +40,23 @@ done
 
 REMOTE_HOST=${DEVCONTAINER_REMOTE_HOST:?set DEVCONTAINER_REMOTE_HOST}
 REMOTE_USER=${DEVCONTAINER_REMOTE_USER:?set DEVCONTAINER_REMOTE_USER}
-DOCKER_CONTEXT=${DEVCONTAINER_DOCKER_CONTEXT:-"ssh-${REMOTE_HOST}"}
+DOCKER_CONTEXT=${DEVCONTAINER_DOCKER_CONTEXT:-""}
+DOCKER_CMD=(docker)
+if [[ -n "$DOCKER_CONTEXT" ]]; then
+  DOCKER_CMD+=(--context "$DOCKER_CONTEXT")
+fi
 
-echo "[verify] Using docker context: ${DOCKER_CONTEXT}"
+echo "[verify] Using docker context: ${DOCKER_CONTEXT:-<none>}"
 echo "[verify] Checking image: ${IMAGE_TAG}"
 
 # Ensure image exists on remote
-if ! docker --context "${DOCKER_CONTEXT}" image inspect "${IMAGE_TAG}" >/dev/null 2>&1; then
+if ! "${DOCKER_CMD[@]}" image inspect "${IMAGE_TAG}" >/dev/null 2>&1; then
   echo "[verify] ERROR: image ${IMAGE_TAG} not found on ${REMOTE_HOST}" >&2
   exit 1
 fi
 
 echo "[verify] Running tool checks inside ${IMAGE_TAG}..."
-docker --context "${DOCKER_CONTEXT}" run --rm \
+"${DOCKER_CMD[@]}" run --rm \
   -e PATH="/opt/gcc-15/bin:${PATH}" \
   "${IMAGE_TAG}" \
   bash -lc 'set -e;
