@@ -4,6 +4,7 @@
    - **Remote Docker bake + devcontainer matrix is built and validated** – all permutations (gcc14/15 × clang21/22/p2996) are baked on `c24s1.ch2`, running, and verified via `scripts/verify_devcontainer.sh --require-ssh` using the per-permutation env files in `config/env/`.  
    - Clang branch mapping now resolved centrally via `scripts/clang_branch_utils.sh` (stable→20, qualification→21, development→22) and threaded through Dockerfile/bake/verify.  
    - Tooling installs live under `/usr/local` (clang from apt.llvm.org pockets, gcc from source with symlinks, p2996 staged under `/usr/local/clang-p2996`).  
+   - **Near-real-time sync (Mutagen) under evaluation** – see `docs/mutagen_sync.md` for how we plan to sync macOS edits into the remote devcontainer via SSH/ProxyJump without relying on SSHFS.  
    - Add/maintain workflow diagrams and ensure Dockerfile lint rules remain satisfied; keep package versions pinned once stable.
    - Keep `docs/ai_devcontainer_workflow.md` and `docs/CURRENT_WORKFLOW.md` as the entry points for new agents.
 
