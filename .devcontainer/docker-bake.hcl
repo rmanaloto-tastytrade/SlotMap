@@ -28,6 +28,14 @@ variable "GCC_VERSION" {
   default = "15"
 }
 
+variable "EGET_VERSION" {
+  default = "v1.3.4"
+}
+
+variable "MUTAGEN_VERSION" {
+  default = "v0.18.1"
+}
+
 target "_base" {
   context    = "."
   dockerfile = ".devcontainer/Dockerfile"
@@ -72,6 +80,8 @@ target "_base" {
     AWSCLI_VERSION     = "latest"
     GCC15_VERSION      = "15.1.0"
     GCC15_JOBS         = "4"
+    EGET_VERSION       = "${EGET_VERSION}"
+    MUTAGEN_VERSION    = "${MUTAGEN_VERSION}"
   }
 }
 

@@ -41,6 +41,11 @@
    - `mutagen sync pause/resume slotmap-sync`
    - `mutagen sync terminate slotmap-sync`
 
+## Mutagen Availability in the Devcontainer
+- The devcontainer image now installs `eget v1.3.4` and `mutagen v0.18.1` at build time (via GitHub releases) into `/usr/local/bin` (`mutagen` and `mutagen-agent`).
+- This keeps Mutagen ready inside the container for agent operations; macOS-side Mutagen still runs locally to initiate sessions.
+- All GitHub binary installs going forward should use `eget` to enforce consistent, pinned downloads.
+
 ## Configuration Notes
 - **Ignores:** Add `.git`, build dirs (`build/`, `cmake-build-*`, `logs/`, `vcpkg_installed/`) to reduce churn.
 - **Symlinks:** Use `--symlink-mode=posix-raw` to avoid macOS-to-Linux translation issues.
