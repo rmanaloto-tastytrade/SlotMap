@@ -31,6 +31,10 @@ PATH_PREFIX="/usr/local/bin:/opt/clang-p2996/bin:/opt/gcc-15/bin"
 
 REQUIRE_SSH=0
 
+# Expected mutagen version (installed in image build)
+# shellcheck disable=SC2034 # consumed in generated check script
+EXPECTED_MUTAGEN_VERSION="${MUTAGEN_VERSION:-0.18.1}"
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --image) IMAGE_TAG="$2"; shift 2 ;;
@@ -95,6 +99,7 @@ fi
 REQUIRED_TOOLS=("${EXPECTED_CLANG_CMD}")
 [[ -n "$EXPECTED_GCC_CMD" ]] && REQUIRED_TOOLS+=("${EXPECTED_GCC_CMD}")
 REQUIRED_TOOLS+=(ninja cmake vcpkg mrdocs)
+REQUIRED_TOOLS+=(mutagen)
 REQUIRED_TOOLS_STR="${REQUIRED_TOOLS[*]}"
 
 echo "[verify] Expected clang: ${EXPECTED_CLANG_CMD}; expected gcc: ${EXPECTED_GCC_CMD:-<none>}"
@@ -112,6 +117,17 @@ check() {
       cmake) echo "$tool: $(cmake --version | head -n1)";;
       vcpkg) echo "$tool: $(vcpkg version | head -n1)";;
       mrdocs) echo "$tool: $(mrdocs --version | head -n1)";;
+      mutagen)
+        local out ver
+        out="$(mutagen version 2>/dev/null | head -n1 || true)"
+        ver="$(printf '%s' "$out" | grep -Eo '[0-9]+\\.[0-9]+\\.[0-9]+')"
+        if [[ -n "$EXPECTED_MUTAGEN_VERSION" && "$ver" != "${EXPECTED_MUTAGEN_VERSION#v}" && "$ver" != "$EXPECTED_MUTAGEN_VERSION" ]]; then
+          echo "$tool: $out (EXPECTED ${EXPECTED_MUTAGEN_VERSION})"
+          missing=1
+        else
+          echo "$tool: ${out:-<no output>}"
+        fi
+        ;;
       *) echo "$tool: $("$tool" --version | head -n1)";;
     esac
   else
