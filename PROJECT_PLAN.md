@@ -1,11 +1,11 @@
 # Project Plan
 
 1. **Environment & Tooling (Current phase)**  
-   - **Remote Docker bake + devcontainer matrix is built and validated** – all permutations (gcc14/15 × clang21/22/p2996) are baked on `c24s1.ch2`, running, and verified via `scripts/verify_devcontainer.sh --require-ssh` using the per-permutation env files in `config/env/`.  
-   - Clang branch mapping now resolved centrally via `scripts/clang_branch_utils.sh` (stable→20, qualification→21, development→22) and threaded through Dockerfile/bake/verify.  
-   - Tooling installs live under `/usr/local` (clang from apt.llvm.org pockets, gcc from source with symlinks, p2996 staged under `/usr/local/clang-p2996`).  
-   - **Near-real-time sync (Mutagen) under evaluation** – see `docs/mutagen_sync.md` for how we plan to sync macOS edits into the remote devcontainer via SSH/ProxyJump without relying on SSHFS.  
-   - Add/maintain workflow diagrams and ensure Dockerfile lint rules remain satisfied; keep package versions pinned once stable.
+   - **Remote Docker bake + devcontainer matrix** – baked on `c24s1.ch2` (all permutations built and verified). On `c0903s4.ny5`, images are baked; `gcc14-clang21` container is up and validated via `scripts/run_local_devcontainer.sh` + `scripts/verify_devcontainer.sh --require-ssh` after fixing SSH key paths (`~/.ssh/tastytrade_key`). Remaining permutations on `c0903s4.ny5` still need run/verify.  
+   - Clang branch mapping is centralized in `scripts/clang_branch_utils.sh` (stable→20, qualification→21, development→22) and flows through Dockerfile/bake/verify.  
+   - Tooling installs live under `/usr/local` (clang via apt.llvm.org pockets, gcc from source with symlinks, p2996 staged under `/usr/local/clang-p2996`).  
+   - **Mutagen sync planned (later)** – we will add a mutagen session to sync `config/env/*.env` and workspace files from macOS to the remote host/devcontainer to avoid ad-hoc scp. For now, env files are copied manually. See `docs/mutagen_sync.md` for the intended approach; implementation is deferred.  
+   - Add/maintain workflow diagrams and ensure Dockerfile lint rules remain satisfied; keep package versions pinned once stable.  
    - Keep `docs/ai_devcontainer_workflow.md` and `docs/CURRENT_WORKFLOW.md` as the entry points for new agents.
 
 2. **Policy & Concept Scaffolding**  
