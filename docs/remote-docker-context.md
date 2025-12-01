@@ -17,7 +17,7 @@ This document defines the **authoritative** way to build and run the SlotMap dev
 - SSH keys available on the remote host (public keys only for authorized_keys); private keys remain on the host agent.
 
 ## Setup: Docker SSH Context
-Create a context per host (examples only: c24s1, c0903s4.ny5, c0802s4.ny5):
+Create a context per host (examples only: c24s1, c090s4.ny5, c0802s4.ny5):
 ```bash
 docker context create <context-name> --docker "host=ssh://<remote-user>@<remote-host>"
 ```

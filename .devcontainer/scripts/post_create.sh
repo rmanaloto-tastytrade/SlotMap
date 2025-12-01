@@ -4,11 +4,39 @@ set -euo pipefail
 CURRENT_USER="${DEVCONTAINER_USER:-$(id -un)}"
 CURRENT_GROUP="$(id -gn "$CURRENT_USER" 2>/dev/null || id -gn)"
 WORKSPACE_DIR="${WORKSPACE_FOLDER:-/home/${CURRENT_USER}/workspace}"
+CACHE_ROOT="/slotmap-cache"
+CCACHE_DIR="${CCACHE_DIR:-${CACHE_ROOT}/ccache}"
+SCCACHE_DIR="${SCCACHE_DIR:-${CACHE_ROOT}/sccache}"
+VCPKG_DOWNLOADS="${VCPKG_DOWNLOADS:-${CACHE_ROOT}/vcpkg-downloads}"
+VCPKG_BINARY_CACHE="${VCPKG_DEFAULT_BINARY_CACHE:-${CACHE_ROOT}/vcpkg-archives}"
+PERSISTENT_TMP="${TMPDIR:-${CACHE_ROOT}/tmp}"
 
 if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-  sudo chown -R "${CURRENT_USER}:${CURRENT_GROUP}" /opt/vcpkg /opt/vcpkg/downloads "${WORKSPACE_DIR}" || true
+  sudo chown -R "${CURRENT_USER}:${CURRENT_GROUP}" /opt/vcpkg "${WORKSPACE_DIR}" || true
 else
   echo "[post_create] Skipping chown (sudo password required or unavailable)."
+fi
+
+echo "[post_create] Preparing persistent cache root at ${CACHE_ROOT}..."
+mkdir -p "${CACHE_ROOT}"/{ccache,sccache,vcpkg-downloads,vcpkg-archives,tmp}
+chown -R "${CURRENT_USER}:${CURRENT_GROUP}" "${CACHE_ROOT}"
+
+# Point vcpkg downloads/binary cache at the persistent volume
+if [ -d /opt/vcpkg/downloads ] || [ -L /opt/vcpkg/downloads ]; then
+  rm -rf /opt/vcpkg/downloads
+fi
+ln -snf "${VCPKG_DOWNLOADS}" /opt/vcpkg/downloads
+mkdir -p "${VCPKG_BINARY_CACHE}"
+chown -R "${CURRENT_USER}:${CURRENT_GROUP}" /opt/vcpkg "${VCPKG_DOWNLOADS}" "${VCPKG_BINARY_CACHE}"
+
+# Ensure ccache/sccache dirs are owned and writable
+mkdir -p "${CCACHE_DIR}" "${SCCACHE_DIR}"
+chown -R "${CURRENT_USER}:${CURRENT_GROUP}" "${CCACHE_DIR}" "${SCCACHE_DIR}"
+
+# Make /tmp persistent via symlink into the cache volume if empty
+if [ ! -L /tmp ] && [ -z "$(ls -A /tmp)" ]; then
+  rm -rf /tmp
+  ln -snf "${PERSISTENT_TMP}" /tmp
 fi
 
 if ! command -v clang++-21 >/dev/null 2>&1; then

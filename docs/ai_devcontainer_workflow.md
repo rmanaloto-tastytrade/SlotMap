@@ -15,6 +15,7 @@ Fast on-boarding for AI agents (Claude/Code, Codex CLI) to build, run, and valid
   - `.devcontainer/scripts/resolve_llvm_branches.sh` (discovers latest qualification/development numbers).
   - `scripts/clang_branch_utils.sh` (maps branch name → variant/pocket for Dockerfile and verify).
   - `.devcontainer/scripts/build_remote_images.sh` (not modified today, still drives the matrix).
+- Bake args are **not** inferred from the env files by `run_local_devcontainer.sh`; it uses the defaults in `docker-bake.hcl` (CLANG_VARIANT=21, ENABLE_CLANG_P2996=0, GCC_VERSION=15) unless you pass `--set` overrides. Also, if `DEVCONTAINER_SKIP_BAKE=1` is set in an env file, the script will reuse the existing tag instead of rebuilding. Bake the permutation you need (via `docker buildx bake --set '*.args.CLANG_VARIANT'=... --set '*.args.ENABLE_CLANG_P2996'=...`) before launching.
 - To build a permutation on the remote host from the Mac:  
   ```bash
   DOCKER_HOST=ssh://rmanaloto@c24s1.ch2 \

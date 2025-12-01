@@ -97,6 +97,24 @@ pixi --version
 vcpkg version
 ```
 
+### Baking & Permutations
+- The `docker-bake.hcl` defines the compiler matrix; bake args (`CLANG_VARIANT`, `ENABLE_CLANG_P2996`, `GCC_VERSION`, `MUTAGEN_VERSION`) must be passed explicitly. Example for the p2996/clang+GCC15 + Mutagen image:
+  ```bash
+  docker buildx bake \
+    -f .devcontainer/docker-bake.hcl \
+    devcontainer \
+    --set base.tags=dev-base:local \
+    --set devcontainer.tags=devcontainer:local \
+    --set '*.args.BASE_IMAGE'=dev-base:local \
+    --set '*.args.USERNAME'=slotmap --set '*.args.USER_UID'=1000 --set '*.args.USER_GID'=1000 \
+    --set '*.args.CLANG_VARIANT'=p2996 \
+    --set '*.args.ENABLE_CLANG_P2996'=1 \
+    --set '*.args.GCC_VERSION'=15 \
+    --set '*.args.MUTAGEN_VERSION'=v0.18.1
+  ```
+- `scripts/run_local_devcontainer.sh` currently bakes with the defaults from `docker-bake.hcl` (CLANG_VARIANT=21, ENABLE_CLANG_P2996=0, GCC_VERSION=15) unless you add `--set` overrides manually; if `DEVCONTAINER_SKIP_BAKE=1` in your env file, it reuses whatever image tag already exists.
+- To ensure the running devcontainer matches a specific env permutation (e.g., `config/env/devcontainer.*clangp2996.env`), clear `DEVCONTAINER_SKIP_BAKE` and bake with the matching args before launching `devcontainer up`.
+
 ### Maintenance Notes
 - If you update LLVM or GCC versions, also update IWYU branch and `update-alternatives` priorities.
 - Pin vcpkg to a commit if reproducibility is required; currently the latest master is used.

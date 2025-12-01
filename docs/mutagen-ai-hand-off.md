@@ -1,7 +1,7 @@
 # Mutagen SSH Agent Issue – AI Hand-off
 
 ## Situation
-- Goal: Mutagen two-way sync between macOS host and remote devcontainers (c0903s4.ny5/c24s1.ch2) over SSH, validated as part of `verify_devcontainer.sh` (`REQUIRE_MUTAGEN=1`).
+- Goal: Mutagen two-way sync between macOS host and remote devcontainers (c090s4.ny5/c24s1.ch2) over SSH, validated as part of `verify_devcontainer.sh` (`REQUIRE_MUTAGEN=1`).
 - Blocker: `mutagen sync create` fails; agent launch command is malformed.
   - Logged argv (from ssh wrapper):
     ```
@@ -24,7 +24,7 @@
 1) Host SSH works:
    - `ssh -F ~/.mutagen/slotmap_ssh_config slotmap-mutagen 'echo ok'` ✅
 2) Mutagen fails:
-   - `CONFIG_ENV_FILE=config/env/devcontainer.c0903.gcc14-clang21.env REQUIRE_MUTAGEN=1 scripts/verify_devcontainer.sh --require-ssh`
+   - `CONFIG_ENV_FILE=config/env/devcontainer.c090s4.gcc14-clang21.env REQUIRE_MUTAGEN=1 scripts/verify_devcontainer.sh --require-ssh`
    - Error: `ssh: Could not resolve hostname ssh: nodename nor servname provided`
    - Log file: `/tmp/mutagen_ssh_invocations.log` shows agent host = `ssh`.
 3) Minimal local:

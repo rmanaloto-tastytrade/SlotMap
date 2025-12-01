@@ -1,7 +1,7 @@
 # Mutagen Validation for Remote Devcontainers
 
 ## Purpose
-- Ensure file sync works end-to-end between a local macOS workspace and a remote devcontainer running on a host (e.g., c0903s4.ny5) with SSH port-forwarded access.
+- Ensure file sync works end-to-end between a local macOS workspace and a remote devcontainer running on a host (e.g., c090s4.ny5) with SSH port-forwarded access.
 - Make Mutagen sync a mandatory, automated check so devcontainers are only “green” when two-way file propagation succeeds.
 
 ## How We Validate
@@ -24,7 +24,7 @@
 ## Quick Manual Run
 ```bash
 # from repo root
-CONFIG_ENV_FILE=config/env/devcontainer.c0903.gcc14-clang21.env \
+CONFIG_ENV_FILE=config/env/devcontainer.c090s4.gcc14-clang21.env \
 REQUIRE_MUTAGEN=1 \
 scripts/verify_devcontainer.sh --require-ssh
 ```
@@ -38,7 +38,7 @@ This will:
 - Session terminates cleanly and probe directories are removed.
 
 ## Notes
-- The SSH connection uses ProxyJump to the remote host because the devcontainer ports are published on 127.0.0.1 of the host.
+- The SSH connection uses ProxyJump to the remote host because the devcontainer ports are published on 127.0.0.1 of the host. Host names are suffixed automatically with `MUTAGEN_DOMAIN_SUFFIX` (default `tastyworks.com`) when running `scripts/setup_mutagen_host.sh`; set `DEVCONTAINER_REMOTE_HOST` or `MUTAGEN_PROXY_HOST` to a fully qualified host if needed.
 - The probe directories are transient and ignored after the script exits.
 - If you hit `ssh: Could not resolve hostname ssh` during the Mutagen step, clear any stale local tunnels and re-run with `MUTAGEN_LOG_LEVEL=debug` to capture the underlying ssh invocation; the failure indicates the SSH call to the devcontainer did not complete.
 

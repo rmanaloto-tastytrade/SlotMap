@@ -3,11 +3,11 @@ set -euo pipefail
 
 # Prepares host-side Mutagen SSH configuration for a given devcontainer env.
 # - Writes ~/.mutagen/slotmap_ssh_config with ProxyJump to the remote host and port from CONFIG_ENV_FILE.
-# - Writes ~/.mutagen.yml (backing up any existing file) to force sync.ssh.command to use that config.
-# - Restarts the Mutagen daemon to pick up the new command.
+# - Writes ~/.mutagen.yml (defaults only) and an ssh/scp wrapper under ~/.mutagen/bin that injects that config.
+# - Restarts the Mutagen daemon with MUTAGEN_SSH_PATH pointing at the wrapper dir so Mutagen uses the config.
 #
 # Usage:
-#   CONFIG_ENV_FILE=config/env/devcontainer.c0903.gcc14-clang21.env scripts/setup_mutagen_host.sh
+#   CONFIG_ENV_FILE=config/env/devcontainer.<host>.gcc14-clang21.env scripts/setup_mutagen_host.sh
 #
 # After running, use scripts/verify_mutagen.sh (and verify_devcontainer.sh with REQUIRE_MUTAGEN=1).
 
@@ -26,9 +26,9 @@ CONTAINER_USER=${CONTAINER_USER:-slotmap}
 CONTAINER_WORKSPACE=${CONTAINER_WORKSPACE:-"/home/${CONTAINER_USER}/workspace"}
 SSH_ALIAS=${MUTAGEN_SSH_ALIAS:-slotmap-mutagen}
 PROXY_HOST=${MUTAGEN_PROXY_HOST:-${REMOTE_HOST}}
-# Append a domain suffix if not already fully qualified (user can override)
-DOMAIN_SUFFIX=${MUTAGEN_DOMAIN_SUFFIX:-"example.com"}
-if [[ "$PROXY_HOST" != *"."* && -n "$DOMAIN_SUFFIX" ]]; then
+# Append a domain suffix if not already ending with it (user can override/disable)
+DOMAIN_SUFFIX=${MUTAGEN_DOMAIN_SUFFIX:-"tastyworks.com"}
+if [[ -n "$DOMAIN_SUFFIX" && "$PROXY_HOST" != *".${DOMAIN_SUFFIX}" ]]; then
   PROXY_HOST="${PROXY_HOST}.${DOMAIN_SUFFIX}"
 fi
 
@@ -38,6 +38,15 @@ fi
 MUT_DIR="$HOME/.mutagen"
 SSH_CFG="$MUT_DIR/slotmap_ssh_config"
 YML="$HOME/.mutagen.yml"
+SSH_BIN="$(command -v ssh)"
+WRAP_DIR="$MUT_DIR/bin"
+SSH_WRAPPER="$WRAP_DIR/ssh"
+SCP_WRAPPER="$WRAP_DIR/scp"
+SSH_LOG=${MUTAGEN_SSH_LOG:-"/tmp/mutagen_ssh_invocations.log"}
+if [[ -z "$SSH_BIN" ]]; then
+  echo "ERROR: ssh not found in PATH" >&2
+  exit 1
+fi
 
 mkdir -p "$MUT_DIR"
 
@@ -56,14 +65,30 @@ Host ${SSH_ALIAS}
   ProxyJump ${REMOTE_USER}@${PROXY_HOST}
 EOF
 
-echo "[mutagen-setup] Writing Mutagen config: $YML (minimal defaults)"
+echo "[mutagen-setup] Writing Mutagen config: $YML (forces wrapper ssh command)"
 cat > "$YML" <<'EOF'
 sync:
   defaults: {}
 EOF
 
+echo "[mutagen-setup] Writing ssh wrapper for Mutagen: $SSH_WRAPPER (logs to ${SSH_LOG})"
+mkdir -p "$WRAP_DIR"
+cat > "$SSH_WRAPPER" <<EOF
+#!/usr/bin/env bash
+LOG_FILE="${SSH_LOG}"
+printf '[%s] ssh %s\n' "\$(date +%F@%T)" "\$*" >> "\$LOG_FILE"
+exec "${SSH_BIN}" -F "${SSH_CFG}" "\$@"
+EOF
+chmod +x "$SSH_WRAPPER"
+
+cat > "$SCP_WRAPPER" <<EOF
+#!/usr/bin/env bash
+exec "${SSH_BIN%/ssh}/scp" -F "${SSH_CFG}" "\$@"
+EOF
+chmod +x "$SCP_WRAPPER"
+
 echo "[mutagen-setup] Restarting Mutagen daemon to pick up config..."
-mutagen daemon stop >/dev/null 2>&1 || true
-mutagen daemon start >/dev/null 2>&1
+MUTAGEN_SSH_PATH="$WRAP_DIR" mutagen daemon stop >/dev/null 2>&1 || true
+MUTAGEN_SSH_COMMAND="$SSH_WRAPPER" MUTAGEN_SSH_PATH="$WRAP_DIR" mutagen daemon start >/dev/null 2>&1
 
 echo "[mutagen-setup] Done. SSH alias: ${SSH_ALIAS}, config: ${SSH_CFG}, mutagen config: ${YML}"

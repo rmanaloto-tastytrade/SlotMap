@@ -22,17 +22,11 @@ CONFIG_ENV_FILE=${CONFIG_ENV_FILE:-"${ROOT_DIR}/config/env/devcontainer.env"}
 # shellcheck disable=SC1090
 source "$CONFIG_ENV_FILE"
 
-REMOTE_HOST_RAW=${DEVCONTAINER_REMOTE_HOST:-}
-REMOTE_USER=${DEVCONTAINER_REMOTE_USER:-$USER}
-SSH_PORT=${DEVCONTAINER_SSH_PORT:-9222}
-SSH_KEY=${DEVCONTAINER_SSH_KEY:-"$HOME/.ssh/id_ed25519"}
-PROXY_HOST=${REMOTE_HOST_RAW}
-DOMAIN_SUFFIX=${MUTAGEN_DOMAIN_SUFFIX:-"example.com"}
-if [[ "$PROXY_HOST" != *"."* && -n "$DOMAIN_SUFFIX" ]]; then
-  PROXY_HOST="${PROXY_HOST}.${DOMAIN_SUFFIX}"
-fi
-MUTAGEN_SSH_CONFIG=${MUTAGEN_SSH_CONFIG:-""}
 MUTAGEN_CMD=${MUTAGEN_BIN:-"mutagen"}
+SSH_CFG=${MUTAGEN_SSH_CONFIG:-"$HOME/.mutagen/slotmap_ssh_config"}
+SSH_ALIAS=${MUTAGEN_SSH_ALIAS:-"slotmap-mutagen"}
+SSH_WRAPPER=${MUTAGEN_SSH_COMMAND:-"$HOME/.mutagen/bin/ssh"}
+[[ -f "$SSH_CFG" ]] || { echo "ERROR: SSH config not found: $SSH_CFG (run scripts/setup_mutagen_host.sh)" >&2; exit 1; }
 
 CONTAINER_USER=${CONTAINER_USER:-slotmap}
 CONTAINER_WORKSPACE=${CONTAINER_WORKSPACE:-"/home/${CONTAINER_USER}/workspace"}
@@ -47,29 +41,23 @@ PROBE_DIR=".mutagen_probe"
 LOCAL_PROBE="${ROOT_DIR}/${PROBE_DIR}"
 REMOTE_PROBE="${CONTAINER_WORKSPACE}/${PROBE_DIR}"
 
-SSH_BASE=(ssh -i "$SSH_KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -J "${REMOTE_USER}@${PROXY_HOST}" -p "$SSH_PORT" "${CONTAINER_USER}@127.0.0.1")
-WRAP_LOG="/tmp/mutagen_ssh_invocations.log"
-SSH_WRAPPER="$(mktemp)"
-cat > "$SSH_WRAPPER" <<EOF
-#!/usr/bin/env bash
-echo "\$0 \$@" >> "$WRAP_LOG"
-exec /usr/bin/ssh -i "$SSH_KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -J "${REMOTE_USER}@${PROXY_HOST}" -p "$SSH_PORT" "\$@"
-EOF
-chmod +x "$SSH_WRAPPER"
-MUTAGEN_SSH_COMMAND=${MUTAGEN_SSH_COMMAND:-"$SSH_WRAPPER"}
+MUTAGEN_ENV=(
+  MUTAGEN_SSH_COMMAND="$SSH_WRAPPER"
+  MUTAGEN_SSH_PATH="$(dirname "$SSH_WRAPPER")"
+)
+
+SSH_BASE=(ssh -F "$SSH_CFG" "$SSH_ALIAS")
 
 cleanup() {
   set +e
-  "$MUTAGEN_CMD" sync terminate "$SESSION_NAME" >/dev/null 2>&1 || true
+  env "${MUTAGEN_ENV[@]}" "$MUTAGEN_CMD" sync terminate "$SESSION_NAME" >/dev/null 2>&1 || true
   rm -rf "$LOCAL_PROBE"
   "${SSH_BASE[@]}" "rm -rf '$REMOTE_PROBE'" >/dev/null 2>&1 || true
-  rm -f "$SSH_WRAPPER" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
-echo "[mutagen] Ensuring daemon running with configured SSH command..."
-MUTAGEN_SSH_COMMAND="$MUTAGEN_SSH_COMMAND" "$MUTAGEN_CMD" daemon stop >/dev/null 2>&1 || true
-MUTAGEN_SSH_COMMAND="$MUTAGEN_SSH_COMMAND" "$MUTAGEN_CMD" daemon start >/dev/null 2>&1 || true
+echo "[mutagen] Ensuring daemon running (uses ~/.mutagen.yml ssh config)..."
+env "${MUTAGEN_ENV[@]}" "$MUTAGEN_CMD" daemon start >/dev/null 2>&1 || true
 
 echo "[mutagen] Preparing probe directories..."
 rm -rf "$LOCAL_PROBE"
@@ -77,19 +65,19 @@ mkdir -p "$LOCAL_PROBE"
 "${SSH_BASE[@]}" "mkdir -p '$REMOTE_PROBE' && rm -f '$REMOTE_PROBE'/*" >/dev/null
 
 echo "[mutagen] Creating session $SESSION_NAME..."
-MUTAGEN_SSH_COMMAND="$MUTAGEN_SSH_COMMAND" "$MUTAGEN_CMD" sync create \
+env "${MUTAGEN_ENV[@]}" "$MUTAGEN_CMD" sync create \
   --name "$SESSION_NAME" \
   --sync-mode=two-way-resolved \
   --watch-mode=portable \
   "$LOCAL_PROBE" \
-  "${CONTAINER_USER}@127.0.0.1:${REMOTE_PROBE}"
+  "${SSH_ALIAS}:${REMOTE_PROBE}"
 
 echo "[mutagen] Writing probe files..."
 echo "host->remote $(date)" > "${LOCAL_PROBE}/from_host.txt"
 "${SSH_BASE[@]}" "echo \"remote->host $(date)\" > '${REMOTE_PROBE}/from_remote.txt'"
 
 echo "[mutagen] Flushing session..."
-MUTAGEN_SSH_COMMAND="$MUTAGEN_SSH_COMMAND" "$MUTAGEN_CMD" sync flush "$SESSION_NAME"
+env "${MUTAGEN_ENV[@]}" "$MUTAGEN_CMD" sync flush "$SESSION_NAME"
 
 echo "[mutagen] Verifying bidirectional sync..."
 if [[ ! -f "${LOCAL_PROBE}/from_remote.txt" ]]; then
@@ -104,7 +92,7 @@ if [[ -z "$REMOTE_CHECK" ]]; then
 fi
 
 echo "[mutagen] Session status:"
-MUTAGEN_SSH_COMMAND="$MUTAGEN_SSH_COMMAND" "$MUTAGEN_CMD" sync list --verbose "$SESSION_NAME"
+env "${MUTAGEN_ENV[@]}" "$MUTAGEN_CMD" sync list --long "$SESSION_NAME"
 
 echo "[mutagen] Validation succeeded."
 exit 0

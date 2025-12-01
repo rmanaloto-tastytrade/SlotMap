@@ -11,6 +11,7 @@ cd "$REPO_ROOT"
 PATTERNS=(
   "c24s1"
   "c0903s4"
+  "c090s4"
   "c0802s4"
   "ray\.manaloto"
   "tastytrade\.com"
