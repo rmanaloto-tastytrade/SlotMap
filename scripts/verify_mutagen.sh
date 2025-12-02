@@ -17,6 +17,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_ENV_FILE=${CONFIG_ENV_FILE:-"${ROOT_DIR}/config/env/devcontainer.env"}
+EXPECTED_MUTAGEN_VERSION=${MUTAGEN_VERSION:-"0.18.1"}
 
 [[ -f "$CONFIG_ENV_FILE" ]] || { echo "ERROR: CONFIG_ENV_FILE not found: $CONFIG_ENV_FILE" >&2; exit 1; }
 # shellcheck disable=SC1090
@@ -33,6 +34,12 @@ CONTAINER_WORKSPACE=${CONTAINER_WORKSPACE:-"/home/${CONTAINER_USER}/workspace"}
 
 if ! command -v "$MUTAGEN_CMD" >/dev/null 2>&1; then
   echo "ERROR: mutagen binary not found in PATH." >&2
+  exit 1
+fi
+
+HOST_MUT_VER="$("$MUTAGEN_CMD" version 2>/dev/null | awk 'NR==1{print $1}')"
+if [[ -n "$EXPECTED_MUTAGEN_VERSION" && "$HOST_MUT_VER" != "${EXPECTED_MUTAGEN_VERSION#v}" && "$HOST_MUT_VER" != "$EXPECTED_MUTAGEN_VERSION" ]]; then
+  echo "ERROR: mutagen version mismatch. Found ${HOST_MUT_VER:-unknown}, expected ${EXPECTED_MUTAGEN_VERSION}." >&2
   exit 1
 fi
 

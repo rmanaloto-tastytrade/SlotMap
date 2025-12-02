@@ -40,20 +40,13 @@ This will:
 ## Notes
 - The SSH connection uses ProxyJump to the remote host because the devcontainer ports are published on 127.0.0.1 of the host. Host names are suffixed automatically with `MUTAGEN_DOMAIN_SUFFIX` (default `tastyworks.com`) when running `scripts/setup_mutagen_host.sh`; set `DEVCONTAINER_REMOTE_HOST` or `MUTAGEN_PROXY_HOST` to a fully qualified host if needed.
 - The probe directories are transient and ignored after the script exits.
-- If you hit `ssh: Could not resolve hostname ssh` during the Mutagen step, clear any stale local tunnels and re-run with `MUTAGEN_LOG_LEVEL=debug` to capture the underlying ssh invocation; the failure indicates the SSH call to the devcontainer did not complete.
+- If you hit `ssh: Could not resolve hostname ssh` during the Mutagen step, ensure `scripts/setup_mutagen_host.sh` has written `~/.mutagen.yml` with `sync.ssh.command` and `sync.ssh.path` pointing at the generated wrapper; rerun the setup script and retry.
 
-## Current Debug Status (pending fix)
-- Symptom: `mutagen sync create` fails with `ssh: Could not resolve hostname ssh: nodename nor servname provided`.
-- Logging wrapper shows Mutagen constructs the agent launch as:
-  ```
-  .../ssh -oConnectTimeout=5 ... ssh .mutagen/agents/0.18.1/mutagen-agent synchronizer ...
-  ```
-  The host argument becomes literal `ssh`, so DNS lookup fails before reaching the container.
-- Plain SSH to the devcontainer (via ProxyJump or a local tunnel) succeeds; the issue is specific to how Mutagen builds its ssh command.
-- Next steps to resolve:
-  1) Run the Mutagen daemon in the foreground with `MUTAGEN_LOG_LEVEL=debug` and a logging ssh wrapper to capture the exact argv Mutagen builds.
-  2) Force ssh config via `~/.mutagen.yml` (e.g., `sync.ssh.command: "/usr/bin/ssh -F <cfg>"`) or a PATH-wrapped `ssh` binary to ensure Mutagen doesn’t prepend an extra `ssh` token.
-  3) Once agent handshake succeeds, rerun `scripts/verify_devcontainer.sh --require-ssh` with `REQUIRE_MUTAGEN=1` across all env files.
+## Current Debug Status (fixed by explicit ssh command/path)
+- Repro without config: `mutagen sync create /tmp/foo ssh://localhost/tmp` fails with `ssh: Could not resolve hostname ssh: nodename nor servname provided`; Mutagen inserts a literal `ssh` as host when no `sync.ssh.command` is set.
+- Fix: run `scripts/setup_mutagen_host.sh` to write `~/.mutagen.yml` with `sync.ssh.command: "<wrapper>"` and `sync.ssh.path: "/usr/bin/ssh"` plus the SSH config `~/.mutagen/cpp-devcontainer_ssh_config`. Restarting the daemon with these settings keeps the host argument intact and agent handshake succeeds.
+- Plain SSH to the devcontainer (via ProxyJump or a local tunnel) has always worked; the failure was confined to Mutagen’s ssh transport when the command/path were unset.
+- After applying the fix, rerun `scripts/verify_devcontainer.sh --require-ssh` with `REQUIRE_MUTAGEN=1` across env files.
 
 ## Reference Notes (from upstream docs and examples)
 - Mutagen transports:
@@ -83,7 +76,7 @@ This will:
 - Host-side config approach (current):
   - `scripts/setup_mutagen_host.sh` writes `~/.mutagen/cpp-devcontainer_ssh_config` (ProxyJump to remote host, key, port) and minimal `~/.mutagen.yml`.
   - `scripts/verify_mutagen.sh` uses a logging ssh wrapper and scp-style endpoint (`user@127.0.0.1:/path`).
-  - Result: agent launch still logs host `ssh`; subsequent commands (cleanup) use the correct host.
+- Result: agent launch still logs host `ssh`; subsequent commands (cleanup) use the correct host.
 - Minimal local test: `mutagen sync create /tmp/foo ssh://localhost/tmp` and `mutagen sync create /tmp/foo localhost:/tmp` both fail with host `ssh`.
 
 ## Upstream issue search

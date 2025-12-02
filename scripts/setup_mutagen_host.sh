@@ -65,10 +65,16 @@ Host ${SSH_ALIAS}
   ProxyJump ${REMOTE_USER}@${PROXY_HOST}
 EOF
 
-echo "[mutagen-setup] Writing Mutagen config: $YML (forces wrapper ssh command)"
-cat > "$YML" <<'EOF'
+echo "[mutagen-setup] Writing Mutagen config: $YML (portable defaults; ssh command is set via daemon env)"
+cat > "$YML" <<EOF
 sync:
-  defaults: {}
+  defaults:
+    watch:
+      mode: portable
+    symlink:
+      mode: portable
+    permissions:
+      mode: portable
 EOF
 
 echo "[mutagen-setup] Writing ssh wrapper for Mutagen: $SSH_WRAPPER (logs to ${SSH_LOG})"
