@@ -5,10 +5,11 @@
     {
       "name": "base",
       "hidden": true,
-      "generator": "Ninja",
+      "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_TOOLCHAIN_FILE": "/opt/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_MAKE_PROGRAM": "/usr/bin/ninja",
         "VCPKG_OVERLAY_PORTS": "${sourceDir}/vcpkg-overlays/cib/ports;${sourceDir}/vcpkg-overlays/stdx/ports;${sourceDir}/vcpkg-overlays/qlibs/ports;${sourceDir}/vcpkg-overlays/boost-ext/ports",
         "CMAKE_C_STANDARD": "23",
         "CMAKE_CXX_STANDARD": "26",
