@@ -1,0 +1,11 @@
+{
+  "name": "boost-ut",
+  "version": "2.3.1",
+  "description": "Boost.Ext.Ut unit testing framework (header-only)",
+  "homepage": "https://github.com/boost-ext/ut",
+  "license": "BSL-1.0",
+  "dependencies": [
+    "vcpkg-cmake",
+    "vcpkg-cmake-config"
+  ]
+}
