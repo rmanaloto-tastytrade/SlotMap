@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.28)
 project(
     SlotMap
     VERSION 0.1.0
-    LANGUAGES CXX
+    LANGUAGES C CXX
 )
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
