@@ -260,15 +260,19 @@
   "workflowPresets": [
     {
       "name": "clang21-asan-workflow",
-      "configurePreset": "clang21-asan",
-      "buildPreset": "clang21-asan",
-      "testPreset": "clang21-asan"
+      "steps": [
+        { "type": "configure", "name": "clang21-asan" },
+        { "type": "build", "name": "clang21-asan" },
+        { "type": "test", "name": "clang21-asan" }
+      ]
     },
     {
       "name": "clang21-ubsan-workflow",
-      "configurePreset": "clang21-ubsan",
-      "buildPreset": "clang21-ubsan",
-      "testPreset": "clang21-ubsan"
+      "steps": [
+        { "type": "configure", "name": "clang21-ubsan" },
+        { "type": "build", "name": "clang21-ubsan" },
+        { "type": "test", "name": "clang21-ubsan" }
+      ]
     }
   ]
 }
