@@ -311,6 +311,12 @@
       "configuration": "Debug"
     },
     {
+      "name": "clang21-release",
+      "configurePreset": "clang21-release",
+      "output": { "outputOnFailure": true },
+      "configuration": "Release"
+    },
+    {
       "name": "clang21-asan",
       "configurePreset": "clang21-asan",
       "output": { "outputOnFailure": true },
