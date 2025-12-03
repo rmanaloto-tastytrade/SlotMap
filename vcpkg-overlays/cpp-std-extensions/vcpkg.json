@@ -1,6 +1,6 @@
 {
   "name": "cpp-std-extensions",
-  "version-date": "2025-11-21",
+  "version-date": "2025-12-02",
   "description": "Intel C++ Standard Extensions - Header-only C++ library extending the Standard Library",
   "homepage": "https://github.com/intel/cpp-std-extensions",
   "license": "BSL-1.0",

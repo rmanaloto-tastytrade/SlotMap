@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "boost-int128",
-  "version": "1.0.0",
+  "version-date": "2025-09-19",
   "description": "C++14 implementation of 128-bit integers from C++ Alliance",
   "homepage": "https://github.com/cppalliance/int128",
   "license": "BSL-1.0",

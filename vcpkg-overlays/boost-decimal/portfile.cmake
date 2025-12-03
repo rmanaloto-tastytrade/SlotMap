@@ -7,8 +7,8 @@ vcpkg_check_linkage(ONLY_HEADER_LIBRARY)
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO cppalliance/decimal
-    REF v5.2.0
-    SHA512 631d438c906cb567c30629aad3daf97a336c0b532a16908249b09383e868ad51e8cca538680893a03d2a5c4fbcd153e52585dc5c1293e2db71579afb4cc94525
+    REF a600e8339265c475edc6df90fecb2eae5bb3dddc
+    SHA512 f406a11111ee1e6e9d53ce5e8d0d1130e46f7f6c027f6de283e13467bff4d2486e856e1f42cbea60dc9f3e399e38e029f5f3ceb6e093f737a00db0e19bc00d4f
     HEAD_REF master
 )
 
