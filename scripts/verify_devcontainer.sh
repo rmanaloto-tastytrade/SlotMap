@@ -163,9 +163,10 @@ ssh-keygen -R "[${REMOTE_HOST}]:${SSH_PORT}" >/dev/null 2>&1 || true
 ssh-keygen -R "[127.0.0.1]:${SSH_PORT}" >/dev/null 2>&1 || true
 echo "[verify] Attempting SSH tool check on ${REMOTE_HOST}:${SSH_PORT} (direct, then ProxyJump fallback)..."
 SSH_ERR_LOG="/tmp/verify_ssh_err.log"
-SSH_CMD_PROXY=(ssh -i "${SSH_KEY_PATH}" -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -J "${REMOTE_USER}@${REMOTE_HOST}" -p "${SSH_PORT}" "${CONTAINER_SSH_USER}@127.0.0.1")
-SSH_CMD_DIRECT=(ssh -i "${SSH_KEY_PATH}" -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -p "${SSH_PORT}" "${CONTAINER_SSH_USER}@${REMOTE_HOST}")
-SSH_CMD_LOCALHOST=(ssh -i "${SSH_KEY_PATH}" -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -p "${SSH_PORT}" "${CONTAINER_SSH_USER}@127.0.0.1")
+SSH_STRICT=(-o StrictHostKeyChecking=accept-new)
+SSH_CMD_PROXY=(ssh -i "${SSH_KEY_PATH}" -o IdentitiesOnly=yes "${SSH_STRICT[@]}" -J "${REMOTE_USER}@${REMOTE_HOST}" -p "${SSH_PORT}" "${CONTAINER_SSH_USER}@127.0.0.1")
+SSH_CMD_DIRECT=(ssh -i "${SSH_KEY_PATH}" -o IdentitiesOnly=yes "${SSH_STRICT[@]}" -p "${SSH_PORT}" "${CONTAINER_SSH_USER}@${REMOTE_HOST}")
+SSH_CMD_LOCALHOST=(ssh -i "${SSH_KEY_PATH}" -o IdentitiesOnly=yes "${SSH_STRICT[@]}" -p "${SSH_PORT}" "${CONTAINER_SSH_USER}@127.0.0.1")
 SSH_TARGET_CMD=$(cat <<EOF
 cat <<'EOS' >/tmp/verify_devcontainer.sh
 ${CHECK_SCRIPT}
