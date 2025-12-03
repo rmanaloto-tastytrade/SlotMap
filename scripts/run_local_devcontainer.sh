@@ -45,6 +45,8 @@ WORKSPACE_PATH=${WORKSPACE_PATH:-"/home/${CONTAINER_USER}/dev/devcontainers/work
 DEVCONTAINER_SSH_PORT=${DEVCONTAINER_SSH_PORT:-9222}
 DEVCONTAINER_SKIP_BAKE=${DEVCONTAINER_SKIP_BAKE:-0}
 DEVCONTAINER_VERIFY=${DEVCONTAINER_VERIFY:-0}
+CLANG_VARIANT=${CLANG_VARIANT:-21}
+GCC_VERSION=${GCC_VERSION:-15}
 
 echo "[remote] Repo source       : $REPO_PATH"
 echo "[remote] Sandbox workspace : $SANDBOX_PATH"
@@ -56,6 +58,37 @@ if [[ -n "$DOCKER_CONTEXT" ]]; then
   echo "[remote] Using docker context: $DOCKER_CONTEXT"
   export DOCKER_CONTEXT
 fi
+
+DOCKER_CMD=(docker)
+if [[ -n "$DOCKER_CONTEXT" ]]; then
+  DOCKER_CMD=(docker --context "$DOCKER_CONTEXT")
+fi
+
+validate_image_tools() {
+  local image="$1"
+  local tools=(
+    "clang++-${CLANG_VARIANT}"
+    "gcc-${GCC_VERSION}"
+    "clang++"
+    "c++"
+    "gcc"
+  )
+  if ! "${DOCKER_CMD[@]}" image inspect "$image" >/dev/null 2>&1; then
+    echo "[remote] ERROR: image $image not found (context=${DOCKER_CONTEXT:-default})." >&2
+    exit 1
+  fi
+  local check_script="set -euo pipefail
+for t in ${tools[*]}; do
+  if ! command -v \"\$t\" >/dev/null 2>&1; then
+    echo \"\${t}: MISSING\"; exit 1; fi
+  ver=\$(\"\$t\" --version | head -n1 || true)
+  echo \"\${t}: \${ver}\"
+done"
+  if ! printf '%s\n' "$check_script" | "${DOCKER_CMD[@]}" run --rm "$image" bash -s; then
+    echo "[remote] ERROR: tool validation failed for image $image (expected clang=${CLANG_VARIANT}, gcc=${GCC_VERSION})." >&2
+    exit 1
+  fi
+}
 
 ensure_devcontainer_cli() {
   if command -v devcontainer >/dev/null 2>&1; then
@@ -193,8 +226,10 @@ if [[ "$DEVCONTAINER_SKIP_BAKE" != "1" ]]; then
     --set '*.args.USERNAME'="$CONTAINER_USER" \
     --set '*.args.USER_UID'="$CONTAINER_UID" \
     --set '*.args.USER_GID'="$CONTAINER_GID"
+  validate_image_tools "$DEV_IMAGE"
 else
   echo "[remote] DEVCONTAINER_SKIP_BAKE=1; skipping bake and using image ${DEV_IMAGE}."
+  validate_image_tools "$DEV_IMAGE"
 fi
 popd >/dev/null
 
