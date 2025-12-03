@@ -451,11 +451,19 @@
       ]
     },
     {
-      "name": "clang21-ubsan-workflow",
+      "name": "clang22-asan-workflow",
       "steps": [
-        { "type": "configure", "name": "clang21-ubsan" },
-        { "type": "build", "name": "clang21-ubsan" },
-        { "type": "test", "name": "clang21-ubsan" }
+        { "type": "configure", "name": "clang22-asan" },
+        { "type": "build", "name": "clang22-asan" },
+        { "type": "test", "name": "clang22-asan" }
+      ]
+    },
+    {
+      "name": "clang22-ubsan-workflow",
+      "steps": [
+        { "type": "configure", "name": "clang22-ubsan" },
+        { "type": "build", "name": "clang22-ubsan" },
+        { "type": "test", "name": "clang22-ubsan" }
       ]
     }
   ]
