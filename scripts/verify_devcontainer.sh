@@ -108,9 +108,24 @@ echo "[verify] Expected clang: ${EXPECTED_CLANG_CMD}; expected gcc: ${EXPECTED_G
 build_check_script() {
   cat <<'EOF'
 set +e
+ORIG_PATH="${PATH}"
 PATH="__PATH_PREFIX__:${PATH}"
+EXPECTED_PATH_PARTS="__EXPECTED_PATH_PARTS__"
 missing=0
 echo "user: $(whoami)"
+check_path() {
+  local path="$1"; shift
+  local parts="$@"
+  for p in $parts; do
+    if ! echo ":$path:" | grep -q ":$p:"; then
+      echo "[verify] ERROR: PATH missing $p (PATH=$path)"
+      missing=1
+    fi
+  done
+  if [ "$missing" -eq 0 ]; then
+    echo "[verify] PATH ok: $path"
+  fi
+}
 check() {
   local tool="$1"
   if command -v "$tool" >/dev/null 2>&1; then
@@ -139,6 +154,7 @@ check() {
 for tool in __REQUIRED_TOOLS__; do
   check "$tool"
 done
+check_path "$ORIG_PATH" $EXPECTED_PATH_PARTS
 exit $missing
 EOF
 }
@@ -146,6 +162,10 @@ EOF
 CHECK_SCRIPT="$(build_check_script)"
 CHECK_SCRIPT="${CHECK_SCRIPT//__PATH_PREFIX__/${PATH_PREFIX}}"
 CHECK_SCRIPT="${CHECK_SCRIPT//__REQUIRED_TOOLS__/${REQUIRED_TOOLS_STR}}"
+VCPKG_PATH_EXPECT="${VCPKG_ROOT:-/opt/vcpkg}"
+EXPECTED_PATH_PARTS=("/usr/local/bin" "/opt/clang-p2996/bin" "/opt/gcc-15/bin" "${VCPKG_PATH_EXPECT}" "/opt/mrdocs/bin")
+EXPECTED_PATH_PARTS_STR="${EXPECTED_PATH_PARTS[*]}"
+CHECK_SCRIPT="${CHECK_SCRIPT//__EXPECTED_PATH_PARTS__/${EXPECTED_PATH_PARTS_STR}}"
 
 # Ensure image exists on remote
 if ! "${DOCKER_CMD[@]}" image inspect "${IMAGE_TAG}" >/dev/null 2>&1; then
