@@ -19,6 +19,10 @@ if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
 else
   echo "[post_create] Skipping chown (sudo password required or unavailable)."
 fi
+if [ -d /opt/vcpkg ] && [ ! -L /opt/vcpkg ]; then
+  echo "[post_create] Replacing /opt/vcpkg directory with symlink to ${VCPKG_REPO}..."
+  rm -rf /opt/vcpkg
+fi
 
 echo "[post_create] Preparing persistent cache root at ${CACHE_ROOT}..."
 mkdir -p "${CACHE_ROOT}"/{ccache,sccache,vcpkg-downloads,vcpkg-archives,tmp}
@@ -42,7 +46,9 @@ if [ ! -x "${VCPKG_REPO}/vcpkg" ]; then
   echo "[post_create] Bootstrapping vcpkg..."
   (cd "${VCPKG_REPO}" && ./bootstrap-vcpkg.sh -disableMetrics)
 fi
+# Ensure /opt/vcpkg points at the persistent repo and downloads points at the cache
 ln -snf "${VCPKG_REPO}" /opt/vcpkg
+ln -snf "${VCPKG_DOWNLOADS}" /opt/vcpkg/downloads
 chown -R "${CURRENT_USER}:${CURRENT_GROUP}" "${VCPKG_REPO}" /opt/vcpkg
 if command -v sudo >/dev/null 2>&1; then
   sudo -n ln -snf /opt/vcpkg/vcpkg /usr/local/bin/vcpkg || true

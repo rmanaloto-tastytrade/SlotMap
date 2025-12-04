@@ -99,7 +99,7 @@ if [[ -n "$EXPECTED_GCC" ]]; then
 fi
 REQUIRED_TOOLS=("${EXPECTED_CLANG_CMD}")
 [[ -n "$EXPECTED_GCC_CMD" ]] && REQUIRED_TOOLS+=("${EXPECTED_GCC_CMD}")
-REQUIRED_TOOLS+=(ninja cmake vcpkg mrdocs)
+REQUIRED_TOOLS+=(ninja cmake mrdocs)
 REQUIRED_TOOLS+=(mutagen)
 REQUIRED_TOOLS_STR="${REQUIRED_TOOLS[*]}"
 
