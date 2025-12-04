@@ -149,12 +149,6 @@ target "ripgrep" {
   dependsOn = ["base"]
 }
 
-target "zstd" {
-  inherits  = ["_base"]
-  target    = "zstd"
-  dependsOn = ["base"]
-}
-
 target "cppcheck" {
   inherits  = ["_base"]
   target    = "cppcheck"
@@ -213,7 +207,6 @@ group "tools" {
     "ccache",
     "sccache",
     "ripgrep",
-    "zstd",
     "cppcheck",
     "valgrind",
     "python_tools",
