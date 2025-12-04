@@ -12,6 +12,7 @@ VCPKG_BINARY_CACHE="${VCPKG_DEFAULT_BINARY_CACHE:-${CACHE_ROOT}/vcpkg-archives}"
 PERSISTENT_TMP="${TMPDIR:-${CACHE_ROOT}/tmp}"
 
 if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
+  sudo mkdir -p /opt/vcpkg
   sudo chown -R "${CURRENT_USER}:${CURRENT_GROUP}" /opt/vcpkg "${WORKSPACE_DIR}" || true
 else
   echo "[post_create] Skipping chown (sudo password required or unavailable)."
@@ -22,6 +23,7 @@ mkdir -p "${CACHE_ROOT}"/{ccache,sccache,vcpkg-downloads,vcpkg-archives,tmp}
 chown -R "${CURRENT_USER}:${CURRENT_GROUP}" "${CACHE_ROOT}"
 
 # Point vcpkg downloads/binary cache at the persistent volume
+mkdir -p /opt/vcpkg
 if [ -d /opt/vcpkg/downloads ] || [ -L /opt/vcpkg/downloads ]; then
   rm -rf /opt/vcpkg/downloads
 fi
