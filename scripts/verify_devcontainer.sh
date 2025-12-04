@@ -168,6 +168,7 @@ SSH_CMD_PROXY=(ssh -i "${SSH_KEY_PATH}" -o IdentitiesOnly=yes "${SSH_STRICT[@]}"
 SSH_CMD_DIRECT=(ssh -i "${SSH_KEY_PATH}" -o IdentitiesOnly=yes "${SSH_STRICT[@]}" -p "${SSH_PORT}" "${CONTAINER_SSH_USER}@${REMOTE_HOST}")
 SSH_CMD_LOCALHOST=(ssh -i "${SSH_KEY_PATH}" -o IdentitiesOnly=yes "${SSH_STRICT[@]}" -p "${SSH_PORT}" "${CONTAINER_SSH_USER}@127.0.0.1")
 set +u
+# shellcheck disable=SC2154
 SSH_TARGET_CMD=$(cat <<EOF
 cat <<'EOS' >/tmp/verify_devcontainer.sh
 ${CHECK_SCRIPT}
@@ -179,7 +180,11 @@ if [ \$RC -ne 0 ]; then exit \$RC; fi
 
 # Ensure cache dirs point at the volume
 check_cache_dir() {
-  local name="$1" path="$2"
+  local name="$1"; local path="$2"
+  if [ -z "${path}" ]; then
+    echo "[verify] ERROR: cache dir missing: ${name} (empty path)"
+    return 1
+  fi
   if [ ! -d "$path" ]; then
     echo "[verify] ERROR: cache dir missing: ${name} at ${path}"
     return 1
@@ -193,20 +198,20 @@ check_cache_dir() {
   esac
   echo "[verify] cache ${name}: ${path}"
 }
-check_cache_dir CCACHE_DIR "${CCACHE_DIR:-/cppdev-cache/ccache}" || exit 1
-check_cache_dir CCACHE_HOME "${CCACHE_HOME:-/cppdev-cache/ccache}" || exit 1
-check_cache_dir SCCACHE_DIR "${SCCACHE_DIR:-/cppdev-cache/sccache}" || exit 1
 if [ ! -L /opt/vcpkg ]; then
   echo "[verify] ERROR: /opt/vcpkg is not a symlink to the cache repo"
   exit 1
 fi
-target=$(readlink -f /opt/vcpkg 2>/dev/null || readlink /opt/vcpkg)
+target=$(readlink -f /opt/vcpkg 2>/dev/null || readlink /opt/vcpkg || true)
 case "$target" in
   /cppdev-cache/*) ;;
   *) echo "[verify] ERROR: /opt/vcpkg -> $target (expected under /cppdev-cache)"; exit 1;;
 esac
 if [ ! -x /opt/vcpkg/vcpkg ]; then echo "[verify] ERROR: vcpkg binary missing at /opt/vcpkg/vcpkg"; exit 1; fi
 echo "[verify] vcpkg repo: /opt/vcpkg -> $target"
+check_cache_dir CCACHE_DIR "${CCACHE_DIR:-/cppdev-cache/ccache}" || exit 1
+check_cache_dir CCACHE_HOME "${CCACHE_HOME:-/cppdev-cache/ccache}" || exit 1
+check_cache_dir SCCACHE_DIR "${SCCACHE_DIR:-/cppdev-cache/sccache}" || exit 1
 exit 0
 EOF
 )

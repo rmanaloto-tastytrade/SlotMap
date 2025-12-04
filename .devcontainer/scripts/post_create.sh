@@ -4,6 +4,7 @@ set -euo pipefail
 CURRENT_USER="${DEVCONTAINER_USER:-$(id -un)}"
 CURRENT_GROUP="$(id -gn "$CURRENT_USER" 2>/dev/null || id -gn)"
 WORKSPACE_DIR="${WORKSPACE_FOLDER:-/home/${CURRENT_USER}/workspace}"
+CLANG_VARIANT="${CLANG_VARIANT:-21}"
 CACHE_ROOT="/cppdev-cache"
 CCACHE_DIR="${CCACHE_DIR:-${CACHE_ROOT}/ccache}"
 SCCACHE_DIR="${SCCACHE_DIR:-${CACHE_ROOT}/sccache}"
@@ -43,6 +44,9 @@ if [ ! -x "${VCPKG_REPO}/vcpkg" ]; then
 fi
 ln -snf "${VCPKG_REPO}" /opt/vcpkg
 chown -R "${CURRENT_USER}:${CURRENT_GROUP}" "${VCPKG_REPO}" /opt/vcpkg
+if command -v sudo >/dev/null 2>&1; then
+  sudo -n ln -snf /opt/vcpkg/vcpkg /usr/local/bin/vcpkg || true
+fi
 
 # Ensure ccache/sccache dirs are owned and writable
 mkdir -p "${CCACHE_DIR}" "${SCCACHE_DIR}"
@@ -54,8 +58,8 @@ if [ ! -L /tmp ] && [ -z "$(ls -A /tmp)" ]; then
   ln -snf "${PERSISTENT_TMP}" /tmp
 fi
 
-if ! command -v clang++-21 >/dev/null 2>&1; then
-  echo "[post_create] ERROR: clang++-21 not found in PATH" >&2
+if ! command -v "clang++-${CLANG_VARIANT}" >/dev/null 2>&1; then
+  echo "[post_create] ERROR: clang++-${CLANG_VARIANT} not found in PATH" >&2
   exit 1
 fi
 
@@ -103,36 +107,4 @@ fi
 } >> "$SSH_CONFIG_FILE"
 chmod 600 "$SSH_CONFIG_FILE"
 
-BUILD_DIR="${WORKSPACE_DIR}/build/clang-debug"
-CACHE_FILE="${BUILD_DIR}/CMakeCache.txt"
-
-# Remove any stale CMake build dirs copied from other hosts (path mismatch).
-BUILD_ROOT="${WORKSPACE_DIR}/build"
-if [[ -d "$BUILD_ROOT" ]]; then
-  while IFS= read -r cache; do
-    dir="$(dirname "$cache")"
-    if ! grep -q "CMAKE_HOME_DIRECTORY:INTERNAL=${WORKSPACE_DIR}" "$cache"; then
-      echo "[post_create] Removing stale CMake cache at $dir (workspace path changed)."
-      rm -rf "$dir"
-    fi
-  done < <(find "$BUILD_ROOT" -maxdepth 2 -name CMakeCache.txt 2>/dev/null)
-fi
-
-if [[ -f "$CACHE_FILE" ]]; then
-  if ! grep -q "CMAKE_HOME_DIRECTORY:INTERNAL=${WORKSPACE_DIR}" "$CACHE_FILE"; then
-    echo "[post_create] Removing stale CMake cache at $BUILD_DIR (workspace path changed)."
-    rm -rf "$BUILD_DIR"
-  fi
-fi
-
-cd "$WORKSPACE_DIR"
-PREFERRED_PRESET="${CMAKE_PRESET:-clang21-debug}"
-if ! cmake --list-presets | grep -q "\"${PREFERRED_PRESET}\""; then
-  for candidate in clang21-debug clang22-debug gcc15-debug gcc14-debug clang-p2996-debug; do
-    if cmake --list-presets | grep -q "\"${candidate}\""; then
-      PREFERRED_PRESET="${candidate}"
-      break
-    fi
-  done
-fi
-cmake --preset "${PREFERRED_PRESET}"
+# CMake configuration is project-specific; skip auto-configure for generic devcontainer
