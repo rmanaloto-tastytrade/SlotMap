@@ -91,6 +91,18 @@ chmod 600 "$SSH_CONFIG_FILE"
 BUILD_DIR="${WORKSPACE_DIR}/build/clang-debug"
 CACHE_FILE="${BUILD_DIR}/CMakeCache.txt"
 
+# Remove any stale CMake build dirs copied from other hosts (path mismatch).
+BUILD_ROOT="${WORKSPACE_DIR}/build"
+if [[ -d "$BUILD_ROOT" ]]; then
+  while IFS= read -r cache; do
+    dir="$(dirname "$cache")"
+    if ! grep -q "CMAKE_HOME_DIRECTORY:INTERNAL=${WORKSPACE_DIR}" "$cache"; then
+      echo "[post_create] Removing stale CMake cache at $dir (workspace path changed)."
+      rm -rf "$dir"
+    fi
+  done < <(find "$BUILD_ROOT" -maxdepth 2 -name CMakeCache.txt 2>/dev/null)
+fi
+
 if [[ -f "$CACHE_FILE" ]]; then
   if ! grep -q "CMAKE_HOME_DIRECTORY:INTERNAL=${WORKSPACE_DIR}" "$CACHE_FILE"; then
     echo "[post_create] Removing stale CMake cache at $BUILD_DIR (workspace path changed)."

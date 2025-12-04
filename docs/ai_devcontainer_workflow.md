@@ -74,6 +74,15 @@ Fast on-boarding for AI agents (Claude/Code, Codex CLI) to build, run, and valid
   4) Validate with `scripts/verify_devcontainer.sh --require-ssh` using the same env.
   5) If SSH fails, clear hostkeys with `ssh-keygen -R "[127.0.0.1]:<port>"` (already done in the script) and retry.
 
+## Build/bake hardening
+- Cache discipline for feature flags: when a permutation flips `ENABLE_CLANG_P2996` (or similar), bake with `--no-cache` (`BUILDX_BAKE_FLAGS=--no-cache` or `docker buildx bake devcontainer_gcc14_clangp2996 --no-cache`) to avoid pulling stale layers built with different args.
+- Per-tag isolation: keep unique tags per permutation and never retag across variants; the bake file already emits distinct tags (`cpp-devcontainer:gcc14-clangp2996`, etc.).
+- Toolchain asserts before devcontainer up: `scripts/run_local_devcontainer.sh` now fails fast if the baked image is missing the expected compilers (e.g., `clang++-p2996`, `gcc-14/15`) before launching `devcontainer up`.
+- Optional cache purge for a single target: `scripts/clean_buildx_cache.sh devcontainer_gcc14_clangp2996` clears the buildx cache for that permutation if you suspect stale layers.
+- SSH hygiene remains enforced in the verification scripts via `ssh-keygen -R "[127.0.0.1]:<port>"` prior to testing a container.
+- Bake manifest validation: `scripts/run_local_devcontainer.sh` writes a `--print` bake manifest to `~/dev/devcontainers/build_meta/<target>_timestamp.json` on the remote. Validate with `python scripts/tools/bake_manifest_check.py --manifest <file> --expect-clang-variant <v> --expect-gcc-version <v> [--require-tool clang++-p2996]`. Fail the build if expectations do not match.
+  - BuildKit native metadata: use `BUILDX_BAKE_FLAGS="--metadata-file <path> --progress=plain"` so each bake records BuildKit’s metadata JSON alongside the manifest.
+
 ## Current state (validated)
 - All permutations are built on `c24s1.ch2` and running:  
   `cpp-devcontainer:local` (9222), `gcc14-clang21` (9223), `gcc14-clang22` (9227), `gcc14-clangp2996` (9228), `gcc15-clang21` (9225), `gcc15-clang22` (9226), `gcc15-clangp2996` (9224).

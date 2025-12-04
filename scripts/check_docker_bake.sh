@@ -13,6 +13,11 @@ if [[ ! -f "$BAKE_FILE" ]]; then
 fi
 
 echo "[check] Validating bake file (print): $BAKE_FILE"
+if ! command -v docker >/dev/null 2>&1; then
+  echo "[check] WARNING: Docker not available; skipping bake validation."
+  exit 0
+fi
+
 docker buildx bake -f "$BAKE_FILE" --print devcontainer > /dev/null
 
 if command -v hclfmt >/dev/null 2>&1; then

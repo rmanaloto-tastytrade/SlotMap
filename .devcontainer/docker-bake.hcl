@@ -71,7 +71,7 @@ target "_base" {
     CLANG_P2996_BRANCH = "p2996"
     CLANG_P2996_REPO   = "https://github.com/bloomberg/clang-p2996.git"
     CLANG_P2996_PREFIX = "/opt/clang-p2996"
-    CLANG_P2996_JOBS   = "4"
+    CLANG_P2996_JOBS   = "0"
     LLVM_APT_POCKET    = ""
     ENABLE_CLANG_P2996 = "0"
     ENABLE_GCC15       = "1"
@@ -79,7 +79,7 @@ target "_base" {
     JQ_VERSION         = "1.8.1"
     AWSCLI_VERSION     = "latest"
     GCC15_VERSION      = "15.1.0"
-    GCC15_JOBS         = "4"
+    GCC15_JOBS         = "0"
     EGET_VERSION       = "${EGET_VERSION}"
     MUTAGEN_VERSION    = "${MUTAGEN_VERSION}"
   }

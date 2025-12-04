@@ -53,6 +53,32 @@ echo "[remote] Sandbox workspace : $SANDBOX_PATH"
 echo "[remote] Host key cache    : $KEY_CACHE"
 echo "[remote] Workspace mount   : $WORKSPACE_PATH"
 echo
+echo "[remote] Host capacity     : nproc=$(nproc) mem_total=$(awk 'NR==1{print $2, $3}' /proc/meminfo) docker_ncpu_mem=$(docker info --format '{{.NCPU}} {{.MemTotal}}' 2>/dev/null || true)"
+
+BUILD_META_DIR=${BUILD_META_DIR:-"$HOME/dev/devcontainers/build_meta"}
+mkdir -p "$BUILD_META_DIR"
+
+emit_bake_manifest() {
+  local target="$1"
+  local ts manifest metadata
+  ts="$(date +%Y%m%d%H%M%S)"
+  manifest="$BUILD_META_DIR/${target}_${ts}_print.json"
+  metadata="$BUILD_META_DIR/${target}_${ts}_metadata.json"
+  docker buildx bake \
+    -f "$SANDBOX_PATH/.devcontainer/docker-bake.hcl" \
+    "$target" \
+    --set '*.args.CLANG_VARIANT'"=${CLANG_VARIANT}" \
+    --set '*.args.CLANG_BRANCH'"=${CLANG_BRANCH:-}" \
+    --set '*.args.LLVM_APT_POCKET'"=${LLVM_APT_POCKET:-}" \
+    --set '*.args.ENABLE_CLANG_P2996'"=${enable_clang_p2996_flag}" \
+    --set '*.args.GCC_VERSION'"=${GCC_VERSION}" \
+    --set '*.args.ENABLE_GCC15'"=${enable_gcc15_flag}" \
+    --print >"$manifest"
+  echo "[remote] Wrote bake manifest: $manifest"
+  echo "{}" >"$metadata" # placeholder so path exists; BuildKit will overwrite when used
+  export BUILDX_METADATA_FILE="$metadata"
+  export BUILD_MANIFEST_PATH="$manifest"
+}
 
 if [[ -n "$DOCKER_CONTEXT" ]]; then
   echo "[remote] Using docker context: $DOCKER_CONTEXT"
@@ -62,6 +88,37 @@ fi
 DOCKER_CMD=(docker)
 if [[ -n "$DOCKER_CONTEXT" ]]; then
   DOCKER_CMD=(docker --context "$DOCKER_CONTEXT")
+fi
+
+# Collect buildx bake flags and force no-cache when feature flags flip toolchains (e.g., p2996)
+BAKE_FLAGS=()
+if [[ -n "${BUILDX_BAKE_FLAGS:-}" ]]; then
+  # shellcheck disable=SC2206
+  BAKE_FLAGS=(${BUILDX_BAKE_FLAGS})
+fi
+if [[ "${CLANG_VARIANT}" == "p2996" || "${REQUIRE_P2996:-0}" == "1" || "${ENABLE_CLANG_P2996:-0}" == "1" ]]; then
+  case " ${BAKE_FLAGS[*]} " in
+    *" --no-cache "*) ;; # already present
+    *) BAKE_FLAGS+=(--no-cache) ;;
+  esac
+  case " ${BAKE_FLAGS[*]} " in
+    *" --progress=plain "*) ;; # already present
+    *) BAKE_FLAGS+=(--progress=plain) ;;
+  esac
+fi
+if [[ -n "${BUILDX_METADATA_FILE:-}" ]]; then
+  case " ${BAKE_FLAGS[*]} " in
+    *"--metadata-file"*) ;; # already present
+    *) BAKE_FLAGS+=(--metadata-file "$BUILDX_METADATA_FILE") ;;
+  esac
+fi
+enable_clang_p2996_flag=""
+if [[ "${CLANG_VARIANT}" == "p2996" || "${REQUIRE_P2996:-0}" == "1" || "${ENABLE_CLANG_P2996:-0}" == "1" ]]; then
+  enable_clang_p2996_flag=1
+fi
+enable_gcc15_flag=0
+if [[ "${GCC_VERSION}" == "15" || "${ENABLE_GCC15:-0}" == "1" ]]; then
+  enable_gcc15_flag=1
 fi
 
 validate_image_tools() {
@@ -78,6 +135,7 @@ validate_image_tools() {
     exit 1
   fi
   local check_script="set -euo pipefail
+echo \"container nproc=\$(nproc)\" 
 for t in ${tools[*]}; do
   if ! command -v \"\$t\" >/dev/null 2>&1; then
     echo \"\${t}: MISSING\"; exit 1; fi
@@ -197,20 +255,40 @@ echo "[remote] Ensuring baked images (base: $BASE_IMAGE, dev: $DEV_IMAGE)..."
 pushd "$SANDBOX_PATH" >/dev/null
 # Validate bake/devcontainer config unless skipping bake
 if [[ "$DEVCONTAINER_SKIP_BAKE" != "1" ]]; then
+  emit_bake_manifest devcontainer
   "$SCRIPT_DIR/check_docker_bake.sh" "$SANDBOX_PATH"
   ensure_devcontainer_cli
   "$SCRIPT_DIR/check_devcontainer_config.sh" "$SANDBOX_PATH"
+  if [[ -n "${BUILD_MANIFEST_PATH:-}" ]]; then
+    # Validate manifest expectations before building
+    manifest_args=(
+      --manifest "$BUILD_MANIFEST_PATH"
+      --expect-clang-variant "${CLANG_VARIANT:-}"
+      --expect-gcc-version "${GCC_VERSION:-}"
+    )
+    if [[ "${enable_clang_p2996_flag}" == "1" ]]; then
+      manifest_args+=(--require-tool clang++-p2996)
+    fi
+    python3 "$SCRIPT_DIR/tools/bake_manifest_check.py" "${manifest_args[@]}" || exit 1
+  fi
   # Build base if missing
   if ! docker image inspect "$BASE_IMAGE" >/dev/null 2>&1; then
     echo "[remote] Base image $BASE_IMAGE missing; baking base..."
-    docker buildx bake \
-      -f "$SANDBOX_PATH/.devcontainer/docker-bake.hcl" \
-      base \
-      --set base.tags="$BASE_IMAGE" \
-      --set '*.args.BASE_IMAGE'="$BASE_IMAGE" \
-      --set '*.args.USERNAME'="$CONTAINER_USER" \
-      --set '*.args.USER_UID'="$CONTAINER_UID" \
-      --set '*.args.USER_GID'="$CONTAINER_GID"
+  docker buildx bake \
+    -f "$SANDBOX_PATH/.devcontainer/docker-bake.hcl" \
+    base \
+    "${BAKE_FLAGS[@]}" \
+    --set base.tags="$BASE_IMAGE" \
+    --set '*.args.CLANG_VARIANT'="$CLANG_VARIANT" \
+    --set '*.args.CLANG_BRANCH'="${CLANG_BRANCH:-}" \
+    --set '*.args.LLVM_APT_POCKET'="${LLVM_APT_POCKET:-}" \
+    --set '*.args.ENABLE_CLANG_P2996'="$enable_clang_p2996_flag" \
+    --set '*.args.GCC_VERSION'="$GCC_VERSION" \
+    --set '*.args.ENABLE_GCC15'="$enable_gcc15_flag" \
+    --set '*.args.BASE_IMAGE'="$BASE_IMAGE" \
+    --set '*.args.USERNAME'="$CONTAINER_USER" \
+    --set '*.args.USER_UID'="$CONTAINER_UID" \
+    --set '*.args.USER_GID'="$CONTAINER_GID"
   else
     echo "[remote] Found base image $BASE_IMAGE."
   fi
@@ -220,8 +298,15 @@ if [[ "$DEVCONTAINER_SKIP_BAKE" != "1" ]]; then
   docker buildx bake \
     -f "$SANDBOX_PATH/.devcontainer/docker-bake.hcl" \
     devcontainer \
+    "${BAKE_FLAGS[@]}" \
     --set base.tags="$BASE_IMAGE" \
     --set devcontainer.tags="$DEV_IMAGE" \
+    --set '*.args.CLANG_VARIANT'="$CLANG_VARIANT" \
+    --set '*.args.CLANG_BRANCH'="${CLANG_BRANCH:-}" \
+    --set '*.args.LLVM_APT_POCKET'="${LLVM_APT_POCKET:-}" \
+    --set '*.args.ENABLE_CLANG_P2996'="$enable_clang_p2996_flag" \
+    --set '*.args.GCC_VERSION'="$GCC_VERSION" \
+    --set '*.args.ENABLE_GCC15'="$enable_gcc15_flag" \
     --set '*.args.BASE_IMAGE'="$BASE_IMAGE" \
     --set '*.args.USERNAME'="$CONTAINER_USER" \
     --set '*.args.USER_UID'="$CONTAINER_UID" \
