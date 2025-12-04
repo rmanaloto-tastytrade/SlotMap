@@ -41,7 +41,7 @@ variable "ZSTD_VERSION" {
 }
 
 variable "ZSTD_ARCHIVE" {
-  default = "zstd-1.5.7-linux-x86_64.tar.gz"
+  default = "zstd-v1.5.7-linux.tar.gz"
 }
 
 target "_base" {
