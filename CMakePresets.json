@@ -371,6 +371,12 @@
       "configuration": "Debug"
     },
     {
+      "name": "clang-p2996-debug",
+      "configurePreset": "clang-p2996-debug",
+      "output": { "outputOnFailure": true },
+      "configuration": "Debug"
+    },
+    {
       "name": "gcc15-release",
       "configurePreset": "gcc15-release",
       "output": { "outputOnFailure": true },
@@ -470,6 +476,14 @@
         { "type": "configure", "name": "clang22-ubsan" },
         { "type": "build", "name": "clang22-ubsan" },
         { "type": "test", "name": "clang22-ubsan" }
+      ]
+    },
+    {
+      "name": "clang-p2996-debug-workflow",
+      "steps": [
+        { "type": "configure", "name": "clang-p2996-debug" },
+        { "type": "build", "name": "clang-p2996-debug" },
+        { "type": "test", "name": "clang-p2996-debug" }
       ]
     }
   ]
