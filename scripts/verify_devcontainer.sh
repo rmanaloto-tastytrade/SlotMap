@@ -114,6 +114,17 @@ if [[ "${EXPECTED_GCC}" == "15" ]]; then
 fi
 EXPECTED_PATH_PARTS+=("${VCPKG_ROOT:-/opt/vcpkg}" "/opt/mrdocs/bin")
 EXPECTED_PATH_PARTS_STR="${EXPECTED_PATH_PARTS[*]}"
+# Tools that should be absent for isolation
+UNEXPECTED_TOOLS=()
+if [[ "${EXPECTED_CLANG}" != "p2996" ]]; then
+  UNEXPECTED_TOOLS+=("clang++-p2996")
+fi
+if [[ "${EXPECTED_GCC}" != "15" ]]; then
+  UNEXPECTED_TOOLS+=("gcc-15")
+fi
+if [[ "${EXPECTED_GCC}" != "14" ]]; then
+  UNEXPECTED_TOOLS+=("gcc-14")
+fi
 
 echo "[verify] Expected clang: ${EXPECTED_CLANG_CMD}; expected gcc: ${EXPECTED_GCC_CMD:-<none>}"
 
@@ -166,6 +177,12 @@ check() {
 for tool in __REQUIRED_TOOLS__; do
   check "$tool"
 done
+for tool in __UNEXPECTED_TOOLS__; do
+  if command -v "$tool" >/dev/null 2>&1; then
+    echo "[verify] ERROR: unexpected tool present: $tool"
+    missing=1
+  fi
+done
 check_path "$ORIG_PATH" $EXPECTED_PATH_PARTS
 exit $missing
 EOF
@@ -175,10 +192,8 @@ CHECK_SCRIPT="$(build_check_script)"
 CHECK_SCRIPT="${CHECK_SCRIPT//__PATH_PREFIX__/${PATH_PREFIX}}"
 CHECK_SCRIPT="${CHECK_SCRIPT//__REQUIRED_TOOLS__/${REQUIRED_TOOLS_STR}}"
 CHECK_SCRIPT="${CHECK_SCRIPT//__EXPECTED_PATH_PARTS__/${EXPECTED_PATH_PARTS_STR}}"
-VCPKG_PATH_EXPECT="${VCPKG_ROOT:-/opt/vcpkg}"
-EXPECTED_PATH_PARTS=("/usr/local/bin" "/opt/clang-p2996/bin" "/opt/gcc-15/bin" "${VCPKG_PATH_EXPECT}" "/opt/mrdocs/bin")
-EXPECTED_PATH_PARTS_STR="${EXPECTED_PATH_PARTS[*]}"
-CHECK_SCRIPT="${CHECK_SCRIPT//__EXPECTED_PATH_PARTS__/${EXPECTED_PATH_PARTS_STR}}"
+UNEXPECTED_TOOLS_STR="${UNEXPECTED_TOOLS[*]}"
+CHECK_SCRIPT="${CHECK_SCRIPT//__UNEXPECTED_TOOLS__/${UNEXPECTED_TOOLS_STR}}"
 
 # Ensure image exists on remote
 if ! "${DOCKER_CMD[@]}" image inspect "${IMAGE_TAG}" >/dev/null 2>&1; then
