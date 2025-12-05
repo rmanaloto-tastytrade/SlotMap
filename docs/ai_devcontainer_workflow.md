@@ -44,6 +44,7 @@ Fast on-boarding for AI agents (Claude/Code, Codex CLI) to build, run, and valid
   - Sources `CONFIG_ENV_FILE` (defaults to `config/env/devcontainer.env`) and `scripts/clang_branch_utils.sh`.
   - Infers expected compiler versions from the env/tag, builds a tiny tool check script, and runs it with `docker run` against the image. This includes verifying the exact compiler binaries exist (`clang++-${CLANG_VARIANT}`, `gcc-${GCC_VERSION}`), that unversioned `clang++/c++/cc` resolve to the expected defaults, and that paths are correct in the image itself (not just inferred from the tag).
   - Cleans `known_hosts` entry for the target SSH port, then SSHes (ProxyJump through `${DEVCONTAINER_REMOTE_HOST}`) into the running container and re-runs the same checks. `--require-ssh` enforces container reachability.
+  - SSH key defaults to `~/.ssh/id_ed25519`. If you use a different key (e.g., `~/.ssh/tastytrade_key`), set `DEVCONTAINER_SSH_KEY` (or `DEVCONTAINER_SSH_KEY_PATH`) in your env file before running `verify_devcontainer.sh --require-ssh` to avoid “missing key” warnings.
 - If the env file points to an image tag that does not match the requested variant (e.g., `DEVCONTAINER_IMAGE=cpp-devcontainer:local` but `CLANG_VARIANT=p2996`), the verification will fail on the image check before SSH; fix the env/image pairing or rebuild the correct tag before rerunning.
 - Example (Mac → remote docker via SSH transport):  
   ```bash
