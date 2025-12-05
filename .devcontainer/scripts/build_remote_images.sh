@@ -155,7 +155,6 @@ cmd_env=("${env_prefix[@]}")
 cmd_env+=("DOCKER_CONTEXT=${DOCKER_CONTEXT}")
 
 env "${cmd_env[@]}" docker buildx bake \
-  --allow=fs="/private/tmp" \
   --allow=fs="${CACHE_DIR}" \
   -f "$REPO_ROOT/.devcontainer/docker-bake.hcl" \
   --progress=plain \
