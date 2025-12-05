@@ -102,6 +102,18 @@ REQUIRED_TOOLS=("${EXPECTED_CLANG_CMD}")
 REQUIRED_TOOLS+=(ninja cmake mrdocs)
 REQUIRED_TOOLS+=(mutagen)
 REQUIRED_TOOLS_STR="${REQUIRED_TOOLS[*]}"
+# Build expected PATH parts for validation
+EXPECTED_PATH_PARTS=("/usr/local/bin")
+if [[ "${EXPECTED_CLANG}" == "p2996" ]]; then
+  EXPECTED_PATH_PARTS+=("/opt/clang-p2996/bin")
+else
+  EXPECTED_PATH_PARTS+=("/usr/lib/llvm-${EXPECTED_CLANG}/bin")
+fi
+if [[ "${EXPECTED_GCC}" == "15" ]]; then
+  EXPECTED_PATH_PARTS+=("/opt/gcc-15/bin")
+fi
+EXPECTED_PATH_PARTS+=("${VCPKG_ROOT:-/opt/vcpkg}" "/opt/mrdocs/bin")
+EXPECTED_PATH_PARTS_STR="${EXPECTED_PATH_PARTS[*]}"
 
 echo "[verify] Expected clang: ${EXPECTED_CLANG_CMD}; expected gcc: ${EXPECTED_GCC_CMD:-<none>}"
 
@@ -162,6 +174,7 @@ EOF
 CHECK_SCRIPT="$(build_check_script)"
 CHECK_SCRIPT="${CHECK_SCRIPT//__PATH_PREFIX__/${PATH_PREFIX}}"
 CHECK_SCRIPT="${CHECK_SCRIPT//__REQUIRED_TOOLS__/${REQUIRED_TOOLS_STR}}"
+CHECK_SCRIPT="${CHECK_SCRIPT//__EXPECTED_PATH_PARTS__/${EXPECTED_PATH_PARTS_STR}}"
 VCPKG_PATH_EXPECT="${VCPKG_ROOT:-/opt/vcpkg}"
 EXPECTED_PATH_PARTS=("/usr/local/bin" "/opt/clang-p2996/bin" "/opt/gcc-15/bin" "${VCPKG_PATH_EXPECT}" "/opt/mrdocs/bin")
 EXPECTED_PATH_PARTS_STR="${EXPECTED_PATH_PARTS[*]}"
