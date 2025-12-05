@@ -234,6 +234,23 @@ printf '%s\n' "${CHECK_SCRIPT}" | "${DOCKER_CMD[@]}" run --rm \
   "${IMAGE_TAG}" \
   bash -s
 
+# Inventory check (optional, defaults to on)
+VERIFY_INVENTORY=${VERIFY_INVENTORY:-1}
+if [[ "${VERIFY_INVENTORY}" == "1" ]]; then
+  EXTRA_EXPECTED_IMAGES="${EXTRA_EXPECTED_IMAGES:-}" "${SCRIPT_DIR}/verify_devcontainer_inventory.sh"
+fi
+
+# Cache volume/layout check against running container (best-effort)
+VERIFY_CACHE=${VERIFY_CACHE:-1}
+if [[ "${VERIFY_CACHE}" == "1" ]]; then
+  running_container="$("${DOCKER_CMD[@]}" ps --filter "ancestor=${IMAGE_TAG}" --filter "status=running" --format '{{.ID}}' | head -n1)"
+  if [[ -n "$running_container" ]]; then
+    CONFIG_ENV_FILE="${CONFIG_ENV_FILE}" TARGET_CONTAINER_ID="$running_container" "${SCRIPT_DIR}/verify_cache_volume.sh"
+  else
+    echo "[verify] WARNING: no running container for ${IMAGE_TAG}; skipping cache layout check."
+  fi
+fi
+
 # Optional SSH verification against a running devcontainer
 ssh-keygen -R "[${REMOTE_HOST}]:${SSH_PORT}" >/dev/null 2>&1 || true
 ssh-keygen -R "[127.0.0.1]:${SSH_PORT}" >/dev/null 2>&1 || true

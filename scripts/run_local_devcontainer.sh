@@ -378,7 +378,14 @@ docker exec "$CONTAINER_ID" sh -c 'echo "--- LLVM packages list ---"; if [ -f /o
   fi
   if [[ "$DEVCONTAINER_VERIFY" == "1" ]]; then
     echo "[remote] Running post-up verification (image ${DEV_IMAGE}, port ${DEVCONTAINER_SSH_PORT})..."
-    "${SANDBOX_PATH}/scripts/verify_devcontainer.sh" --image "${DEV_IMAGE}" --ssh-port "${DEVCONTAINER_SSH_PORT}" --require-ssh
+    CONFIG_ENV_FILE="${CONFIG_ENV_FILE}" \
+      DEVCONTAINER_IMAGE="${DEV_IMAGE}" \
+      DEVCONTAINER_SSH_PORT="${DEVCONTAINER_SSH_PORT}" \
+      "${SANDBOX_PATH}/scripts/verify_devcontainer.sh" --image "${DEV_IMAGE}" --ssh-port "${DEVCONTAINER_SSH_PORT}" --require-ssh
+    echo "[remote] Running cache layout check..."
+    CONFIG_ENV_FILE="${CONFIG_ENV_FILE}" \
+      TARGET_CONTAINER_ID="${CONTAINER_ID}" \
+      "${SANDBOX_PATH}/scripts/verify_cache_volume.sh" || true
   fi
 else
   echo "[remote] WARNING: unable to locate container for inspection."

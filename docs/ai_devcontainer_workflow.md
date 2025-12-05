@@ -43,16 +43,18 @@ Fast on-boarding for AI agents (Claude/Code, Codex CLI) to build, run, and valid
 - Use `scripts/verify_devcontainer.sh` to check the image and (optionally) a running container. It:
   - Sources `CONFIG_ENV_FILE` (defaults to `config/env/devcontainer.env`) and `scripts/clang_branch_utils.sh`.
   - Infers expected compiler versions from the env/tag, builds a tiny tool check script, and runs it with `docker run` against the image. This includes verifying the exact compiler binaries exist (`clang++-${CLANG_VARIANT}`, `gcc-${GCC_VERSION}`), that unversioned `clang++/c++/cc` resolve to the expected defaults, and that paths are correct in the image itself (not just inferred from the tag).
+  - Inventory enforcement: calls `scripts/verify_devcontainer_inventory.sh` (defaults on, toggle via `VERIFY_INVENTORY=0`) to ensure only the expected cpp-devcontainer tags exist and no dangling images remain.
+  - Cache layout enforcement: if a container for the image is running, calls `scripts/verify_cache_volume.sh` (toggle via `VERIFY_CACHE=0`) to assert `/cppdev-cache/{ccache,sccache,tmp,vcpkg-archives,vcpkg-downloads,vcpkg-repo}` exist and `/opt/vcpkg` points at the cached repo; prints sizes.
   - If `--require-ssh` is set, it cleans `known_hosts` for the target port and SSHes (ProxyJump through `${DEVCONTAINER_REMOTE_HOST}`) into the running container to rerun the checks. Only use `--require-ssh` when the devcontainer is on a different host (e.g., Mac → remote). For same-host verification (running on the remote itself), omit `--require-ssh`.
   - SSH key defaults to `~/.ssh/id_ed25519`. If you use a different key (e.g., `~/.ssh/tastytrade_key`), set `DEVCONTAINER_SSH_KEY` (or `DEVCONTAINER_SSH_KEY_PATH`) in your env before running with `--require-ssh`.
-- If the env file points to an image tag that does not match the requested variant (e.g., `DEVCONTAINER_IMAGE=cpp-devcontainer:local` but `CLANG_VARIANT=p2996`), the verification will fail on the image check before SSH; fix the env/image pairing or rebuild the correct tag before rerunning.
-- Example (Mac → remote docker via SSH transport):  
-  ```bash
-  DOCKER_HOST=ssh://rmanaloto@c24s1.ch2 \
-  CONFIG_ENV_FILE=config/env/devcontainer.gcc14-clang22.env \
-  scripts/verify_devcontainer.sh --require-ssh
-  ```
-- Current results (all succeeded via `--require-ssh`): ports 9222/9223/9224/9225/9226/9227/9228 with expected clang/gcc/ninja/cmake/vcpkg/mrdocs.
+  - If the env file points to an image tag that does not match the requested variant (e.g., `DEVCONTAINER_IMAGE=cpp-devcontainer:local` but `CLANG_VARIANT=p2996`), the verification will fail on the image check before SSH; fix the env/image pairing or rebuild the correct tag before rerunning.
+  - Example (Mac → remote docker via SSH transport):  
+    ```bash
+    DOCKER_HOST=ssh://rmanaloto@c24s1.ch2 \
+    CONFIG_ENV_FILE=config/env/devcontainer.gcc14-clang22.env \
+    scripts/verify_devcontainer.sh --require-ssh
+    ```
+  - Current results (all succeeded via `--require-ssh`): ports 9222/9223/9224/9225/9226/9227/9228 with expected clang/gcc/ninja/cmake/vcpkg/mrdocs.
 
 ## SSH and key handling
 - Host→engine: set `DOCKER_HOST=ssh://<user>@<host>` or create a docker context (see `docs/remote-docker-context.md`).
