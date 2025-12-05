@@ -237,15 +237,16 @@ printf '%s\n' "${CHECK_SCRIPT}" | "${DOCKER_CMD[@]}" run --rm \
 # Optional SSH verification against a running devcontainer
 ssh-keygen -R "[${REMOTE_HOST}]:${SSH_PORT}" >/dev/null 2>&1 || true
 ssh-keygen -R "[127.0.0.1]:${SSH_PORT}" >/dev/null 2>&1 || true
-echo "[verify] Attempting SSH tool check on ${REMOTE_HOST}:${SSH_PORT} (direct, then ProxyJump fallback)..."
-SSH_ERR_LOG="/tmp/verify_ssh_err.log"
-SSH_STRICT=(-o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
-SSH_CMD_PROXY=(ssh -i "${SSH_KEY_PATH}" -o IdentitiesOnly=yes "${SSH_STRICT[@]}" -J "${REMOTE_USER}@${REMOTE_HOST}" -p "${SSH_PORT}" "${CONTAINER_SSH_USER}@127.0.0.1")
-SSH_CMD_DIRECT=(ssh -i "${SSH_KEY_PATH}" -o IdentitiesOnly=yes "${SSH_STRICT[@]}" -p "${SSH_PORT}" "${CONTAINER_SSH_USER}@${REMOTE_HOST}")
-SSH_CMD_LOCALHOST=(ssh -i "${SSH_KEY_PATH}" -o IdentitiesOnly=yes "${SSH_STRICT[@]}" -p "${SSH_PORT}" "${CONTAINER_SSH_USER}@127.0.0.1")
-set +u
-# shellcheck disable=SC2154
-SSH_TARGET_CMD=$(cat <<EOF
+if [[ "${REQUIRE_SSH}" == "1" ]]; then
+  echo "[verify] Attempting SSH tool check on ${REMOTE_HOST}:${SSH_PORT} (direct, then ProxyJump fallback)..."
+  SSH_ERR_LOG="/tmp/verify_ssh_err.log"
+  SSH_STRICT=(-o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
+  SSH_CMD_PROXY=(ssh -i "${SSH_KEY_PATH}" -o IdentitiesOnly=yes "${SSH_STRICT[@]}" -J "${REMOTE_USER}@${REMOTE_HOST}" -p "${SSH_PORT}" "${CONTAINER_SSH_USER}@127.0.0.1")
+  SSH_CMD_DIRECT=(ssh -i "${SSH_KEY_PATH}" -o IdentitiesOnly=yes "${SSH_STRICT[@]}" -p "${SSH_PORT}" "${CONTAINER_SSH_USER}@${REMOTE_HOST}")
+  SSH_CMD_LOCALHOST=(ssh -i "${SSH_KEY_PATH}" -o IdentitiesOnly=yes "${SSH_STRICT[@]}" -p "${SSH_PORT}" "${CONTAINER_SSH_USER}@127.0.0.1")
+  set +u
+  # shellcheck disable=SC2154
+  SSH_TARGET_CMD=$(cat <<EOF
 cat <<'EOS' >/tmp/verify_devcontainer.sh
 ${CHECK_SCRIPT}
 EOS
@@ -290,33 +291,34 @@ check_cache_dir CCACHE_HOME "${CCACHE_HOME:-/cppdev-cache/ccache}" || exit 1
 check_cache_dir SCCACHE_DIR "${SCCACHE_DIR:-/cppdev-cache/sccache}" || exit 1
 exit 0
 EOF
-)
-set -u
+  )
+  set -u
 
-SSH_OK=0
-if "${SSH_CMD_DIRECT[@]}" "${SSH_TARGET_CMD}" 2>"${SSH_ERR_LOG}"; then
-  SSH_OK=1
-else
-  echo "[verify] Direct SSH failed; retrying with ProxyJump..." >&2
-  if "${SSH_CMD_PROXY[@]}" "${SSH_TARGET_CMD}" 2>"${SSH_ERR_LOG}.proxy"; then
+  SSH_OK=0
+  if "${SSH_CMD_DIRECT[@]}" "${SSH_TARGET_CMD}" 2>"${SSH_ERR_LOG}"; then
     SSH_OK=1
-    mv "${SSH_ERR_LOG}.proxy" "${SSH_ERR_LOG}" 2>/dev/null || true
-  elif [[ "${REMOTE_HOST}" != "127.0.0.1" && "${REMOTE_HOST}" != "localhost" ]]; then
-    echo "[verify] ProxyJump failed; retrying direct localhost connection..." >&2
-    if "${SSH_CMD_LOCALHOST[@]}" "${SSH_TARGET_CMD}" 2>"${SSH_ERR_LOG}.localhost"; then
+  else
+    echo "[verify] Direct SSH failed; retrying with ProxyJump..." >&2
+    if "${SSH_CMD_PROXY[@]}" "${SSH_TARGET_CMD}" 2>"${SSH_ERR_LOG}.proxy"; then
       SSH_OK=1
-      mv "${SSH_ERR_LOG}.localhost" "${SSH_ERR_LOG}" 2>/dev/null || true
+      mv "${SSH_ERR_LOG}.proxy" "${SSH_ERR_LOG}" 2>/dev/null || true
+    elif [[ "${REMOTE_HOST}" != "127.0.0.1" && "${REMOTE_HOST}" != "localhost" ]]; then
+      echo "[verify] ProxyJump failed; retrying direct localhost connection..." >&2
+      if "${SSH_CMD_LOCALHOST[@]}" "${SSH_TARGET_CMD}" 2>"${SSH_ERR_LOG}.localhost"; then
+        SSH_OK=1
+        mv "${SSH_ERR_LOG}.localhost" "${SSH_ERR_LOG}" 2>/dev/null || true
+      fi
     fi
   fi
-fi
 
-if [[ "${SSH_OK}" -eq 1 ]]; then
-  echo "[verify] SSH tool check succeeded on port ${SSH_PORT}."
-else
-  echo "[verify] WARNING: SSH tool check failed or container not running. See /tmp/verify_ssh_err.log for details." >&2
-  if [[ "${REQUIRE_SSH}" == "1" ]]; then
+  if [[ "${SSH_OK}" -eq 1 ]]; then
+    echo "[verify] SSH tool check succeeded on port ${SSH_PORT}."
+  else
+    echo "[verify] WARNING: SSH tool check failed or container not running. See /tmp/verify_ssh_err.log for details." >&2
     exit 1
   fi
+else
+  echo "[verify] Skipping SSH tool check (REQUIRE_SSH=0)."
 fi
 
 # Optional Mutagen validation (two-way sync) if requested
