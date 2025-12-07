@@ -1,0 +1,6 @@
+{
+  "name": "stdx",
+  "version-string": "0.1.0",
+  "description": "SlotMap overlay for experimental std extensions used across policies.",
+  "license": "MIT"
+}

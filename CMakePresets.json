@@ -1,0 +1,490 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 28, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "/opt/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_MAKE_PROGRAM": "/usr/local/bin/ninja",
+        "VCPKG_OVERLAY_PORTS": "${sourceDir}/vcpkg-overlays",
+        "CMAKE_CONFIGURATION_TYPES": "Debug;Release;RelWithDebInfo;MinSizeRel",
+        "CMAKE_C_STANDARD": "23",
+        "CMAKE_CXX_STANDARD": "26",
+        "SLOTMAP_BUILD_TESTS": "ON",
+        "SLOTMAP_BUILD_DOCS": "ON"
+      }
+    },
+    {
+      "name": "clang21-base",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/clang21.cmake"
+      }
+    },
+    {
+      "name": "clang21-debug",
+      "displayName": "Clang21 Debug",
+      "inherits": "clang21-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang21-release",
+      "displayName": "Clang21 Release",
+      "inherits": "clang21-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
+      }
+    },
+    {
+      "name": "clang21-asan",
+      "displayName": "Clang21 ASan",
+      "inherits": "clang21-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS_DEBUG": "-fsanitize=address -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "-fsanitize=address -fno-omit-frame-pointer -g",
+        "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "-fsanitize=address -fno-omit-frame-pointer -g",
+        "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "-fsanitize=address -fno-omit-frame-pointer -g",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang21-ubsan",
+      "displayName": "Clang21 UBSan",
+      "inherits": "clang21-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS_DEBUG": "-fsanitize=undefined -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "-fsanitize=undefined -fno-omit-frame-pointer -g",
+        "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "-fsanitize=undefined -fno-omit-frame-pointer -g",
+        "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "-fsanitize=undefined -fno-omit-frame-pointer -g",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang21-asan-ubsan",
+      "displayName": "Clang21 ASan+UBSan",
+      "inherits": "clang21-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS_DEBUG": "-fsanitize=address,undefined -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "-fsanitize=address,undefined -fno-omit-frame-pointer -g",
+        "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "-fsanitize=address,undefined -fno-omit-frame-pointer -g",
+        "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "-fsanitize=address,undefined -fno-omit-frame-pointer -g",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang21-tsan",
+      "displayName": "Clang21 TSan",
+      "inherits": "clang21-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS_DEBUG": "-fsanitize=thread -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "-fsanitize=thread -fno-omit-frame-pointer -g",
+        "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "-fsanitize=thread -fno-omit-frame-pointer -g",
+        "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "-fsanitize=thread -fno-omit-frame-pointer -g",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang21-msan",
+      "displayName": "Clang21 MSan",
+      "inherits": "clang21-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS_DEBUG": "-fsanitize=memory -fno-omit-frame-pointer -fsanitize-memory-track-origins -g",
+        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "-fsanitize=memory -fno-omit-frame-pointer -fsanitize-memory-track-origins -g",
+        "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "-fsanitize=memory -fno-omit-frame-pointer -fsanitize-memory-track-origins -g",
+        "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "-fsanitize=memory -fno-omit-frame-pointer -fsanitize-memory-track-origins -g",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang21-coverage",
+      "displayName": "Clang21 Coverage",
+      "inherits": "clang21-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS_DEBUG": "-fprofile-instr-generate -fcoverage-mapping -g",
+        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "-fprofile-instr-generate -fcoverage-mapping",
+        "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "-fprofile-instr-generate -fcoverage-mapping",
+        "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "-fprofile-instr-generate -fcoverage-mapping",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang21-clang-tidy",
+      "displayName": "Clang21 Clang-Tidy",
+      "inherits": "clang21-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_CLANG_TIDY": "/usr/bin/clang-tidy-21;-warnings-as-errors=*",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang21-clang-format",
+      "displayName": "Clang21 Clang-Format",
+      "inherits": "clang21-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_CLANG_FORMAT": "/usr/bin/clang-format-21",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang21-cpp26-debug",
+      "displayName": "Clang21 C++26 Debug",
+      "inherits": "clang21-debug",
+      "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "26"
+      }
+    },
+    {
+      "name": "clang22-base",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/clang22.cmake"
+      }
+    },
+    {
+      "name": "clang22-debug",
+      "displayName": "Clang22 Debug",
+      "inherits": "clang22-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang22-release",
+      "displayName": "Clang22 Release",
+      "inherits": "clang22-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
+      }
+    },
+    {
+      "name": "clang22-asan",
+      "displayName": "Clang22 ASan",
+      "inherits": "clang22-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_FLAGS": "-fsanitize=address -fno-omit-frame-pointer -g",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address -fno-omit-frame-pointer -g",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang22-ubsan",
+      "displayName": "Clang22 UBSan",
+      "inherits": "clang22-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_FLAGS": "-fsanitize=undefined -fno-omit-frame-pointer -g",
+        "CMAKE_CXX_FLAGS": "-fsanitize=undefined -fno-omit-frame-pointer -g",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "clang22-cpp26-debug",
+      "displayName": "Clang22 C++26 Debug",
+      "inherits": "clang22-debug",
+      "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "26"
+      }
+    },
+    {
+      "name": "gcc14-base",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/gcc14.cmake"
+      }
+    },
+    {
+      "name": "gcc14-debug",
+      "displayName": "GCC14 Debug",
+      "inherits": "gcc14-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "gcc14-release",
+      "displayName": "GCC14 Release",
+      "inherits": "gcc14-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
+      }
+    },
+    {
+      "name": "gcc15-base",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/gcc15.cmake"
+      }
+    },
+    {
+      "name": "gcc15-debug",
+      "displayName": "GCC15 Debug",
+      "inherits": "gcc15-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "gcc15-release",
+      "displayName": "GCC15 Release",
+      "inherits": "gcc15-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
+      }
+    },
+    {
+      "name": "clang-p2996-base",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/clang_p2996.cmake"
+      }
+    },
+    {
+      "name": "clang-p2996-debug",
+      "displayName": "Clang p2996 Debug (experimental)",
+      "inherits": "clang-p2996-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SLOTMAP_ENABLE_WARNINGS_AS_ERRORS": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "clang21-debug", "configurePreset": "clang21-debug", "configuration": "Debug" },
+    { "name": "clang21-release", "configurePreset": "clang21-release", "configuration": "Release" },
+    { "name": "clang21-asan", "configurePreset": "clang21-asan", "configuration": "Debug" },
+    { "name": "clang21-ubsan", "configurePreset": "clang21-ubsan", "configuration": "Debug" },
+    { "name": "clang21-asan-ubsan", "configurePreset": "clang21-asan-ubsan", "configuration": "Debug" },
+    { "name": "clang21-tsan", "configurePreset": "clang21-tsan", "configuration": "Debug" },
+    { "name": "clang21-msan", "configurePreset": "clang21-msan", "configuration": "Debug" },
+    { "name": "clang21-coverage", "configurePreset": "clang21-coverage", "configuration": "Debug" },
+    { "name": "clang21-clang-tidy", "configurePreset": "clang21-clang-tidy", "configuration": "Debug" },
+    { "name": "clang21-clang-format", "configurePreset": "clang21-clang-format", "configuration": "Debug" },
+    { "name": "clang21-cpp26-debug", "configurePreset": "clang21-cpp26-debug", "configuration": "Debug" },
+    { "name": "clang22-debug", "configurePreset": "clang22-debug", "configuration": "Debug" },
+    { "name": "clang22-release", "configurePreset": "clang22-release", "configuration": "Release" },
+    { "name": "clang22-asan", "configurePreset": "clang22-asan", "configuration": "Debug" },
+    { "name": "clang22-ubsan", "configurePreset": "clang22-ubsan", "configuration": "Debug" },
+    { "name": "clang22-cpp26-debug", "configurePreset": "clang22-cpp26-debug", "configuration": "Debug" },
+    { "name": "gcc14-debug", "configurePreset": "gcc14-debug", "configuration": "Debug" },
+    { "name": "gcc14-release", "configurePreset": "gcc14-release", "configuration": "Release" },
+    { "name": "gcc15-debug", "configurePreset": "gcc15-debug", "configuration": "Debug" },
+    { "name": "gcc15-release", "configurePreset": "gcc15-release", "configuration": "Release" },
+    { "name": "clang-p2996-debug", "configurePreset": "clang-p2996-debug", "configuration": "Debug" }
+  ],
+  "testPresets": [
+    {
+      "name": "clang21-debug",
+      "configurePreset": "clang21-debug",
+      "output": { "outputOnFailure": true },
+      "configuration": "Debug"
+    },
+    {
+      "name": "clang21-release",
+      "configurePreset": "clang21-release",
+      "output": { "outputOnFailure": true },
+      "configuration": "Release"
+    },
+    {
+      "name": "clang21-asan",
+      "configurePreset": "clang21-asan",
+      "output": { "outputOnFailure": true },
+      "configuration": "Debug"
+    },
+    {
+      "name": "clang21-ubsan",
+      "configurePreset": "clang21-ubsan",
+      "output": { "outputOnFailure": true },
+      "configuration": "Debug"
+    },
+    {
+      "name": "clang21-asan-ubsan",
+      "configurePreset": "clang21-asan-ubsan",
+      "output": { "outputOnFailure": true },
+      "configuration": "Debug"
+    },
+    {
+      "name": "clang21-tsan",
+      "configurePreset": "clang21-tsan",
+      "output": { "outputOnFailure": true },
+      "configuration": "Debug"
+    },
+    {
+      "name": "clang21-msan",
+      "configurePreset": "clang21-msan",
+      "output": { "outputOnFailure": true },
+      "configuration": "Debug"
+    },
+    {
+      "name": "clang21-coverage",
+      "configurePreset": "clang21-coverage",
+      "output": { "outputOnFailure": true },
+      "configuration": "Debug"
+    },
+    {
+      "name": "clang22-debug",
+      "configurePreset": "clang22-debug",
+      "output": { "outputOnFailure": true },
+      "configuration": "Debug"
+    },
+    {
+      "name": "clang22-asan",
+      "configurePreset": "clang22-asan",
+      "output": { "outputOnFailure": true },
+      "configuration": "Debug"
+    },
+    {
+      "name": "clang22-ubsan",
+      "configurePreset": "clang22-ubsan",
+      "output": { "outputOnFailure": true },
+      "configuration": "Debug"
+    },
+    {
+      "name": "clang-p2996-debug",
+      "configurePreset": "clang-p2996-debug",
+      "output": { "outputOnFailure": true },
+      "configuration": "Debug"
+    },
+    {
+      "name": "gcc15-release",
+      "configurePreset": "gcc15-release",
+      "output": { "outputOnFailure": true },
+      "configuration": "Release"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "dev-cycle",
+      "steps": [
+        { "type": "configure", "name": "clang21-debug" },
+        { "type": "build", "name": "clang21-debug" },
+        { "type": "test", "name": "clang21-debug" }
+      ]
+    },
+    {
+      "name": "release-workflow",
+      "steps": [
+        { "type": "configure", "name": "clang21-release" },
+        { "type": "build", "name": "clang21-release" },
+        { "type": "test", "name": "clang21-release" }
+      ]
+    },
+    {
+      "name": "clang21-asan-workflow",
+      "steps": [
+        { "type": "configure", "name": "clang21-asan" },
+        { "type": "build", "name": "clang21-asan" },
+        { "type": "test", "name": "clang21-asan" }
+      ]
+    },
+    {
+      "name": "clang21-ubsan-workflow",
+      "steps": [
+        { "type": "configure", "name": "clang21-ubsan" },
+        { "type": "build", "name": "clang21-ubsan" },
+        { "type": "test", "name": "clang21-ubsan" }
+      ]
+    },
+    {
+      "name": "clang21-asan-ubsan-workflow",
+      "steps": [
+        { "type": "configure", "name": "clang21-asan-ubsan" },
+        { "type": "build", "name": "clang21-asan-ubsan" },
+        { "type": "test", "name": "clang21-asan-ubsan" }
+      ]
+    },
+    {
+      "name": "clang21-tsan-workflow",
+      "steps": [
+        { "type": "configure", "name": "clang21-tsan" },
+        { "type": "build", "name": "clang21-tsan" },
+        { "type": "test", "name": "clang21-tsan" }
+      ]
+    },
+    {
+      "name": "clang21-msan-workflow",
+      "steps": [
+        { "type": "configure", "name": "clang21-msan" },
+        { "type": "build", "name": "clang21-msan" },
+        { "type": "test", "name": "clang21-msan" }
+      ]
+    },
+    {
+      "name": "clang21-coverage-workflow",
+      "steps": [
+        { "type": "configure", "name": "clang21-coverage" },
+        { "type": "build", "name": "clang21-coverage" },
+        { "type": "test", "name": "clang21-coverage" }
+      ]
+    },
+    {
+      "name": "clang21-clang-tidy-workflow",
+      "steps": [
+        { "type": "configure", "name": "clang21-clang-tidy" },
+        { "type": "build", "name": "clang21-clang-tidy" }
+      ]
+    },
+    {
+      "name": "clang21-clang-format-workflow",
+      "steps": [
+        { "type": "configure", "name": "clang21-clang-format" },
+        { "type": "build", "name": "clang21-clang-format" }
+      ]
+    },
+    {
+      "name": "clang22-asan-workflow",
+      "steps": [
+        { "type": "configure", "name": "clang22-asan" },
+        { "type": "build", "name": "clang22-asan" },
+        { "type": "test", "name": "clang22-asan" }
+      ]
+    },
+    {
+      "name": "clang22-ubsan-workflow",
+      "steps": [
+        { "type": "configure", "name": "clang22-ubsan" },
+        { "type": "build", "name": "clang22-ubsan" },
+        { "type": "test", "name": "clang22-ubsan" }
+      ]
+    },
+    {
+      "name": "clang-p2996-debug-workflow",
+      "steps": [
+        { "type": "configure", "name": "clang-p2996-debug" },
+        { "type": "build", "name": "clang-p2996-debug" },
+        { "type": "test", "name": "clang-p2996-debug" }
+      ]
+    }
+  ]
+}

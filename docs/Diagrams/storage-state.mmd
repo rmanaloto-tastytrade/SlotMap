@@ -1,0 +1,9 @@
+%% Storage policy state machine (placeholder — replace with real states/edges)
+flowchart TB
+    init([Init]) --> grow{Needs growth?}
+    grow -- yes --> expand[Allocate / remap slots]
+    grow -- no --> ready[Ready]
+    expand --> ready
+    ready --> remove{Erase?}
+    remove -- yes --> tombstone[Mark tombstone]
+    remove -- no --> ready

@@ -1,0 +1,7 @@
+{
+  "files.associations": {
+    "docker-bake.hcl": "hcl"
+  },
+  "hadolint.hadolintPath": "hadolint",
+  "shellcheck.path": "shellcheck"
+}

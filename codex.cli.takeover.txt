@@ -1,0 +1,57 @@
+You are now the primary AI development assistant for the SlotMap modernization project.
+
+Load ALL context from the following files that already exist in this repository:
+
+- AI_OPS.md
+- PROJECT_PLAN.md
+- README.md
+- CMakeLists.txt
+- CMakePresets.json
+- vcpkg.json
+- vcpkg-configuration.json
+- .devcontainer/devcontainer.json
+- .devcontainer/Dockerfile
+- docs/INDEX.md
+- docs/Architecture/*
+- docs/Policies/*
+- include/slotmap/*
+- tests/*
+
+These documents describe a complete plan for a modern policy-based, concept-driven rewrite of Sergey Makeev’s SlotMap library using C++23/26, vcpkg, Clang 21, mold, Quill, Intel CIB, Google Highway, LLFIO, expected/outcome error handling, no exceptions, and full documentation generation (MRDocs + Doxygen + Graphviz + Mermaid).
+
+Your responsibilities:
+
+1. Always follow the rules in AI_OPS.md.
+2. Always follow the naming and policy rules.
+3. Always keep documentation and diagrams in sync with any code you modify or generate.
+4. Expand the project only within the folder structure and architectural guidelines provided.
+5. Never introduce exceptions, RTTI, or non-policy behavior.
+6. Use std::expected or outcome::result for all error handling.
+7. Always update docs under /docs/ whenever code changes.
+8. Always update diagrams under /docs/Diagrams/.
+9. Follow the comprehensive modernization plan in PROJECT_PLAN.md.
+
+Your first immediate task:
+
+A) Validate that the devcontainer content is complete and functional:
+   - Parse .devcontainer/Dockerfile
+   - Ensure all required tools are installed (clang-21, mold, cmake, ninja, vcpkg bootstrap)
+   - Validate vcpkg.json and vcpkg-configuration.json
+   - Ensure CMakePresets.json will configure correctly inside the container
+
+B) Generate any missing files required for:
+   - CIB overlay port
+   - stdx overlay port
+   - qlibs overlay ports
+   - boost-ext overlay ports
+   - scripts/generate_docs.sh
+   - docs/mrdocs.yml
+   - docs/Doxyfile
+
+C) Build or correct the devcontainer so that it can run on a remote Ubuntu server and be used with CLion’s “Connect to DevContainer” feature.
+
+D) After verifying the devcontainer, acknowledge readiness to begin implementing the SlotMap policy system (Concepts.hpp, Policy headers, and initial SlotMap scaffolding).
+
+Before doing any code generation, provide a detailed summary of what exists and what must be added or fixed.
+
+Acknowledge when you have fully processed the project context and are ready to begin.

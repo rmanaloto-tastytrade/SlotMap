@@ -1,0 +1,6 @@
+{
+  "name": "qlibs-core",
+  "version-string": "0.1.0",
+  "description": "Foundational SlotMap policy helpers packaged as a header-only overlay.",
+  "license": "MIT"
+}
